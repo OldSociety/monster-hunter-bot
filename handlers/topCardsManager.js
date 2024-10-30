@@ -1,5 +1,5 @@
 // handlers/topCardsManager.js
-const { Collection, User } = require('../models')
+const { Collection, User } = require('../Models/model')
 
 /**
  * Updates a user's top 5 cards based on CR and m_score, and recalculates their score.
