@@ -85,8 +85,13 @@ for (const file of eventFiles) {
     client.on(event.name, (...args) => event.execute(...args))
   }
 }
+// Import the message handler and booster handler
+const messageHandler = require('./handlers/messageHandler')
 
-// Log in to Discord with your client's token
+// Call the function to set up message handling
+messageHandler(client, User)
+
+// Log in to Discord with client's token
 client.login(process.env.TOKEN)
 
 module.exports = { sequelize }
