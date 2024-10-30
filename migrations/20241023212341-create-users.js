@@ -15,7 +15,7 @@ module.exports = {
       gold: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 100,
+        defaultValue: 1000,
       },
       currency: {
         type: Sequelize.JSON,
@@ -33,8 +33,7 @@ module.exports = {
       },
       class: {
         type: Sequelize.ENUM('fighter', 'wizard', 'rogue'),
-        allowNull: false,
-        defaultValue: 'fighter',
+        allowNull: true,
       },
       top_monsters: {
         type: Sequelize.JSON,

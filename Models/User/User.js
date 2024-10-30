@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     gold: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 100,
+      defaultValue: 1000,
     },
     currency: {
       type: DataTypes.JSON,
@@ -30,8 +30,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     class: {
       type: DataTypes.ENUM('fighter', 'wizard', 'rogue'),
-      allowNull: false,
-      defaultValue: 'fighter',
+      allowNull: true,
     },
     top_monsters: {
       type: DataTypes.JSON,
