@@ -9,35 +9,36 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    wealth: {
+    gold: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 100,
     },
-    org_name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: 'Lamplighters'
-      },
-    org_size: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 1,
-    },
-    lead_investigator: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    specialty: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: 'relic',
-    },
-    library_size: {
+    dice: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
+    gems: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    eggs: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    ichor: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    class: {
+        type: DataTypes.ENUM('fighter', 'wizard', 'rogue'),
+        allowNull: false,
+        defaultValue: 'fighter'
+      },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

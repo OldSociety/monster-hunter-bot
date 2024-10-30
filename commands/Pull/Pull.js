@@ -1,10 +1,12 @@
-// pull.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const {
   cacheMonstersByTier,
   selectTier,
   pullValidMonster,
 } = require('../../handlers/monsterHandler')
+
+// Define excluded types for the pull command
+const excludedTypes = new Set(['fey','dragon', 'fiend']) // Add any types you wish to exclude
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -23,6 +25,12 @@ module.exports = {
     do {
       const selectedTier = selectTier()
       monster = await pullValidMonster(selectedTier)
+
+      // Check if the monster's type is in the exclusion list
+      if (monster && excludedTypes.has(monster.type.toLowerCase())) {
+        console.log(`Excluded monster type: ${monster.type}`)
+        monster = null // Skip the monster if it matches the excluded type
+      }
       retries++
     } while (!monster && retries < maxRetries)
 
@@ -32,6 +40,7 @@ module.exports = {
         .setTitle(monster.name)
         .setDescription(`**Type:** ${monster.type}`)
         .setThumbnail(monster.imageUrl)
+        .setFooter({ text: `Challenge Rating: ${monster.cr}` })
 
       await interaction.editReply({ embeds: [embed] })
     } else {
