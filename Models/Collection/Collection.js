@@ -1,40 +1,40 @@
 module.exports = (sequelize, DataTypes) => {
   const Collection = sequelize.define('Collections', {
     id: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
     },
     type: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
     },
     cr: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       defaultValue: 0,
     },
-    experience: {
-      type: DataTypes.INTEGER,
+    hp: {
+      type: Sequelize.INTEGER,
+      defaultValue: 0,
+    },
+    m_score: {
+      type: Sequelize.INTEGER,
       defaultValue: 0,
     },
     level: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       defaultValue: 1,
     },
     copies: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       defaultValue: 0,
     },
-    exp_needed: {
-      type: DataTypes.INTEGER,
-      defaultValue: 100,
-    },
     userId: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
       references: {
         model: 'Users', // Refers to the Users table
@@ -44,11 +44,11 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'SET NULL',
     },
     createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      type: Sequelize.DATE,
+      defaultValue: Sequelize.NOW,
     },
     updatedAt: {
-      type: DataTypes.DATE,
+      type: Sequelize.DATE,
       allowNull: true,
     },
   })

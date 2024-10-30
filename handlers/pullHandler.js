@@ -1,5 +1,7 @@
+// pullHandler.js
 const fs = require('fs')
 const path = require('path')
+const { updateOrAddMonsterToCollection } = require('./monsterHandler')
 
 // Read all filenames in the assets folder to create validCreatures set
 const assetsPath = path.join(__dirname, '..', 'assets')
@@ -60,6 +62,7 @@ async function cacheMonstersByTier() {
           name: monsterDetails.name,
           cr,
           type: monsterDetails.type,
+          rarity: matchingTier.name, // Added rarity for the monster
           imageUrl,
           color: matchingTier.color,
         })
@@ -100,8 +103,10 @@ async function pullValidMonster(tier, maxAttempts = 10) {
   return monster
 }
 
+// Export functions to be used in command handlers
 module.exports = {
   cacheMonstersByTier,
   selectTier,
   pullValidMonster,
+  updateOrAddMonsterToCollection, // Export for commands to access directly
 }

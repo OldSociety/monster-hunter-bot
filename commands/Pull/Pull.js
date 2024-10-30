@@ -4,7 +4,8 @@ const {
   selectTier,
   pullValidMonster,
 } = require('../../handlers/pullHandler')
-const { User, Collection } = require('../../Models/model') // Import the models
+const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
+const { User, Collection } = require('../../Models/model') 
 
 // Define excluded types for the pull command
 const excludedTypes = new Set(['fey', 'dragon', 'fiend']) // Add any types you wish to exclude
@@ -67,7 +68,7 @@ module.exports = {
           level: 1, // Starting level, could be default
         })
       }
-
+      await updateTop5AndUserScore(userId)
       // Send the embed with monster details
       const embed = new EmbedBuilder()
         .setColor(monster.color)
