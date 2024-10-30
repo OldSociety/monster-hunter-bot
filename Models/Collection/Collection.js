@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const Investigator = sequelize.define('Investigators', {
+  const Collection = sequelize.define('Collections', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -9,47 +9,39 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    prowess: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+    type: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
-    knowledge: {
+    cr: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false,
-    },
-    specialty: {
-      type: DataTypes.ENUM(
-        'relic',
-        'cult',
-        'mythos'
-      ),
-      allowNull: false,
     },
     experience: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false,
     },
     level: {
       type: DataTypes.INTEGER,
       defaultValue: 1,
-      allowNull: false,
     },
-    resolve: {
+    copies: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    exp_needed: {
       type: DataTypes.INTEGER,
       defaultValue: 100,
-      allowNull: false,
-    },
-    sanity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 100,
-      allowNull: false,
     },
     userId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: {
+        model: 'Users', // Refers to the Users table
+        key: 'user_id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -61,5 +53,5 @@ module.exports = (sequelize, DataTypes) => {
     },
   })
 
-  return Investigator
+  return Collection
 }

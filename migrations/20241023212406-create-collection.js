@@ -2,48 +2,49 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Users', {
-      user_id: {
-        type: Sequelize.STRING,
-        allowNull: false,
+    await queryInterface.createTable('Collections', {
+      id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
         primaryKey: true,
       },
-      user_name: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      gold: {
-        type: Sequelize.INTEGER,
+      type: {
+        type: Sequelize.STRING,
         allowNull: false,
+      },
+      cr: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+      experience: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+      level: {
+        type: Sequelize.INTEGER,
+        defaultValue: 1,
+      },
+      copies: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+      exp_needed: {
+        type: Sequelize.INTEGER,
         defaultValue: 100,
       },
-      dice: {
-        type: Sequelize.INTEGER,
+      userId: {
+        type: Sequelize.STRING,
         allowNull: false,
-        defaultValue: 0,
-      },
-      gems: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      eggs: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      ichor: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      class: {
-        type: Sequelize.ENUM('fighter', 'wizard', 'rogue'), 
-        defaultValue: 'fighter',
-      },
-      last_chat_message: {
-        type: Sequelize.DATE,
-        allowNull: true,
+        references: {
+          model: 'Users', // Refers to the Users table
+          key: 'user_id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -57,6 +58,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Users')
+    await queryInterface.dropTable('Collections')
   },
 }

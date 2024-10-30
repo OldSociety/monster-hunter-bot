@@ -35,10 +35,14 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0,
     },
     class: {
-        type: DataTypes.ENUM('fighter', 'wizard', 'rogue'),
-        allowNull: false,
-        defaultValue: 'fighter'
-      },
+      type: DataTypes.ENUM('fighter', 'wizard', 'rogue'),
+      allowNull: false,
+      defaultValue: 'fighter',
+    },
+    last_chat_message: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

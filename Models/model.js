@@ -3,30 +3,30 @@ const sequelize = require('../config/sequelize')
 
 // Import models
 const User = require('./User/User')(sequelize, DataTypes)
-const Investigator = require('./Investigator/Investigator')(sequelize, DataTypes)
+const Collection = require('./Collection/Collection')(sequelize, DataTypes)
 
 // Set up associations
 User.associate = (models) => {
-  User.hasMany(models.Investigator, {
+  User.hasMany(models.Collection, {
     foreignKey: 'userId',
-    as: 'investigators',
+    as: 'Collections',
   })
 }
 
-Investigator.associate = (models) => {
-  Investigator.belongsTo(models.User, {
+Collection.associate = (models) => {
+  Collection.belongsTo(models.User, {
     foreignKey: 'userId',
     as: 'user',
   })
 }
 
 // Call the associations
-User.associate({ Investigator })
-Investigator.associate({ User })
+User.associate({ Collection })
+Collection.associate({ User })
 
 
 
 module.exports = {
   User,
-  Investigator,
+  Collection,
 }
