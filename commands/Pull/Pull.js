@@ -3,10 +3,11 @@ const {
   cacheMonstersByTier,
   selectTier,
   pullValidMonster,
-} = require('../../handlers/monsterHandler')
+} = require('../../handlers/pullHandler')
+const { User, Collection } = require('../../Models/model') // Import the models
 
 // Define excluded types for the pull command
-const excludedTypes = new Set(['fey','dragon', 'fiend']) // Add any types you wish to exclude
+const excludedTypes = new Set(['fey', 'dragon', 'fiend']) // Add any types you wish to exclude
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,6 +16,18 @@ module.exports = {
 
   async execute(interaction) {
     await interaction.deferReply()
+
+    const userId = interaction.user.id
+    const userName = interaction.user.username
+
+    // Ensure the user exists in the database
+    let user = await User.findOne({ where: { user_id: userId } })
+    if (!user) {
+      user = await User.create({
+        user_id: userId,
+        user_name: userName,
+      })
+    }
 
     await cacheMonstersByTier()
 
@@ -35,6 +48,27 @@ module.exports = {
     } while (!monster && retries < maxRetries)
 
     if (monster) {
+      // Check if this monster is already in the user's collection
+      let collectionEntry = await Collection.findOne({
+        where: { userId: user.user_id, name: monster.name },
+      })
+
+      if (collectionEntry) {
+        // Increase the copies if already owned
+        await collectionEntry.increment('copies', { by: 1 })
+      } else {
+        // Add a new monster to the collection if not owned
+        await Collection.create({
+          userId: user.user_id,
+          name: monster.name,
+          type: monster.type,
+          cr: monster.cr,
+          copies: 1, // Initial copy count
+          level: 1, // Starting level, could be default
+        })
+      }
+
+      // Send the embed with monster details
       const embed = new EmbedBuilder()
         .setColor(monster.color)
         .setTitle(monster.name)

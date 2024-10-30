@@ -17,30 +17,31 @@ module.exports = {
         allowNull: false,
         defaultValue: 100,
       },
-      dice: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
+      currency: {
+        type: Sequelize.JSON,
+        defaultValue: {
+          gems: 0,
+          eggs: 0,
+          ichor: 0,
+          dice: 0,
+        },
       },
-      gems: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      eggs: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      ichor: {
+      score: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 0,
       },
       class: {
-        type: Sequelize.ENUM('fighter', 'wizard', 'rogue'), 
+        type: Sequelize.ENUM('fighter', 'wizard', 'rogue'),
+        allowNull: false,
         defaultValue: 'fighter',
       },
+      top_monsters: {
+        type: Sequelize.JSON,
+        allowNull: true,
+        defaultValue: [],
+      },
+      
       last_chat_message: {
         type: Sequelize.DATE,
         allowNull: true,

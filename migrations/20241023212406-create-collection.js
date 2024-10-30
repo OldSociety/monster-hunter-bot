@@ -20,7 +20,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
-      experience: {
+      m_score: {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
@@ -32,9 +32,9 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
-      exp_needed: {
+      copies_needed: {
         type: Sequelize.INTEGER,
-        defaultValue: 100,
+        defaultValue: 3,
       },
       userId: {
         type: Sequelize.STRING,

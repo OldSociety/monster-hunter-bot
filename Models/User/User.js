@@ -14,22 +14,16 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 100,
     },
-    dice: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
+    currency: {
+      type: DataTypes.JSON,
+      defaultValue: {
+        gems: 0,
+        eggs: 0,
+        ichor: 0,
+        dice: 0,
+      },
     },
-    gems: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-    },
-    eggs: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-    },
-    ichor: {
+    score: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
@@ -38,6 +32,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('fighter', 'wizard', 'rogue'),
       allowNull: false,
       defaultValue: 'fighter',
+    },
+    top_monsters: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: [],
     },
     last_chat_message: {
       type: DataTypes.DATE,
