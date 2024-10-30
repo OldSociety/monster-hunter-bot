@@ -10,7 +10,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const isAdmin = interaction.guild.roles.cache.get(process.env.ADMINROLEID)
+
 
     // Check if the executing user has the admin role
     if (!interaction.member.roles.cache.has(process.env.ADMINROLEID)) {
@@ -76,8 +76,7 @@ module.exports = {
     }
 
     await cacheMonsterList()
-    await processBatch() // Only process the first 25 monsters
-
+    await processBatch() 
     // Create an embed to display the counts
     const embed = new EmbedBuilder()
       .setTitle('Monsters by CR Tier (First 25)')
