@@ -2,8 +2,7 @@
 const { Collection, User } = require('../Models/model')
 
 /**
- * Updates a user's top 5 cards based on CR and m_score, and recalculates their score.
- * Also stores the top 5 monster IDs in the user profile.
+ * Updates a user's top 5 cards based on CR and m_score.
  * @param {string} userId - The ID of the user.
  */
 async function updateTop5AndUserScore(userId) {
