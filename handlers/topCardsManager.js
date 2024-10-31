@@ -12,7 +12,7 @@ async function updateTop5AndUserScore(userId) {
   // Sort by CR and m_score to determine the top 5
   const top5Monsters = userMonsters
     .sort((a, b) => (b.cr - a.cr) || (b.m_score - a.m_score))
-    .slice(0, 5)
+    .slice(0, 3)
 
   // Calculate total score based on top 5 m_scores
   const newScore = top5Monsters.reduce((acc, monster) => acc + monster.m_score, 0)

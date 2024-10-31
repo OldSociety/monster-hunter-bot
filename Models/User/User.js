@@ -28,9 +28,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0,
     },
-    class: {
-      type: DataTypes.ENUM('fighter', 'wizard', 'rogue'),
-      allowNull: true,
+    class_score: {
+      type: DataTypes.JSON,
+      defaultValue: {
+        brute: 0,
+        caster: 0,
+        sneak: 0,
+      },
     },
     top_monsters: {
       type: DataTypes.JSON,
