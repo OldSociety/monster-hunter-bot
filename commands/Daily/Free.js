@@ -14,11 +14,11 @@ module.exports = {
     try {
       const user = await User.findOne({ where: { user_id: userId } })
       if (!user) {
-        await interaction.reply({
-          content: "You don't have an account. Use `/account` to create one.",
-          ephemeral: true,
+        user = await User.create({
+          user_id: userId,
+          user_name: interaction.user.username,
+          gold: 1000,
         })
-        return
       }
 
       const currentTime = new Date()
