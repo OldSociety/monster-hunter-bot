@@ -1,5 +1,5 @@
 // dailyRewardsHandler.js
-const { Collection } = require('../../../Models/model.js')
+// const { Collection } = require('../../../Models/model.js')
 const { pullValidMonster } = require('../../handlers/pullHandler')
 const {
   updateOrAddMonsterToCollection,
@@ -12,7 +12,7 @@ const { getStarsBasedOnColor } = require('../../utils/starRating')
 
 async function grantDailyReward(user) {
   const currentDay = user.daily_streak % 7 || 7 // Ensure it cycles between 1 and 7
-  let rewardMessage = { content: '' } // Initialize rewardMessage
+  let rewardMessage = { content: '' }
 
   switch (currentDay) {
     case 1:

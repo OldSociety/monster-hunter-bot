@@ -60,7 +60,7 @@ module.exports = {
     // Check if user has enough gold
     if (user.gold < PACK_COST) {
       return interaction.editReply(
-        "You don't have enough gold to buy a pack. Each pack costs 800 gold."
+        "You don't have enough gold to buy a pack. Each pack costs 🪙800 gold."
       )
     }
 
@@ -91,7 +91,7 @@ module.exports = {
       )
       .addFields({
         name: 'Common Pack',
-        value: `Contains common monsters only\nCost: ${PACK_COST} gold`,
+        value: `Contains common monsters only\nCost: 🪙${PACK_COST} gold`,
         inline: true,
       })
       .setFooter({ text: 'Click the button below to purchase a Common Pack.' })

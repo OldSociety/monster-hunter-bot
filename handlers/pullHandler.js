@@ -70,7 +70,7 @@ async function cacheMonstersByTier() {
           name: monsterDetails.name,
           cr,
           type: monsterDetails.type,
-          rarity: matchingTier.name, 
+          rarity: matchingTier.name,
           imageUrl,
           color: matchingTier.color,
         })
@@ -119,9 +119,22 @@ async function pullValidMonster(tier, maxAttempts = 10) {
   return monster
 }
 
+// New function: fetch monster by specific name
+async function fetchMonsterByName(name) {
+  for (const tier of Object.values(monsterCacheByTier)) {
+    const monster = tier.find(
+      (m) => m.name.toLowerCase() === name.toLowerCase()
+    )
+    if (monster) return monster
+  }
+  console.log(`Monster ${name} not found in cache.`)
+  return null
+}
+
 module.exports = {
   cacheMonstersByTier,
   selectTier,
   pullValidMonster,
+  fetchMonsterByName,
   updateOrAddMonsterToCollection,
 }
