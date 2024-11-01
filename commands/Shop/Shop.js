@@ -7,6 +7,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
+
 const {
   cacheMonstersByTier,
   pullValidMonster,
@@ -15,6 +16,12 @@ const {
   updateOrAddMonsterToCollection,
 } = require('../../handlers/monsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
+
+const {
+  generateMonsterRewardEmbed,
+} = require('../../utils/embeds/monsterRewardEmbed')
+const { getStarsBasedOnColor } = require('../../utils/starRating')
+
 const { User } = require('../../Models/model')
 
 // EXCLUDED TYPES
@@ -141,39 +148,14 @@ module.exports = {
           retries++
         } while (!monster && retries < maxRetries)
 
+        // Inside the collector logic in shop.js:
         if (monster) {
-          // Update collection and top 5
           await updateOrAddMonsterToCollection(userId, monster)
           await updateTop5AndUserScore(userId)
-          let color = monster.color
 
-          let stars
-          switch (true) {
-            case color === 8421504:
-              stars = '⭐★★★★ '
-              break
-            case color === 65280:
-              stars = '⭐⭐★★★'
-              break
-            case color === 255:
-              stars = '⭐⭐⭐★★'
-              break
-            case color === 8388736:
-              stars = '⭐⭐⭐⭐★'
-              break
-            case color === 16766720:
-              stars = '⭐⭐⭐⭐⭐'
-              break
-            default:
-              stars = 'N/A'
-          }
+          const stars = getStarsBasedOnColor(monster.color)
 
-          const monsterEmbed = new EmbedBuilder()
-            .setColor(monster.color)
-            .setTitle(monster.name)
-            .setDescription(`**Type:** ${monster.type}`)
-            .setThumbnail(monster.imageUrl)
-            .setFooter({ text: `Rarity: ${stars}` })
+          const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
 
           await interaction.followUp({
             content: 'You pulled a monster from the pack!',
