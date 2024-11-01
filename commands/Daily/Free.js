@@ -1,3 +1,5 @@
+// free.js
+
 const { SlashCommandBuilder } = require('discord.js')
 const { User } = require('../../Models/model.js')
 const { setupFreeRewardCollector } = require('./helpers/freeRewardCollector.js')

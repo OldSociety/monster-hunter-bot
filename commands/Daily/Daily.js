@@ -1,3 +1,5 @@
+//daily.js
+
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { grantDailyReward } = require('./helpers/dailyRewardsHandler')
 const { User } = require('../../Models/model')
@@ -69,27 +71,26 @@ module.exports = {
         ]
 
         let description = rewards
-        .map((reward, index) => {
-          // Check if the reward has been claimed before this interaction
-          const hasBeenClaimed = index + 1 < user.daily_streak;
-          const isBeingClaimedNow = index + 1 === user.daily_streak;
-      
-          // Mark previous claimed rewards and the one being claimed now
-          let claimedStatus = hasBeenClaimed ? ' ❎' : '';
-          let rewardDescription = `Day ${index + 1}: ${reward}`;
-      
-          // Apply bold formatting and a check to the reward being claimed now
-          if (isBeingClaimedNow) {
-            rewardDescription = `**${rewardDescription} ❎**`; // Add the green check for the current claim
-          } else if (hasBeenClaimed) {
-            // Optionally handle previously claimed rewards differently if needed
-            rewardDescription = `${rewardDescription}${claimedStatus}`; 
-          }
-      
-          return rewardDescription;
-        })
-        .join('\n');
-      
+          .map((reward, index) => {
+            // Check if the reward has been claimed before this interaction
+            const hasBeenClaimed = index + 1 < user.daily_streak
+            const isBeingClaimedNow = index + 1 === user.daily_streak
+
+            // Mark previous claimed rewards and the one being claimed now
+            let claimedStatus = hasBeenClaimed ? ' ❎' : ''
+            let rewardDescription = `Day ${index + 1}: ${reward}`
+
+            // Apply bold formatting and a check to the reward being claimed now
+            if (isBeingClaimedNow) {
+              rewardDescription = `**${rewardDescription} ❎**` // Add the green check for the current claim
+            } else if (hasBeenClaimed) {
+              // Optionally handle previously claimed rewards differently if needed
+              rewardDescription = `${rewardDescription}${claimedStatus}`
+            }
+
+            return rewardDescription
+          })
+          .join('\n')
 
         await interaction.reply({
           embeds: [

@@ -18,6 +18,14 @@ const monsterCacheByTier = {
   Legendary: [],
 }
 
+// EXCLUDED TYPES
+const excludedTypes = new Set([
+  'ooze',
+  'dragon',
+  'fiend',
+  'swarm of tiny beasts',
+])
+
 let cachePopulated = false
 
 const defaultTiers = [
@@ -62,7 +70,7 @@ async function cacheMonstersByTier() {
           name: monsterDetails.name,
           cr,
           type: monsterDetails.type,
-          rarity: matchingTier.name, // Added rarity for the monster
+          rarity: matchingTier.name, 
           imageUrl,
           color: matchingTier.color,
         })
@@ -74,6 +82,7 @@ async function cacheMonstersByTier() {
   cachePopulated = true
 }
 
+// Function to select a tier based on cumulative chance
 function selectTier(customTiers = defaultTiers) {
   const roll = Math.random()
   let cumulative = 0
@@ -85,6 +94,7 @@ function selectTier(customTiers = defaultTiers) {
   return customTiers[0]
 }
 
+// Adjusted pullValidMonster to apply exclusions automatically
 async function pullValidMonster(tier, maxAttempts = 10) {
   let attempts = 0
   let monster
@@ -94,10 +104,16 @@ async function pullValidMonster(tier, maxAttempts = 10) {
     monster =
       eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)]
 
-    attempts++
-    if (!monster || !monster.imageUrl.includes('githubusercontent.com')) {
+    // Check for exclusion of "swarm" or any listed in excludedTypes
+    if (
+      monster &&
+      (excludedTypes.has(monster.type.toLowerCase()) ||
+        monster.type.toLowerCase().includes('swarm'))
+    ) {
+      console.log(`Excluded monster type: ${monster.type}`)
       monster = null
     }
+    attempts++
   } while (!monster && attempts < maxAttempts)
 
   return monster
