@@ -1,17 +1,30 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
+const { cacheMonstersByTier} = require('../../handlers/pullHandler')
 
 let monsterListCache = [] // Cache for monster indices
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('list')
-    .setDescription(
-      '(ADMIN)Lists the number of monsters by CR tier'
+    .setDescription('(ADMIN)Lists the number of monsters by CR tier')
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('crtiers')
+        .setDescription('Lists the number of monsters by CR tier')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('findname')
+        .setDescription('Searches for a specific monster by name')
+        .addStringOption((option) =>
+          option
+            .setName('name')
+            .setDescription('Monster name to search')
+            .setRequired(true)
+        )
     ),
 
   async execute(interaction) {
-
-
     // Check if the executing user has the admin role
     if (!interaction.member.roles.cache.has(process.env.ADMINROLEID)) {
       return interaction.reply({
@@ -23,6 +36,7 @@ module.exports = {
 
     // Dynamically import node-fetch
     const fetch = (await import('node-fetch')).default
+    const subcommand = interaction.options.getSubcommand(false) || 'crtiers'
 
     // Define CR tiers with initial counts
     const tiers = [
@@ -43,60 +57,84 @@ module.exports = {
       }
     }
 
-    async function processBatch(batchSize = 400) {
-      const batch = monsterListCache.slice(0, batchSize) // Limit to first 25
-      let processedCount = 0
-    
-      for (const monster of batch) {
-        // console.log(`Processing monster: ${monster.name} | CR: ${monster.challenge_rating}`)
-    
-        // Fetch details if `challenge_rating` is missing or undefined
-        if (monster.challenge_rating === undefined) {
-          const detailResponse = await fetch(`https://www.dnd5eapi.co/api/monsters/${monster.index}`)
-          const monsterDetails = await detailResponse.json()
-          
-          // Assign the fetched challenge rating or set it to 0 if still undefined
-          monster.challenge_rating = monsterDetails.challenge_rating ?? 0
-        }
-    
-        const cr = monster.challenge_rating
-        if (cr === undefined || cr === null) {
-          console.log(`Warning: Monster ${monster.name} has no challenge rating.`)
-          continue
-        }
-    
-        // Categorize by CR tier
-        for (const tier of tiers) {
-          if (cr >= tier.crRange[0] && cr <= tier.crRange[1]) {
-            tier.count += 1
-            break
+      async function processBatch(batchSize = 400) {
+        const batch = monsterListCache.slice(0, batchSize) // Limit to first 25
+        let processedCount = 0
+
+        for (const monster of batch) {
+          // console.log(`Processing monster: ${monster.name} | CR: ${monster.challenge_rating}`)
+
+          // Fetch details if `challenge_rating` is missing or undefined
+          if (monster.challenge_rating === undefined) {
+            const detailResponse = await fetch(
+              `https://www.dnd5eapi.co/api/monsters/${monster.index}`
+            )
+            const monsterDetails = await detailResponse.json()
+
+            // Assign the fetched challenge rating or set it to 0 if still undefined
+            monster.challenge_rating = monsterDetails.challenge_rating ?? 0
           }
+
+          const cr = monster.challenge_rating
+          if (cr === undefined || cr === null) {
+            console.log(
+              `Warning: Monster ${monster.name} has no challenge rating.`
+            )
+            continue
+          }
+
+          // Categorize by CR tier
+          for (const tier of tiers) {
+            if (cr >= tier.crRange[0] && cr <= tier.crRange[1]) {
+              tier.count += 1
+              break
+            }
+          }
+          processedCount++
         }
-        processedCount++
+        return processedCount
       }
-      return processedCount
-    }
-    
 
-    await cacheMonsterList()
-    await processBatch() 
-    // Create an embed to display the counts
-    const embed = new EmbedBuilder()
-      .setTitle('Monsters by CR Tier (First 25)')
-      .setDescription('Number of monsters organized by Challenge Rating tiers.')
-      .setColor(0x00bfff)
-      .setFooter({ text: 'Data retrieved from D&D API' })
+      await cacheMonsterList()
+      await processBatch()
 
-    tiers.forEach((tier) => {
-      embed.addFields({
-        name: `${tier.name} (CR ${tier.crRange[0]} - ${
-          tier.crRange[1] === Infinity ? '20+' : tier.crRange[1]
-        })`,
-        value: `${tier.count} monsters`,
-        inline: true,
+      if (subcommand === 'crtiers') {
+      // Create an embed to display the counts
+      const embed = new EmbedBuilder()
+        .setTitle('Monsters by CR Tier (First 25)')
+        .setDescription(
+          'Number of monsters organized by Challenge Rating tiers.'
+        )
+        .setColor(0x00bfff)
+        .setFooter({ text: 'Data retrieved from D&D API' })
+
+      tiers.forEach((tier) => {
+        embed.addFields({
+          name: `${tier.name} (CR ${tier.crRange[0]} - ${
+            tier.crRange[1] === Infinity ? '20+' : tier.crRange[1]
+          })`,
+          value: `${tier.count} monsters`,
+          inline: true,
+        })
       })
-    })
 
-    await interaction.editReply({ embeds: [embed] })
+      await interaction.editReply({ embeds: [embed] })
+    } else if (subcommand === 'findname') {
+      const monsterName = interaction.options.getString('name')
+
+      // Search for the specified monster in the `monsterListCache`
+      const foundMonster = monsterListCache.find(
+        (monster) => monster.name.toLowerCase() === monsterName.toLowerCase()
+      )
+
+      const resultEmbed = new EmbedBuilder().setTitle('Monster Search Result').setColor('#00FF00')
+      if (foundMonster) {
+        resultEmbed.setDescription(`**${foundMonster.name}** was found in the monster list.`)
+      } else {
+        resultEmbed.setDescription(`**${monsterName}** could not be found in the monster list.`)
+      }
+
+      await interaction.editReply({ embeds: [resultEmbed] })
+    }
   },
 }

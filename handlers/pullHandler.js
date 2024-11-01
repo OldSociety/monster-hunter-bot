@@ -1,6 +1,7 @@
 // pullHandler.js
 const fs = require('fs')
 const path = require('path')
+const { EmbedBuilder } = require('discord.js')
 const { updateOrAddMonsterToCollection } = require('./monsterHandler')
 
 // Read all filenames in the assets folder to create validCreatures set
@@ -80,6 +81,7 @@ async function cacheMonstersByTier() {
     }
   }
   cachePopulated = true
+ 
 }
 
 // Function to select a tier based on cumulative chance
@@ -119,14 +121,27 @@ async function pullValidMonster(tier, maxAttempts = 10) {
   return monster
 }
 
-// New function: fetch monster by specific name
 async function fetchMonsterByName(name) {
+  // Check if cache is populated; if not, populate it first
+  if (!cachePopulated) {
+    console.log('Cache not populated. Populating cache now...')
+    await cacheMonstersByTier()
+    cachePopulated = true
+    console.log('Cache populated successfully.')
+  }
+
+  // Iterate through each tier's cached monsters to find the specified monster
   for (const tier of Object.values(monsterCacheByTier)) {
     const monster = tier.find(
       (m) => m.name.toLowerCase() === name.toLowerCase()
     )
-    if (monster) return monster
+    if (monster) {
+      console.log(`Monster ${name} found in cache.`)
+      return monster // Return the monster if found
+    }
   }
+
+  // If not found in the cache, log and return null
   console.log(`Monster ${name} not found in cache.`)
   return null
 }

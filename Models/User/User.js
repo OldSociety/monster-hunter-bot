@@ -68,8 +68,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     daily_streak: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
     last_free_claim: {
       type: DataTypes.DATE,

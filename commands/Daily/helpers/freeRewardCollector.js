@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js')
-const { User, Collection } = require('../../Models/model.js')
+const { User, Collection } = require('../../../Models/model.js')
 const { pullValidMonster } = require('../../../handlers/pullHandler.js')
 
 // Utility function to transform rarity identifiers
