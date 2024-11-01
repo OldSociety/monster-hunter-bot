@@ -1,5 +1,4 @@
-// monsterHandler.js
-const { Collection } = require('../Models/model') 
+const { Collection, User } = require('../Models/model')
 
 // Copies needed for each level
 const copiesNeededPerLevel = {
@@ -23,83 +22,140 @@ const mScoreMultipliers = {
   Legendary: { 1: 1.05, 2: 1.15, 3: 1.25, 4: 1.4, 5: 2.5, 6: 3.25, 7: 4.0, 8: 5.0, 9: 6.0, 10: 7.0 },
 }
 
-// Function to calculate m_score based on CR, rarity, and level
+// Calculate m_score based on CR, rarity, and level
 function calculateMScore(cr, rarity, level) {
-    const adjustedCR = cr < 1 ? 1 : cr;
+  const adjustedCR = cr < 1 ? 1 : cr
   const multiplier = mScoreMultipliers[rarity][level] || 1
-  return Math.round(adjustedCR * multiplier * 10);
+  return Math.round(adjustedCR * multiplier * 10)
 }
 
-// Access the copies needed for the next level up
-function getCopiesNeededForNextLevel(level) {
-    console.log(`Requested level: ${level}`)
-    console.log(`Copies needed for level: ${copiesNeededPerLevel[level]}`)
-    return copiesNeededPerLevel[level] || 50
-  }
-  
+// Determine category based on monster type
+function determineCategory(type) {
+  const bruteTypes = new Set(['construct', 'dragon', 'giant', 'monstrosity'])
+  const casterTypes = new Set(['aberration', 'celestial', 'elemental', 'fey', 'fiend'])
+  const sneakTypes = new Set(['plant', 'ooze', 'humanoid', 'beast', 'undead'])
 
-// Add or update a monster in the user's collection
-async function updateOrAddMonsterToCollection(userId, monster) {
-    // Find the collection entry if it exists
-    let collectionEntry = await Collection.findOne({
-      where: { userId, name: monster.name },
+  if (bruteTypes.has(type.toLowerCase())) return 'brute'
+  if (casterTypes.has(type.toLowerCase())) return 'caster'
+  if (sneakTypes.has(type.toLowerCase())) return 'sneak'
+  return null
+}
+
+// Update the top monsters and user scores for a specific category and overall score
+async function updateUserScores(userId, category, monster) {
+    const user = await User.findByPk(userId)
+    if (!user) return
+
+    console.log(`Processing user ${userId} for category ${category}.`)
+    console.log(`Monster received for update: ID=${monster.id}, m_score=${monster.m_score}`)
+
+    const topCategoryField = `top_${category}s` // e.g., top_brutes
+    const categoryScoreField = `${category}_score` // e.g., brute_score
+
+    // Retrieve current top monsters (IDs only) and top category list (IDs only)
+    const currentTopMonsters = user.top_monsters || []
+    const currentTopCategory = user[topCategoryField] || []
+
+    console.log(`Current top_monsters: ${JSON.stringify(currentTopMonsters)}`)
+    console.log(`Current ${topCategoryField}: ${JSON.stringify(currentTopCategory)}`)
+
+    // Update top monsters with unique IDs, keeping only the top 3 by m_score across all categories
+    const updatedTopMonsters = Array.from(new Set([...currentTopMonsters, monster.id]))
+
+    // Fetch m_scores directly from the Collection to ensure accurate values
+    const topMonsterScores = await Collection.findAll({
+        where: { id: updatedTopMonsters },
+        attributes: ['id', 'm_score']
     })
-  
-    // Log retrieval of collection entry
-    console.log(`Collection entry found: ${collectionEntry ? "Yes" : "No"}`);
-  
-    if (collectionEntry) {
-      collectionEntry.copies += 1
-      console.log(`Copies incremented. New copies count: ${collectionEntry.copies}`);
-      console.log(getCopiesNeededForNextLevel(collectionEntry.level))
-  
-      // Loop to handle overflow leveling if copies exceed requirements
-      while (collectionEntry.copies >= getCopiesNeededForNextLevel(collectionEntry.level)) {
-        const copiesNeeded = getCopiesNeededForNextLevel(collectionEntry.level);
-        console.log(`Level ${collectionEntry.level} requires ${copiesNeeded} copies.`);
-  
-        // Level up
-        collectionEntry.level += 1
-        collectionEntry.copies -= copiesNeeded
-        console.log(`Leveled up! New level: ${collectionEntry.level}. Remaining copies: ${collectionEntry.copies}`);
-  
-        // Calculate and update m_score
-        collectionEntry.m_score = calculateMScore(
-          monster.cr,
-          monster.rarity,
-          collectionEntry.level
-        )
-        console.log(`m_score updated to ${collectionEntry.m_score}`);
-      }
-  
-      // Attempt to save the updated collection entry
-      try {
-        await collectionEntry.save()
-        console.log('Collection entry successfully saved.')
-      } catch (error) {
-        console.error('Error saving collection entry:', error);
-      }
-    } else {
-      // If no entry exists, create a new one
-      const initialMScore = calculateMScore(monster.cr, monster.rarity, 1)
-      try {
-        await Collection.create({
-          userId,
-          name: monster.name,
-          type: monster.type,
-          cr: monster.cr,
-          m_score: initialMScore,
-          level: 1,
-          copies: 1,
-        })
-        console.log('New collection entry created.')
-      } catch (error) {
-        console.error('Error creating collection entry:', error)
-      }
-    }
-  }
-  
 
-module.exports = {
-  updateOrAddMonsterToCollection,
+    const sortedTopMonsters = topMonsterScores
+        .sort((a, b) => b.m_score - a.m_score)
+        .slice(0, 3)
+        .map(m => m.id) // Extract only IDs
+
+    console.log(`Updated top_monsters after adding new monster: ${JSON.stringify(sortedTopMonsters)}`)
+
+    // For updatedTopCategory, include only IDs for monsters of the specified category (brute, caster, etc.)
+    const updatedTopCategory = Array.from(new Set([ ...currentTopCategory, monster.id ]))
+
+    const topCategoryScores = await Collection.findAll({
+        where: { id: updatedTopCategory },
+        attributes: ['id', 'm_score']
+    })
+
+    const sortedTopCategory = topCategoryScores
+        .sort((a, b) => b.m_score - a.m_score)
+        .slice(0, 3)
+        .map(m => m.id) // Extract only IDs
+
+    console.log(`Updated ${topCategoryField} after sorting and trimming: ${JSON.stringify(sortedTopCategory)}`)
+
+    // Calculate the updated category score based on m_scores in updatedTopCategory
+    const updatedClassScoreValue = topCategoryScores
+        .filter(entry => sortedTopCategory.includes(entry.id))
+        .reduce((total, entry) => {
+            console.log(`Adding m_score ${entry.m_score} for monster ID=${entry.id} to ${category} score.`)
+            return total + entry.m_score
+        }, 0)
+
+    console.log(`Final calculated ${categoryScoreField} for user ${userId}: ${updatedClassScoreValue}`)
+
+    // Calculate the new total score across top monsters
+    const newTotalScore = topMonsterScores
+        .filter(entry => sortedTopMonsters.includes(entry.id))
+        .reduce((total, entry) => {
+            console.log(`Adding m_score ${entry.m_score} for monster ID=${entry.id} to total score.`)
+            return total + entry.m_score
+        }, 0)
+
+    console.log(`Calculated new total score for user ${userId}: ${newTotalScore}`)
+
+    // Update the User table with the calculated results
+    await user.update({
+        top_monsters: sortedTopMonsters,
+        [topCategoryField]: sortedTopCategory,
+        [categoryScoreField]: updatedClassScoreValue,
+        score: newTotalScore,
+    })
+
+    console.log(`Updated user ${userId} data with new scores and top monsters.`)
 }
+
+
+  
+// Add or update monster in collection
+async function updateOrAddMonsterToCollection(userId, monster) {
+  let collectionEntry = await Collection.findOne({ where: { userId, name: monster.name } })
+  const category = determineCategory(monster.type)
+  console.log(`Monster ${monster.name} categorized as ${category}`)
+
+  if (collectionEntry) {
+    collectionEntry.copies += 1
+    const copiesNeeded = copiesNeededPerLevel[collectionEntry.level] || 50
+
+    while (collectionEntry.copies >= copiesNeeded) {
+      collectionEntry.level += 1
+      collectionEntry.copies -= copiesNeeded
+      collectionEntry.m_score = calculateMScore(monster.cr, monster.rarity, collectionEntry.level)
+    }
+
+    await collectionEntry.save()
+
+    if (category) await updateUserScores(userId, category, collectionEntry)
+  } else {
+    const initialMScore = calculateMScore(monster.cr, monster.rarity, 1)
+    collectionEntry = await Collection.create({
+      userId,
+      name: monster.name,
+      type: monster.type,
+      cr: monster.cr,
+      m_score: initialMScore,
+      level: 1,
+      copies: 1,
+    })
+
+    if (category) await updateUserScores(userId, category, collectionEntry)
+  }
+}
+
+module.exports = { updateOrAddMonsterToCollection }

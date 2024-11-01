@@ -16,7 +16,7 @@ const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
 const { User } = require('../../Models/model')
 
 // EXCLUDED TYPES
-const excludedTypes = new Set(['fey', 'dragon', 'fiend'])
+const excludedTypes = new Set(['ooze', 'dragon', 'fiend', 'swarm of tiny beasts'])
 
 // Cache tracking variable
 let cachePopulated = false
@@ -31,7 +31,7 @@ module.exports = {
     console.log('Shop command started.')
 
     const userId = interaction.user.id
-    const PACK_COST = 800
+    const PACK_COST = 0
 
     // Ensure the user exists in the database
     let user = await User.findOne({ where: { user_id: userId } })

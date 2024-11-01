@@ -31,20 +31,37 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
-      class_score: {
-        type: Sequelize.JSON,
-        defaultValue: {
-          brute: 0,
-          caster: 0,
-          sneak: 0,
-        },
+      brute_score: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      caster_score: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      sneak_score: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
       },
       top_monsters: {
         type: Sequelize.JSON,
-        allowNull: true,
         defaultValue: [],
       },
-      
+      top_brutes: {
+        type: Sequelize.JSON,
+        defaultValue: [],
+      },
+      top_casters: {
+        type: Sequelize.JSON,
+        defaultValue: [],
+      },
+      top_sneaks: {
+        type: Sequelize.JSON,
+        defaultValue: [],
+      },
       last_chat_message: {
         type: Sequelize.DATE,
         allowNull: true,

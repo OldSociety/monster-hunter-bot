@@ -28,18 +28,36 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0,
     },
-    class_score: {
-      type: DataTypes.JSON,
-      defaultValue: {
-        brute: 0,
-        caster: 0,
-        sneak: 0,
-      },
+    brute_score: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    caster_score: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    sneak_score: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     top_monsters: {
       type: DataTypes.JSON,
-      allowNull: true,
       defaultValue: [],
+    },
+    top_brutes: {
+      type: DataTypes.JSON,
+      defaultValue: [], 
+    },
+    top_casters: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+    },
+    top_sneaks: {
+      type: DataTypes.JSON,
+      defaultValue: [], 
     },
     last_chat_message: {
       type: DataTypes.DATE,

@@ -43,27 +43,29 @@ module.exports = {
       }
     }
 
-    async function processBatch(batchSize = 25) {
+    async function processBatch(batchSize = 400) {
       const batch = monsterListCache.slice(0, batchSize) // Limit to first 25
       let processedCount = 0
-
+    
       for (const monster of batch) {
-        console.log(
-          'Processing monster:',
-          monster.name,
-          '| CR:',
-          monster.challenge_rating
-        ) // Log each monster's CR
-
+        // console.log(`Processing monster: ${monster.name} | CR: ${monster.challenge_rating}`)
+    
+        // Fetch details if `challenge_rating` is missing or undefined
+        if (monster.challenge_rating === undefined) {
+          const detailResponse = await fetch(`https://www.dnd5eapi.co/api/monsters/${monster.index}`)
+          const monsterDetails = await detailResponse.json()
+          
+          // Assign the fetched challenge rating or set it to 0 if still undefined
+          monster.challenge_rating = monsterDetails.challenge_rating ?? 0
+        }
+    
         const cr = monster.challenge_rating
-        if (cr === undefined) {
-          console.log(
-            `Warning: Monster ${monster.name} has no challenge rating`
-          )
+        if (cr === undefined || cr === null) {
+          console.log(`Warning: Monster ${monster.name} has no challenge rating.`)
           continue
         }
-
-        // Categorize by CR tier, bypassing image check
+    
+        // Categorize by CR tier
         for (const tier of tiers) {
           if (cr >= tier.crRange[0] && cr <= tier.crRange[1]) {
             tier.count += 1
@@ -74,6 +76,7 @@ module.exports = {
       }
       return processedCount
     }
+    
 
     await cacheMonsterList()
     await processBatch() 
