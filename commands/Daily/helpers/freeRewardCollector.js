@@ -32,6 +32,7 @@ async function setupFreeRewardCollector(rewardMessage) {
   shuffleArray(rewards)
 
   const usersWhoClaimed = new Set() // Track users who claimed
+  console.log(usersWhoClaimed)
 
   const filter = (reaction, user) => {
     return (
