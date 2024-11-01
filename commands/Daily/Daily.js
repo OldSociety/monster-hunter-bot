@@ -1,77 +1,120 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
-const { User } = require('../../Models/model.js') // Adjust according to your project structure
-const cron = require('node-cron') // Import node-cron to reset cooldowns
+const { grantDailyReward } = require('./helpers/dailyRewardsHandler')
+const { User } = require('../../Models/model')
+const moment = require('moment-timezone')
 
-// Function to calculate time left for cooldown reset
-function getTimeUntilNextReset() {
-  const now = new Date()
-  const nextReset = new Date()
-  nextReset.setUTCHours(14, 0, 0, 0) // 6am PST is 14:00 UTC
-  if (now > nextReset) nextReset.setUTCDate(nextReset.getUTCDate() + 1) // Move to the next day if time is past 6am
+function calculateTimeUntilNextReset() {
+  const now = moment().tz('America/Los_Angeles')
+  let nextReset
 
-  const msUntilReset = nextReset - now
-  const hours = Math.floor(msUntilReset / (1000 * 60 * 60))
-  const minutes = Math.floor((msUntilReset % (1000 * 60 * 60)) / (1000 * 60))
-  const seconds = Math.floor((msUntilReset % (1000 * 60)) / 1000)
+  if (now.hour() < 6) {
+    // If before 6 AM today, next reset is today at 6 AM
+    nextReset = now.clone().startOf('day').add(6, 'hours')
+  } else {
+    // If after 6 AM today, next reset is tomorrow at 6 AM
+    nextReset = now.clone().add(1, 'day').startOf('day').add(6, 'hours')
+  }
 
-  return { hours, minutes, seconds }
+  const duration = moment.duration(nextReset.diff(now))
+  return {
+    hours: duration.hours(),
+    minutes: duration.minutes(),
+  }
 }
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('daily')
-    .setDescription('Claim your daily fate point.'),
+    .setDescription('Claim your daily reward!'),
   async execute(interaction) {
     const userId = interaction.user.id
+    const user = await User.findByPk(userId)
 
-    // Fetch or create user data
-    let userData = await User.findOne({ where: { user_id: userId } })
     if (!user) {
-        user = await User.create({
-          user_id: userId,
-          user_name: interaction.user.username,
-          gold: 1000,
+      await interaction.reply({
+        content:
+          "You don't have an account with us. Please register to claim daily rewards.",
+        ephemeral: true,
+      })
+      return
+    }
+    // Check if the user has already claimed their daily reward today
+    const now = moment().tz('America/Los_Angeles')
+    const lastClaim = moment(user.last_daily_claim).tz('America/Los_Angeles')
+    if (lastClaim.isSame(now, 'day')) {
+      // User has already claimed today
+      const nextClaimTime = lastClaim
+        .add(1, 'days')
+        .startOf('day')
+        .add(6, 'hours')
+      const duration = moment.duration(nextClaimTime.diff(now))
+      await interaction.reply({
+        content: `You've already claimed your daily reward today. Please come back in ${duration.hours()} hours and ${duration.minutes()} minutes!`,
+        ephemeral: true,
+      })
+      return
+    }
+    try {
+      // Grant the daily reward
+
+      async function replyWithRewardsStatus(interaction, user) {
+        const rewards = [
+          '5000 coins',
+          'Exclusive Rare Card',
+          '30 qubits',
+          '10000 coins',
+          'Exclusive Epic Card',
+          '15000 coins',
+          '60 qubits',
+        ]
+
+        let description = rewards
+        .map((reward, index) => {
+          // Check if the reward has been claimed before this interaction
+          const hasBeenClaimed = index + 1 < user.daily_streak;
+          const isBeingClaimedNow = index + 1 === user.daily_streak;
+      
+          // Mark previous claimed rewards and the one being claimed now
+          let claimedStatus = hasBeenClaimed ? ' ❎' : '';
+          let rewardDescription = `Day ${index + 1}: ${reward}`;
+      
+          // Apply bold formatting and a check to the reward being claimed now
+          if (isBeingClaimedNow) {
+            rewardDescription = `**${rewardDescription} ❎**`; // Add the green check for the current claim
+          } else if (hasBeenClaimed) {
+            // Optionally handle previously claimed rewards differently if needed
+            rewardDescription = `${rewardDescription}${claimedStatus}`; 
+          }
+      
+          return rewardDescription;
+        })
+        .join('\n');
+      
+
+        await interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor('#00FF00')
+              .setTitle('Daily Rewards Overview')
+              .setDescription(description),
+          ],
+          ephemeral: true,
         })
       }
 
-    // Check if the user is on cooldown
-    const lastDaily = userData.last_daily ? new Date(userData.last_daily) : null
-    const now = new Date()
-    const resetTime = new Date()
-    resetTime.setUTCHours(14, 0, 0, 0) // 6am PST (14:00 UTC)
-
-    if (now > resetTime) resetTime.setUTCDate(resetTime.getUTCDate() + 1) // Move to next day if already past reset time
-
-    // Check if the last claim was today
-    if (lastDaily && lastDaily >= resetTime) {
-      const { hours, minutes, seconds } = getTimeUntilNextReset()
-      const cooldownEmbed = new EmbedBuilder()
-        .setColor('#FF0000')
-        .setTitle('You are on cooldown!')
-        .setDescription(
-          `You can claim your daily reward again in: ${hours} hours, ${minutes} minutes, and ${seconds} seconds.`
-        )
-
-      await interaction.reply({ embeds: [cooldownEmbed], ephemeral: true })
-      return
+      // After granting the daily reward...
+      await replyWithRewardsStatus(interaction, user)
+      await grantDailyReward(user)
+      user.last_daily_claim = new Date() // Or use moment() for timezone consistency
+      await user.save()
+    } catch (error) {
+      console.error('Error granting daily reward:', error)
+      // Reply to the user that an error occurred
+      await interaction.reply({
+        content:
+          'An error occurred while trying to claim your daily reward. Please try again later.',
+        ephemeral: false,
+      })
     }
-
-    // Award 1 fate point and update the last_daily field
-    userData.fate_points = Math.min(userData.fate_points + 1, 100) // Cap at 100
-    userData.last_daily = now
-    await userData.save()
-
-    const successEmbed = new EmbedBuilder()
-      .setColor('#00FF00')
-      .setTitle('Daily Fate Point Claimed!')
-      .setDescription(
-        'You have received 1 fate point as part of your daily reward.'
-      )
-      .addFields(
-        { name: 'Fate Points', value: `${userData.fate_points}`, inline: true },
-        { name: 'Total', value: `${userData.fate_points}`, inline: true }
-      )
-
-    await interaction.reply({ embeds: [successEmbed], ephemeral: true })
   },
 }

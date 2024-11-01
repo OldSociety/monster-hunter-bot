@@ -66,6 +66,14 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      last_daily_claim: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      daily_streak: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
       last_free_claim: {
         type: Sequelize.DATE,
         allowNull: true,
