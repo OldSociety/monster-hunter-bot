@@ -6,7 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('list')
     .setDescription(
-      'Lists the number of monsters by CR tier (first 25 only, debugging enabled)'
+      '(ADMIN)Lists the number of monsters by CR tier'
     ),
 
   async execute(interaction) {

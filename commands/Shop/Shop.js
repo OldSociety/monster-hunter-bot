@@ -16,7 +16,12 @@ const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
 const { User } = require('../../Models/model')
 
 // EXCLUDED TYPES
-const excludedTypes = new Set(['ooze', 'dragon', 'fiend', 'swarm of tiny beasts'])
+const excludedTypes = new Set([
+  'ooze',
+  'dragon',
+  'fiend',
+  'swarm of tiny beasts',
+])
 
 // Cache tracking variable
 let cachePopulated = false
@@ -138,13 +143,35 @@ module.exports = {
           // Update collection and top 5
           await updateOrAddMonsterToCollection(userId, monster)
           await updateTop5AndUserScore(userId)
+          let color = monster.color
+
+          let stars
+          switch (true) {
+            case color === 8421504:
+              stars = '⭐★★★★ '
+              break
+            case color === 65280:
+              stars = '⭐⭐★★★'
+              break
+            case color === 255:
+              stars = '⭐⭐⭐★★'
+              break
+            case color === 8388736:
+              stars = '⭐⭐⭐⭐★'
+              break
+            case color === 16766720:
+              stars = '⭐⭐⭐⭐⭐'
+              break
+            default:
+              stars = 'N/A'
+          }
 
           const monsterEmbed = new EmbedBuilder()
             .setColor(monster.color)
             .setTitle(monster.name)
             .setDescription(`**Type:** ${monster.type}`)
             .setThumbnail(monster.imageUrl)
-            .setFooter({ text: `Challenge Rating: ${monster.cr}` })
+            .setFooter({ text: `Rarity: ${stars}` })
 
           await interaction.followUp({
             content: 'You pulled a monster from the pack!',
