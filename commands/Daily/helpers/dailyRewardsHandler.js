@@ -1,12 +1,12 @@
 const { fetchCardByRarity } = require('./cardHelpers.js')
-const { User, UserCardCollection } = require('../../../Models/model.js')
+const { User, Collection } = require('../../../Models/model.js')
 
 async function grantDailyReward(user) {
   const currentDay = user.daily_streak % 7 || 7 // Ensure it cycles between 1 and 7
 
   switch (currentDay) {
     case 1:
-      user.balance += 5000
+      user.gold += 5000
       break
     case 2:
       const exRareCard = await fetchCardByRarity(['exRare'])
@@ -17,10 +17,10 @@ async function grantDailyReward(user) {
       })
       break
     case 3:
-      user.qubit_balance += 30
+      user.qubit_gold += 30
       break
     case 4:
-      user.balance += 10000
+      user.gold += 10000
       break
     case 5:
       const exEpicCard = await fetchCardByRarity(['exEpic'])
@@ -31,10 +31,10 @@ async function grantDailyReward(user) {
       })
       break
     case 6:
-      user.balance += 15000
+      user.gold += 15000
       break
     case 7:
-      user.qubit_balance += 60
+      user.qubit_gold += 60
       break
   }
 

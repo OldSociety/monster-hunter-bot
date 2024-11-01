@@ -66,6 +66,10 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      last_free_claim: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,

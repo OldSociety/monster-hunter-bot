@@ -1,3 +1,5 @@
+// shop.js
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
