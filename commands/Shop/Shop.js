@@ -28,10 +28,10 @@ let cachePopulated = false
 
 // Pack costs
 const PACK_COSTS = {
-  common: 800,
-  uncommon: 3500,
-  rare: 10000,
-  dragon: 15000,
+  common: 0, //800
+  uncommon: 0, //3500
+  rare: 0, //10000
+  dragon: 0, //15000
 }
 
 // Define tier options for each pack
@@ -130,10 +130,10 @@ module.exports = {
       const packType = buttonInteraction.customId.split('_')[1]
       const packCost = PACK_COSTS[packType]
       const tierOption = TIER_OPTIONS[packType]
-
+    
       try {
         await buttonInteraction.deferUpdate()
-
+    
         // Check if user has enough gold
         if (user.gold < packCost) {
           return buttonInteraction.followUp({
@@ -141,11 +141,10 @@ module.exports = {
             ephemeral: true,
           })
         }
-
-        // Deduct gold and show processing message
+    
+        // Deduct gold
         await user.decrement('gold', { by: packCost })
-        console.log(`Gold deducted for ${packType} pack.`)
-
+    
         await interaction.editReply({
           embeds: [
             new EmbedBuilder()
@@ -154,32 +153,18 @@ module.exports = {
           ],
           components: [],
         })
-
-        // Pull a monster from the specified tier, ensuring Dragon pack only includes dragons up to Rare
-        let monster
-        let retries = 0
-        const maxRetries = 5
-
-        do {
-          monster = await pullValidMonster(tierOption)
-          const isDragonPackInvalid =
-            packType === 'dragon' && (monster?.type.toLowerCase() !== 'dragon' || monster.cr > 10)
-          const isExcludedType = excludedTypes.has(monster?.type.toLowerCase())
-
-          if (monster && (isDragonPackInvalid || isExcludedType)) {
-            console.log(`Excluded or invalid type for Dragon pack: ${monster.type}`)
-            monster = null
-          }
-          retries++
-        } while (!monster && retries < maxRetries)
-
+    
+        // Fetch monster, specifying Dragon pack if applicable
+        const isDragonPack = packType === 'dragon'
+        const monster = await pullValidMonster(tierOption, isDragonPack)
+    
         if (monster) {
           await updateOrAddMonsterToCollection(userId, monster)
           await updateTop5AndUserScore(userId)
-
+    
           const stars = getStarsBasedOnColor(monster.color)
           const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
-
+    
           await interaction.followUp({
             content: `You pulled a monster from the ${packType} pack!`,
             embeds: [monsterEmbed],
@@ -187,13 +172,14 @@ module.exports = {
         } else {
           await interaction.followUp('Could not retrieve a valid monster. Please try again later.')
         }
-
+    
         collector.stop('completed')
       } catch (error) {
         console.error('Error handling the button interaction:', error)
         await interaction.followUp('An error occurred. Please try again later.')
       }
     })
+    
 
     collector.on('end', async (collected, reason) => {
       if (reason === 'time' && cachePopulated) {

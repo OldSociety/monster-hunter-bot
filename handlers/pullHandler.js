@@ -96,30 +96,68 @@ function selectTier(customTiers = defaultTiers) {
   return customTiers[0]
 }
 
-// Adjusted pullValidMonster to apply exclusions automatically
-async function pullValidMonster(tier, maxAttempts = 10) {
+// Adjusted pullValidMonster with weighted selection for Dragon pack
+async function pullValidMonster(tier, isDragonPack = false, maxAttempts = 10) {
   let attempts = 0
   let monster
 
+  // Determine weights if it's the Dragon pack
+  const commonWeight = 2
+  const rareWeight = 1
+  let weightedList = []
+
   do {
     const eligibleMonsters = monsterCacheByTier[tier.name]
-    monster =
-      eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)]
 
-    // Check for exclusion of "swarm" or any listed in excludedTypes
-    if (
-      monster &&
-      (excludedTypes.has(monster.type.toLowerCase()) ||
-        monster.type.toLowerCase().includes('swarm'))
-    ) {
-      console.log(`Excluded monster type: ${monster.type}`)
-      monster = null
+    if (isDragonPack) {
+      // Clear and rebuild weighted list each attempt to avoid duplicates
+      weightedList = eligibleMonsters.flatMap((monster) => {
+        return monster.rarity === 'common'
+          ? Array(commonWeight).fill(monster)
+          : Array(rareWeight).fill(monster)
+      })
+
+      const totalDragons = weightedList.length
+      const adjustedChance = (1 / totalDragons) * 100
+
+      console.log(
+        `Common dragons are twice as likely to be drawn. Each dragon has an adjusted ${adjustedChance.toFixed(
+          2
+        )}% chance of being drawn.`
+      )
+
+      monster =
+        weightedList[Math.floor(Math.random() * weightedList.length)]
+    } else {
+      // For other packs, use the standard eligibleMonsters array
+      monster =
+        eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)]
+    }
+
+    const monsterType = monster?.type.toLowerCase()
+
+    if (monster) {
+      // Only allow dragons for the Dragon pack
+      if (isDragonPack && monsterType !== 'dragon') {
+        console.log(`Excluded or invalid type for Dragon pack: ${monster.type}`)
+        monster = null
+      }
+      // Apply general exclusions for other packs
+      else if (
+        !isDragonPack &&
+        (excludedTypes.has(monsterType) || monsterType.includes('swarm'))
+      ) {
+        console.log(`Excluded monster type: ${monster.type}`)
+        monster = null
+      }
     }
     attempts++
   } while (!monster && attempts < maxAttempts)
 
   return monster
 }
+
+
 
 async function fetchMonsterByName(name) {
   // Check if cache is populated; if not, populate it first
