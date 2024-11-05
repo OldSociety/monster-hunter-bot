@@ -1,12 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
-const { cacheMonstersByTier} = require('../../handlers/pullHandler')
+const { cacheMonstersByTier } = require('../../handlers/pullHandler')
 
-let monsterListCache = [] // Cache for monster indices
+let monsterListCache = [] // Cache for monster data
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('list')
-    .setDescription('(ADMIN)Lists the number of monsters by CR tier')
+    .setDescription('(ADMIN) Lists monsters by CR tier, name, or type')
     .addSubcommand((subcommand) =>
       subcommand
         .setName('crtiers')
@@ -22,10 +22,20 @@ module.exports = {
             .setDescription('Monster name to search')
             .setRequired(true)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('type')
+        .setDescription('Lists monsters by type')
+        .addStringOption((option) =>
+          option
+            .setName('monstertype')
+            .setDescription('Specify a monster type to list all monsters within it')
+            .setRequired(false)
+        )
     ),
 
   async execute(interaction) {
-    // Check if the executing user has the admin role
     if (!interaction.member.roles.cache.has(process.env.ADMINROLEID)) {
       return interaction.reply({
         content: 'You do not have permission to run this command.',
@@ -34,107 +44,74 @@ module.exports = {
     }
     await interaction.deferReply()
 
-    // Dynamically import node-fetch
     const fetch = (await import('node-fetch')).default
     const subcommand = interaction.options.getSubcommand(false) || 'crtiers'
-
-    // Define CR tiers with initial counts
-    const tiers = [
-      { name: 'Tier 1', crRange: [1, 4], color: 0x808080, count: 0 }, // Grey
-      { name: 'Tier 2', crRange: [5, 10], color: 0x00ff00, count: 0 }, // Green
-      { name: 'Tier 3', crRange: [11, 15], color: 0x0000ff, count: 0 }, // Blue
-      { name: 'Tier 4', crRange: [16, 19], color: 0x800080, count: 0 }, // Purple
-      { name: 'Tier 5', crRange: [20, Infinity], color: 0xffd700, count: 0 }, // Gold
-    ]
+    const monsterType = interaction.options.getString('monstertype')?.toLowerCase()
 
     async function cacheMonsterList() {
       if (monsterListCache.length === 0) {
         const response = await fetch('https://www.dnd5eapi.co/api/monsters')
         const data = await response.json()
         monsterListCache = data.results
-
-        console.log('Fetched monster list:', monsterListCache) // Log fetched data
+        console.log('Fetched monster list:', monsterListCache)
       }
     }
 
-      async function processBatch(batchSize = 400) {
-        const batch = monsterListCache.slice(0, batchSize) // Limit to first 25
-        let processedCount = 0
-
-        for (const monster of batch) {
-          // console.log(`Processing monster: ${monster.name} | CR: ${monster.challenge_rating}`)
-
-          // Fetch details if `challenge_rating` is missing or undefined
-          if (monster.challenge_rating === undefined) {
-            const detailResponse = await fetch(
-              `https://www.dnd5eapi.co/api/monsters/${monster.index}`
-            )
-            const monsterDetails = await detailResponse.json()
-
-            // Assign the fetched challenge rating or set it to 0 if still undefined
-            monster.challenge_rating = monsterDetails.challenge_rating ?? 0
-          }
-
-          const cr = monster.challenge_rating
-          if (cr === undefined || cr === null) {
-            console.log(
-              `Warning: Monster ${monster.name} has no challenge rating.`
-            )
-            continue
-          }
-
-          // Categorize by CR tier
-          for (const tier of tiers) {
-            if (cr >= tier.crRange[0] && cr <= tier.crRange[1]) {
-              tier.count += 1
-              break
-            }
-          }
-          processedCount++
+    async function processMonsterDetails() {
+      for (const monster of monsterListCache) {
+        if (monster.challenge_rating === undefined) {
+          const detailResponse = await fetch(`https://www.dnd5eapi.co/api/monsters/${monster.index}`)
+          const monsterDetails = await detailResponse.json()
+          monster.challenge_rating = monsterDetails.challenge_rating ?? 0
+          monster.type = monsterDetails.type || 'unknown'
         }
-        return processedCount
       }
+    }
 
-      await cacheMonsterList()
-      await processBatch()
+    await cacheMonsterList()
+    await processMonsterDetails()
 
-      if (subcommand === 'crtiers') {
-      // Create an embed to display the counts
-      const embed = new EmbedBuilder()
-        .setTitle('Monsters by CR Tier (First 25)')
-        .setDescription(
-          'Number of monsters organized by Challenge Rating tiers.'
-        )
-        .setColor(0x00bfff)
-        .setFooter({ text: 'Data retrieved from D&D API' })
+    if (subcommand === 'type') {
+      const typeCounts = monsterListCache.reduce((acc, monster) => {
+        if (monster.type) {
+          acc[monster.type] = (acc[monster.type] || 0) + 1
+        }
+        return acc
+      }, {})
 
-      tiers.forEach((tier) => {
-        embed.addFields({
-          name: `${tier.name} (CR ${tier.crRange[0]} - ${
-            tier.crRange[1] === Infinity ? '20+' : tier.crRange[1]
-          })`,
-          value: `${tier.count} monsters`,
-          inline: true,
+      const typeEmbed = new EmbedBuilder().setColor(0x00bfff).setFooter({ text: 'Data retrieved from D&D API' })
+
+      if (!monsterType) {
+        // Show counts for each type
+        typeEmbed.setTitle('Monsters by Type').setDescription('Count of monsters organized by type.')
+        Object.entries(typeCounts).forEach(([type, count]) => {
+          typeEmbed.addFields({
+            name: `${type.charAt(0).toUpperCase() + type.slice(1)}`,
+            value: `${count} monsters`,
+            inline: true,
+          })
         })
-      })
-
-      await interaction.editReply({ embeds: [embed] })
-    } else if (subcommand === 'findname') {
-      const monsterName = interaction.options.getString('name')
-
-      // Search for the specified monster in the `monsterListCache`
-      const foundMonster = monsterListCache.find(
-        (monster) => monster.name.toLowerCase() === monsterName.toLowerCase()
-      )
-
-      const resultEmbed = new EmbedBuilder().setTitle('Monster Search Result').setColor('#00FF00')
-      if (foundMonster) {
-        resultEmbed.setDescription(`**${foundMonster.name}** was found in the monster list.`)
       } else {
-        resultEmbed.setDescription(`**${monsterName}** could not be found in the monster list.`)
+        // Show monsters in the specified type
+        const monstersInType = monsterListCache
+          .filter((monster) => monster.type?.toLowerCase() === monsterType)
+          .map((monster) => ({ name: monster.name, cr: monster.challenge_rating }))
+
+        if (monstersInType.length > 0) {
+          typeEmbed.setTitle(`Monsters of Type: ${monsterType.charAt(0).toUpperCase() + monsterType.slice(1)}`)
+          monstersInType.forEach((monster) => {
+            typeEmbed.addFields({
+              name: `${monster.name}`,
+              value: `CR: ${monster.cr}`,
+              inline: true,
+            })
+          })
+        } else {
+          typeEmbed.setTitle(`No monsters found of type "${monsterType}"`)
+        }
       }
 
-      await interaction.editReply({ embeds: [resultEmbed] })
+      await interaction.editReply({ embeds: [typeEmbed] })
     }
   },
 }

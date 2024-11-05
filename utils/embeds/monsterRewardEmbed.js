@@ -12,6 +12,7 @@ function generateMonsterRewardEmbed(monster, rarityStars) {
     .setColor(monster.color)
     .setTitle(monster.name)
     .setDescription(`**Type:** ${monster.type}`)
+    .addFields({name: ``, value: ``})
     .setThumbnail(monster.imageUrl)
     .setFooter({ text: `Rarity: ${rarityStars}` })
 }

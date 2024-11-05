@@ -1,5 +1,3 @@
-// shop.js
-
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -16,24 +14,33 @@ const {
   updateOrAddMonsterToCollection,
 } = require('../../handlers/monsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
-
 const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
-
 const { User } = require('../../Models/model')
 
-// EXCLUDED TYPES
-const excludedTypes = new Set([
-  'ooze',
-  'dragon',
-  'fiend',
-  'swarm of tiny beasts',
-])
+// Excluded types for normal packs
+const excludedTypes = new Set(['ooze', 'fiend', 'swarm of tiny beasts'])
 
 // Cache tracking variable
 let cachePopulated = false
+
+// Pack costs
+const PACK_COSTS = {
+  common: 800,
+  uncommon: 3500,
+  rare: 10000,
+  dragon: 15000,
+}
+
+// Define tier options for each pack
+const TIER_OPTIONS = {
+  common: { name: 'Common' },
+  uncommon: { name: 'Uncommon' },
+  rare: { name: 'Rare' },
+  dragon: { name: 'Rare', type: 'dragon' }, // Dragon Pack: limited to dragons up to Rare
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -45,7 +52,6 @@ module.exports = {
     console.log('Shop command started.')
 
     const userId = interaction.user.id
-    const PACK_COST = 0
 
     // Ensure the user exists in the database
     let user = await User.findOne({ where: { user_id: userId } })
@@ -55,13 +61,6 @@ module.exports = {
         user_name: interaction.user.username,
         gold: 1000,
       })
-    }
-
-    // Check if user has enough gold
-    if (user.gold < PACK_COST) {
-      return interaction.editReply(
-        "You don't have enough gold to buy a pack. Each pack costs 🪙800 gold."
-      )
     }
 
     // Show loading embed if cache is not populated
@@ -89,18 +88,31 @@ module.exports = {
       .setDescription(
         'Welcome to the Monster Shop! Here you can purchase packs containing monsters of various tiers.'
       )
-      .addFields({
-        name: 'Common Pack',
-        value: `Contains common monsters only\nCost: 🪙${PACK_COST} gold`,
-        inline: true,
-      })
-      .setFooter({ text: 'Click the button below to purchase a Common Pack.' })
+      .addFields(
+        { name: 'Common Pack', value: `Contains common monsters only\nCost: 🪙${PACK_COSTS.common}`, inline: true },
+        { name: 'Uncommon Pack', value: `Contains uncommon monsters\nCost: 🪙${PACK_COSTS.uncommon}`, inline: true },
+        { name: 'Rare Pack', value: `Contains rare monsters\nCost: 🪙${PACK_COSTS.rare}`, inline: true },
+        { name: 'Dragon Pack', value: `Contains only dragons up to Rare\nCost: 🪙${PACK_COSTS.dragon}`, inline: true }
+      )
+      .setFooter({ text: 'Select a pack to purchase.' })
 
-    // Add button to purchase pack
+    // Add buttons for each pack
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('purchase_common_pack')
         .setLabel('Buy Common Pack')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('purchase_uncommon_pack')
+        .setLabel('Buy Uncommon Pack')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('purchase_rare_pack')
+        .setLabel('Buy Rare Pack')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('purchase_dragon_pack')
+        .setLabel('Buy Dragon Pack')
         .setStyle(ButtonStyle.Primary)
     )
 
@@ -108,21 +120,31 @@ module.exports = {
     await interaction.editReply({ embeds: [shopEmbed], components: [row] })
 
     // Set up button interaction collector
-    const filter = (i) =>
-      i.customId === 'purchase_common_pack' && i.user.id === userId
+    const filter = (i) => i.user.id === userId
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: 15000,
     })
 
     collector.on('collect', async (buttonInteraction) => {
+      const packType = buttonInteraction.customId.split('_')[1]
+      const packCost = PACK_COSTS[packType]
+      const tierOption = TIER_OPTIONS[packType]
+
       try {
-        console.log('Purchase button clicked.')
         await buttonInteraction.deferUpdate()
 
+        // Check if user has enough gold
+        if (user.gold < packCost) {
+          return buttonInteraction.followUp({
+            content: `You don't have enough gold to buy a ${packType} pack. It costs 🪙${packCost} gold.`,
+            ephemeral: true,
+          })
+        }
+
         // Deduct gold and show processing message
-        await user.decrement('gold', { by: PACK_COST })
-        console.log('Gold deducted.')
+        await user.decrement('gold', { by: packCost })
+        console.log(`Gold deducted for ${packType} pack.`)
 
         await interaction.editReply({
           embeds: [
@@ -133,38 +155,37 @@ module.exports = {
           components: [],
         })
 
-        // Pull a common monster
+        // Pull a monster from the specified tier, ensuring Dragon pack only includes dragons up to Rare
         let monster
         let retries = 0
         const maxRetries = 5
-        const selectedTier = { name: 'Common' }
 
         do {
-          monster = await pullValidMonster(selectedTier)
-          if (monster && excludedTypes.has(monster.type.toLowerCase())) {
-            console.log(`Excluded monster type: ${monster.type}`)
+          monster = await pullValidMonster(tierOption)
+          const isDragonPackInvalid =
+            packType === 'dragon' && (monster?.type.toLowerCase() !== 'dragon' || monster.cr > 10)
+          const isExcludedType = excludedTypes.has(monster?.type.toLowerCase())
+
+          if (monster && (isDragonPackInvalid || isExcludedType)) {
+            console.log(`Excluded or invalid type for Dragon pack: ${monster.type}`)
             monster = null
           }
           retries++
         } while (!monster && retries < maxRetries)
 
-        // Inside the collector logic in shop.js:
         if (monster) {
           await updateOrAddMonsterToCollection(userId, monster)
           await updateTop5AndUserScore(userId)
 
           const stars = getStarsBasedOnColor(monster.color)
-
           const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
 
           await interaction.followUp({
-            content: 'You pulled a monster from the pack!',
+            content: `You pulled a monster from the ${packType} pack!`,
             embeds: [monsterEmbed],
           })
         } else {
-          await interaction.followUp(
-            'Could not retrieve a valid monster. Please try again later.'
-          )
+          await interaction.followUp('Could not retrieve a valid monster. Please try again later.')
         }
 
         collector.stop('completed')
