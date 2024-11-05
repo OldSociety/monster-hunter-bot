@@ -120,11 +120,7 @@ async function pullValidMonster(tier, isDragonPack = false, maxAttempts = 10) {
       const totalDragons = weightedList.length
       const adjustedChance = (1 / totalDragons) * 100
 
-      console.log(
-        `Common dragons are twice as likely to be drawn. Each dragon has an adjusted ${adjustedChance.toFixed(
-          2
-        )}% chance of being drawn.`
-      )
+
 
       monster =
         weightedList[Math.floor(Math.random() * weightedList.length)]
