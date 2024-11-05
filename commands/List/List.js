@@ -1,5 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
-const { cacheMonstersByTier } = require('../../handlers/pullHandler')
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
+let cacheMonstersByTier
+
+(async () => {
+  const module = await import('../../handlers/pullHandler.js')
+  cacheMonstersByTier = module.cacheMonstersByTier
+})()
 
 let monsterListCache = [] // Cache for monster data
 
@@ -7,22 +12,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('list')
     .setDescription('(ADMIN) Lists monsters by CR tier, name, or type')
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName('crtiers')
-        .setDescription('Lists the number of monsters by CR tier')
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName('findname')
-        .setDescription('Searches for a specific monster by name')
-        .addStringOption((option) =>
-          option
-            .setName('name')
-            .setDescription('Monster name to search')
-            .setRequired(true)
-        )
-    )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('type')
@@ -45,15 +34,14 @@ module.exports = {
     await interaction.deferReply()
 
     const fetch = (await import('node-fetch')).default
-    const subcommand = interaction.options.getSubcommand(false) || 'crtiers'
     const monsterType = interaction.options.getString('monstertype')?.toLowerCase()
+    const monstersPerPage = 20
 
     async function cacheMonsterList() {
       if (monsterListCache.length === 0) {
         const response = await fetch('https://www.dnd5eapi.co/api/monsters')
         const data = await response.json()
         monsterListCache = data.results
-        console.log('Fetched monster list:', monsterListCache)
       }
     }
 
@@ -71,47 +59,86 @@ module.exports = {
     await cacheMonsterList()
     await processMonsterDetails()
 
-    if (subcommand === 'type') {
-      const typeCounts = monsterListCache.reduce((acc, monster) => {
-        if (monster.type) {
-          acc[monster.type] = (acc[monster.type] || 0) + 1
-        }
-        return acc
-      }, {})
+    // Show monsters in the specified type with pagination
+    const monstersInType = monsterListCache
+      .filter((monster) => monster.type?.toLowerCase() === monsterType)
+      .map((monster) => ({ name: monster.name, cr: monster.challenge_rating }))
 
-      const typeEmbed = new EmbedBuilder().setColor(0x00bfff).setFooter({ text: 'Data retrieved from D&D API' })
+    if (monstersInType.length === 0) {
+      return interaction.editReply({
+        content: `No monsters found of type "${monsterType}"`,
+      })
+    }
 
-      if (!monsterType) {
-        // Show counts for each type
-        typeEmbed.setTitle('Monsters by Type').setDescription('Count of monsters organized by type.')
-        Object.entries(typeCounts).forEach(([type, count]) => {
-          typeEmbed.addFields({
-            name: `${type.charAt(0).toUpperCase() + type.slice(1)}`,
-            value: `${count} monsters`,
-            inline: true,
-          })
+    // Initialize pagination
+    let currentPage = 0
+
+    const createEmbed = (page) => {
+      const paginatedMonsters = monstersInType.slice(page * monstersPerPage, (page + 1) * monstersPerPage)
+      const embed = new EmbedBuilder()
+        .setTitle(`Monsters of Type: ${monsterType.charAt(0).toUpperCase() + monsterType.slice(1)}`)
+        .setColor(0x00bfff)
+        .setFooter({ text: `Page ${page + 1} of ${Math.ceil(monstersInType.length / monstersPerPage)}` })
+
+      paginatedMonsters.forEach((monster) => {
+        embed.addFields({
+          name: `${monster.name}`,
+          value: `CR: ${monster.cr}`,
+          inline: true,
         })
-      } else {
-        // Show monsters in the specified type
-        const monstersInType = monsterListCache
-          .filter((monster) => monster.type?.toLowerCase() === monsterType)
-          .map((monster) => ({ name: monster.name, cr: monster.challenge_rating }))
+      })
 
-        if (monstersInType.length > 0) {
-          typeEmbed.setTitle(`Monsters of Type: ${monsterType.charAt(0).toUpperCase() + monsterType.slice(1)}`)
-          monstersInType.forEach((monster) => {
-            typeEmbed.addFields({
-              name: `${monster.name}`,
-              value: `CR: ${monster.cr}`,
-              inline: true,
-            })
-          })
-        } else {
-          typeEmbed.setTitle(`No monsters found of type "${monsterType}"`)
-        }
+      return embed
+    }
+
+    const getRow = (page) => {
+      return new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('previous')
+          .setLabel('Previous')
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled(page === 0),
+        new ButtonBuilder()
+          .setCustomId('next')
+          .setLabel('Next')
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled((page + 1) * monstersPerPage >= monstersInType.length),
+        new ButtonBuilder()
+          .setCustomId('finish')
+          .setLabel('Finish')
+          .setStyle(ButtonStyle.Danger)
+      )
+    }
+
+    await interaction.editReply({ embeds: [createEmbed(currentPage)], components: [getRow(currentPage)] })
+
+    const collector = interaction.channel.createMessageComponentCollector({ time: 60000 })
+
+    collector.on('collect', async (buttonInteraction) => {
+      if (buttonInteraction.user.id !== interaction.user.id) {
+        return buttonInteraction.reply({ content: "This navigation isn't for you.", ephemeral: true })
       }
 
-      await interaction.editReply({ embeds: [typeEmbed] })
-    }
+      if (buttonInteraction.customId === 'finish') {
+        collector.stop('finished')
+        return
+      }
+
+      currentPage += buttonInteraction.customId === 'next' ? 1 : -1
+
+      // Update the interaction with a new embed and buttons, clearing the previous one
+      await buttonInteraction.update({
+        embeds: [createEmbed(currentPage)],
+        components: [getRow(currentPage)],
+      })
+    })
+
+    collector.on('end', async () => {
+      // Clear the components after interaction ends
+      await interaction.editReply({
+        embeds: [createEmbed(currentPage).setFooter({ text: 'Session ended.' })],
+        components: [],
+      })
+    })
   },
 }
