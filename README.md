@@ -1,13 +1,13 @@
-# Eldritch Road Bot
+# Blood Hunter Bot
 
-**Eldritch Road** is an idle game designed for discord servers. Players take on the role of head of a paranormal investigation organization that recruits, trains a team to take down various threats to the world. 
+**Blood Hunter** is an Collectible card game designed for discord servers. Players take on the role of a monster hunter that collects the tokens of their hunt, represented by a card. The top cards in your collection contribute to your total score which is used to battle stronger monsters. Level up your monsters and increase your score to climb the latter and become a champion hunter. 
 
 ## Installation
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/OldSociety/monster-hunter-bot.git
+git clone https://github.com/OldSociety/blood-hunter-bot.git
 cd monster-hunter-bot
 ```
 

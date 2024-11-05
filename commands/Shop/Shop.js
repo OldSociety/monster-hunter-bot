@@ -89,10 +89,10 @@ module.exports = {
         'Welcome to the Monster Shop! Here you can purchase packs containing monsters of various tiers.'
       )
       .addFields(
-        { name: 'Common Pack', value: `Contains common monsters only\nCost: 🪙${PACK_COSTS.common}`, inline: true },
-        { name: 'Uncommon Pack', value: `Contains uncommon monsters\nCost: 🪙${PACK_COSTS.uncommon}`, inline: true },
-        { name: 'Rare Pack', value: `Contains rare monsters\nCost: 🪙${PACK_COSTS.rare}`, inline: true },
-        { name: 'Dragon Pack', value: `Contains only dragons up to Rare\nCost: 🪙${PACK_COSTS.dragon}`, inline: true }
+        { name: 'Common Pack', value: `Cost: 🪙${PACK_COSTS.common}`, inline: true },
+        { name: 'Uncommon Pack', value: `Cost: 🪙${PACK_COSTS.uncommon}`, inline: true },
+        { name: 'Rare Pack', value: `Cost: 🪙${PACK_COSTS.rare}`, inline: true },
+        { name: 'Dragon Pack', value: `Cost: 🪙${PACK_COSTS.dragon}`, inline: true }
       )
       .setFooter({ text: 'Select a pack to purchase.' })
 
@@ -100,19 +100,19 @@ module.exports = {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('purchase_common_pack')
-        .setLabel('Buy Common Pack')
+        .setLabel('Common Pack')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId('purchase_uncommon_pack')
-        .setLabel('Buy Uncommon Pack')
+        .setLabel('Uncommon Pack')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId('purchase_rare_pack')
-        .setLabel('Buy Rare Pack')
+        .setLabel('Rare Pack')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId('purchase_dragon_pack')
-        .setLabel('Buy Dragon Pack')
+        .setLabel('Dragon Pack')
         .setStyle(ButtonStyle.Primary)
     )
 
@@ -166,7 +166,7 @@ module.exports = {
           const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
     
           await interaction.followUp({
-            content: `You pulled a monster from the ${packType} pack!`,
+            content: `You pulled a monster from the **${packType} pack!**`,
             embeds: [monsterEmbed],
           })
         } else {
