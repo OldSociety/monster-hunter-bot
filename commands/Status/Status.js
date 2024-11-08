@@ -80,12 +80,12 @@ module.exports = {
           Uncommon: [5, 10],
           Rare: [11, 15],
           'Very Rare': [16, 19],
-          Legendary: [20],
+          Legendary: [20, Infinity],
         }
 
         const totalMonsters = {
-          Common: 105,
-          Uncommon: 67,
+          Common: 154,
+          Uncommon: 65,
           Rare: 24,
           'Very Rare': 10,
           Legendary: 15,
@@ -118,11 +118,11 @@ module.exports = {
 
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
-          .setTitle(`BH Overall Score: ${user.score}`)
+          .setTitle(`Blood Hunter Stats`)
           .addFields(
             {
-              name: '**Top Scores**',
-              value: `**Brutes**: ${user.brute_score}\n**Casters**: ${user.caster_score}\n**Sneaks**: ${user.sneak_score}`,
+              name: '**Top Scores |**',
+              value: `**Overall**: ${user.score}\n**Brutes**: ${user.brute_score}\n**Casters**: ${user.caster_score}\n**Sneaks**: ${user.sneak_score}`,
               inline: true,
             },
             {
