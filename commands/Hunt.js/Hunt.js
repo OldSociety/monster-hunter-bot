@@ -111,132 +111,103 @@ module.exports = {
   },
 }
 
-async function startNewEncounter(
-  interaction,
-  user,
-  currentCR,
-  difficulty = 'easy'
-) {
-  let adjustedCR = currentCR
-  if (currentCR === 1) {
-    adjustedCR = 0.25
-  } else if (currentCR === 2) {
-    adjustedCR = 0.5
-  } else {
-    adjustedCR = currentCR - 1
-  }
-
-  let monster
-  do {
-    monster = pullMonsterByCR(adjustedCR)
-  } while (!monster || !monster.index)
-
-  const imageUrl = `https://raw.githubusercontent.com/theoperatore/dnd-monster-api/master/src/db/assets/${monster.index}.jpg`
-
-  let monsterScore = monster.cr * (monster.hp / 10) + 25
-  if (difficulty === 'easy') {
-    monsterScore *= difficultyOptions[difficulty]
-  }
-
-  const monsterEmbed = new EmbedBuilder()
-    .setTitle(`A wild ${monster.name} appears!`)
-    .setDescription(`**CR:** ${adjustedCR}\n**Type:** ${monster.type}`)
-    .setColor('#FFA500')
-    .setThumbnail(imageUrl)
-
-  const styleRow = new ActionRowBuilder()
-  if (user.brute_score > 0) {
-    styleRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('style_brute')
-        .setLabel(`Brute: ${user.brute_score}`)
-        .setStyle(ButtonStyle.Primary)
-    )
-  }
-  if (user.caster_score > 0) {
-    styleRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('style_caster')
-        .setLabel(`Caster: ${user.caster_score}`)
-        .setStyle(ButtonStyle.Secondary)
-    )
-  }
-  if (user.sneak_score > 0) {
-    styleRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('style_sneak')
-        .setLabel(`Sneak: ${user.sneak_score}`)
-        .setStyle(ButtonStyle.Success)
-    )
-  }
-
-  await interaction.followUp({
-    embeds: [monsterEmbed],
-    components: [styleRow],
-    ephemeral: true,
-  })
-
-  const filter = (i) => i.user.id === interaction.user.id
-  const styleCollector = interaction.channel.createMessageComponentCollector({
-    filter,
-    time: 15000,
-  })
-
-
-  styleCollector.on('collect', async (styleInteraction) => {
-    await styleInteraction.deferUpdate()
-    const selectedStyle = styleInteraction.customId.split('_')[1]
-    const playerScore = user[`${selectedStyle}_score`]
-    const isAdvantaged = checkAdvantage(selectedStyle, monster.type)
-    const winChance = calculateWinChance(playerScore, monsterScore, isAdvantaged)
-    const playerWins = await runBattlePhases(interaction, playerScore, monsterScore, winChance, monster, isAdvantaged)
-
-    if (playerWins) {
-      const goldReward = calculateReward(adjustedCR)
-      await addGoldToUser(user, goldReward)
-
-      const continueEmbed = new EmbedBuilder()
-        .setTitle('Battle Complete')
-        .setDescription(`You defeated the ${monster.name} and earned ${goldReward} gold. Continue or collect rewards?`)
-        .setColor('#00FF00')
-
-      const continueButton = new ButtonBuilder()
-        .setCustomId('continue_hunt')
-        .setLabel('Continue Hunt')
-        .setStyle(ButtonStyle.Success)
-      const endHuntButton = new ButtonBuilder()
-        .setCustomId('end_hunt')
-        .setLabel('End Hunt and Collect Rewards')
-        .setStyle(ButtonStyle.Danger)
-      const continueRow = new ActionRowBuilder().addComponents(continueButton, endHuntButton)
-
-      await interaction.followUp({
-        embeds: [continueEmbed],
-        components: [continueRow],
-        ephemeral: true,
-      })
-
-      const continueCollector = interaction.channel.createMessageComponentCollector({
-        filter,
-        max: 1,
-        time: 15000,
-      })
-
-      continueCollector.on('collect', async (continueInteraction) => {
-        await continueInteraction.deferUpdate()
-        if (continueInteraction.customId === 'continue_hunt') {
-          continueCollector.stop()
-          await startNewEncounter(interaction, user, currentCR + 1, difficulty)
-        } else if (continueInteraction.customId === 'end_hunt') {
-          continueCollector.stop()
-          await displayHuntSummary(interaction, user)
-        }
-      })
-    } else {
-      await displayHuntSummary(interaction, user)
+async function startNewEncounter(interaction, user, currentCR, difficulty = 'easy') {
+    let adjustedCR = currentCR === 1 ? 0.25 : currentCR === 2 ? 0.5 : currentCR - 1
+  
+    let monster
+    do {
+      monster = pullMonsterByCR(adjustedCR)
+    } while (!monster || !monster.index)
+  
+    const imageUrl = `https://raw.githubusercontent.com/theoperatore/dnd-monster-api/master/src/db/assets/${monster.index}.jpg`
+    let monsterScore = monster.cr * (monster.hp / 10) + 25
+    if (difficulty === 'easy') monsterScore *= difficultyOptions[difficulty]
+  
+    const monsterEmbed = new EmbedBuilder()
+      .setTitle(`A wild ${monster.name} appears!`)
+      .setDescription(`**CR:** ${adjustedCR}\n**Type:** ${monster.type}`)
+      .setColor('#FFA500')
+      .setThumbnail(imageUrl)
+  
+    const styleRow = new ActionRowBuilder()
+    if (user.brute_score > 0) {
+      styleRow.addComponents(new ButtonBuilder().setCustomId('style_brute').setLabel(`Brute: ${user.brute_score}`).setStyle(ButtonStyle.Primary))
     }
-  })
-}
+    if (user.caster_score > 0) {
+      styleRow.addComponents(new ButtonBuilder().setCustomId('style_caster').setLabel(`Caster: ${user.caster_score}`).setStyle(ButtonStyle.Secondary))
+    }
+    if (user.sneak_score > 0) {
+      styleRow.addComponents(new ButtonBuilder().setCustomId('style_sneak').setLabel(`Sneak: ${user.sneak_score}`).setStyle(ButtonStyle.Success))
+    }
+  
+    await interaction.followUp({
+      embeds: [monsterEmbed],
+      components: [styleRow],
+      ephemeral: true,
+    })
+  
+    const filter = (i) => i.user.id === interaction.user.id
+    const styleCollector = interaction.channel.createMessageComponentCollector({
+      filter,
+      max: 1,
+      time: 15000,
+    })
+  
+    styleCollector.on('collect', async (styleInteraction) => {
+      await styleInteraction.deferUpdate()
+      const selectedStyle = styleInteraction.customId.split('_')[1]
+      const playerScore = user[`${selectedStyle}_score`]
+      const isAdvantaged = checkAdvantage(selectedStyle, monster.type)
+      const winChance = calculateWinChance(playerScore, monsterScore, isAdvantaged)
+      const playerWins = await runBattlePhases(interaction, playerScore, monsterScore, winChance, monster, isAdvantaged)
+  
+      if (playerWins) {
+        const goldReward = calculateReward(adjustedCR)
+        await addGoldToUser(user, goldReward)
+  
+        const continueEmbed = new EmbedBuilder()
+          .setTitle('Battle Complete')
+          .setDescription(`You defeated the ${monster.name} and earned ${goldReward} gold. Continue or collect rewards?`)
+          .setColor('#00FF00')
+  
+        const continueButton = new ButtonBuilder()
+          .setCustomId('continue_hunt')
+          .setLabel('Continue Hunt')
+          .setStyle(ButtonStyle.Success)
+        const endHuntButton = new ButtonBuilder()
+          .setCustomId('end_hunt')
+          .setLabel('End Hunt and Collect Rewards')
+          .setStyle(ButtonStyle.Danger)
+        const continueRow = new ActionRowBuilder().addComponents(continueButton, endHuntButton)
+  
+        await interaction.followUp({
+          embeds: [continueEmbed],
+          components: [continueRow],
+          ephemeral: true,
+        })
+  
+        const continueCollector = interaction.channel.createMessageComponentCollector({
+          filter,
+          max: 1,
+          time: 15000,
+        })
+  
+        continueCollector.on('collect', async (continueInteraction) => {
+          await continueInteraction.deferUpdate()
+          if (continueInteraction.customId === 'continue_hunt') {
+            continueCollector.stop()
+            await startNewEncounter(interaction, user, currentCR + 1, difficulty)
+          } else if (continueInteraction.customId === 'end_hunt') {
+            continueCollector.stop()
+            await displayHuntSummary(interaction, user)
+          }
+        })
+      } else {
+        await displayHuntSummary(interaction, user)
+      }
+    })
+  }
+  
 
 async function displayHuntSummary(interaction, user) {
   const summaryEmbed = new EmbedBuilder()
