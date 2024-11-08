@@ -8,7 +8,6 @@ const {
 const fs = require('fs')
 const path = require('path')
 let cacheMonstersByTier
-
 ;(async () => {
   const module = await import('../../handlers/pullHandler.js')
   cacheMonstersByTier = module.cacheMonstersByTier
