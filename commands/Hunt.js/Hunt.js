@@ -120,7 +120,7 @@ async function startNewEncounter(interaction, user, currentCR, difficulty = 'eas
     } while (!monster || !monster.index)
   
     const imageUrl = `https://raw.githubusercontent.com/theoperatore/dnd-monster-api/master/src/db/assets/${monster.index}.jpg`
-    let monsterScore = monster.cr * (monster.hp / 10) + 25
+    let monsterScore = monster.cr * (monster.hp / 10) + 10
     if (difficulty === 'easy') monsterScore *= difficultyOptions[difficulty]
   
     const monsterEmbed = new EmbedBuilder()
