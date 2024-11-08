@@ -121,12 +121,12 @@ module.exports = {
           .setTitle(`Blood Hunter Stats`)
           .addFields(
             {
-              name: '**Top Scores |**',
+              name: '**-- Category Scores --**',
               value: `**Overall**: ${user.score}\n**Brutes**: ${user.brute_score}\n**Casters**: ${user.caster_score}\n**Sneaks**: ${user.sneak_score}`,
               inline: true,
             },
             {
-              name: '**Collection Stats by Rarity**',
+              name: '**-- Collection Stats by Rarity --**',
               value: 'Track your collection progress below:',
               inline: false,
             }
