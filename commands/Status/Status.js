@@ -26,11 +26,15 @@ function getRaritySymbol(cr) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('View your Monster Hunter game stats and collection progress')
+    .setDescription(
+      'View your Monster Hunter game stats and collection progress'
+    )
     .addStringOption((option) =>
       option
         .setName('category')
-        .setDescription('Specify which top cards to view (brute, caster, sneak, or all)')
+        .setDescription(
+          'Specify which top cards to view (brute, caster, sneak, or all)'
+        )
         .setRequired(false)
         .addChoices(
           { name: 'Brute', value: 'brute' },
@@ -48,7 +52,8 @@ module.exports = {
       const user = await User.findOne({ where: { user_id: userId } })
       if (!user) {
         return interaction.reply({
-          content: 'You do not have any recorded stats yet. Start playing to track your progress!',
+          content:
+            'You do not have any recorded stats yet. Start playing to track your progress!',
           ephemeral: true,
         })
       }
@@ -103,6 +108,14 @@ module.exports = {
           })
         )
 
+        const gold = user.gold || 0
+        const currency = user.currency || {}
+        const gems = currency.gems || 0
+        const eggs = currency.eggs || 0
+        const ichor = currency.ichor || 0
+
+        const footerText = `Available: 🪙${gold} 💎${gems} 🥚${eggs} 🧪${ichor}`
+
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(`BH Overall Score: ${user.score}`)
@@ -119,6 +132,7 @@ module.exports = {
             }
           )
           .setThumbnail(interaction.user.displayAvatarURL())
+          .setFooter({ text: footerText })
 
         rarityCounts.forEach(({ rarity, count }) => {
           const total = totalMonsters[rarity]
@@ -131,9 +145,10 @@ module.exports = {
         })
 
         await interaction.reply({ embeds: [statsEmbed] })
-    } else {
+      } else {
         // Determine whether to fetch top cards from a specific category or overall
-        const categoryField = category === 'all' ? 'top_monsters' : `top_${category}s`
+        const categoryField =
+          category === 'all' ? 'top_monsters' : `top_${category}s`
         const topCardsIds = user[categoryField] || []
 
         // Fetch top cards based on the category or overall selection
@@ -147,7 +162,11 @@ module.exports = {
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(
-            `Top ${category === 'all' ? 'Overall' : category.charAt(0).toUpperCase() + category.slice(1)} Cards`
+            `Top ${
+              category === 'all'
+                ? 'Overall'
+                : category.charAt(0).toUpperCase() + category.slice(1)
+            } Cards`
           )
           .setThumbnail(interaction.user.displayAvatarURL())
 
@@ -192,7 +211,8 @@ module.exports = {
     } catch (error) {
       console.error('Error fetching user stats:', error)
       await interaction.reply({
-        content: 'An error occurred while fetching your stats. Please try again later.',
+        content:
+          'An error occurred while fetching your stats. Please try again later.',
         ephemeral: true,
       })
     }

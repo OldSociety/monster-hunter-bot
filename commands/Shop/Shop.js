@@ -81,36 +81,44 @@ module.exports = {
       console.log('Cache populated successfully.')
     }
 
+    const gold = user.gold || 0
+    const currency = user.currency || {}
+    const gems = currency.gems || 0
+    const eggs = currency.eggs || 0
+    const ichor = currency.ichor || 0
+
+    const footerText = `Available: 🪙${gold} 💎${gems} 🥚${eggs} 🧪${ichor}`
+
     // Shop embed setup after cache is loaded
     const shopEmbed = new EmbedBuilder()
       .setColor(0x00ff00)
-      .setTitle('Monster Shop')
+      .setTitle(`Store`)
       .setDescription(
-        'Welcome to the Monster Shop! Here you can purchase packs containing monsters of various tiers.'
+        `Welcome to the Monster Shop! Here you can purchase packs containing monsters of various tiers.`
       )
       .addFields(
         {
           name: 'Common Pack',
-          value: `Cost: 🪙${PACK_COSTS.common}`,
+          value: `🪙${PACK_COSTS.common}`,
           inline: true,
         },
         {
           name: 'Uncommon Pack',
-          value: `Cost: 🪙${PACK_COSTS.uncommon}`,
+          value: `🪙${PACK_COSTS.uncommon}`,
           inline: true,
         },
         {
           name: 'Rare Pack',
-          value: `Cost: 🪙${PACK_COSTS.rare}`,
+          value: `🪙${PACK_COSTS.rare}`,
           inline: true,
         },
         {
           name: 'Dragon Pack',
-          value: `Cost: 🪙${PACK_COSTS.dragon}`,
+          value: `🪙${PACK_COSTS.dragon}`,
           inline: true,
         }
       )
-      .setFooter({ text: 'Select a pack to purchase.' })
+      .setFooter({ text: `${footerText}` })
 
     // Add buttons for each pack
     const row = new ActionRowBuilder().addComponents(
@@ -153,7 +161,7 @@ module.exports = {
         // Check if user has enough gold
         if (user.gold < packCost) {
           return buttonInteraction.followUp({
-            content: `You don't have enough gold to buy a ${packType} pack. It costs 🪙${packCost} gold.`,
+            content: `You don't have enough gold to buy a ${packType} pack. Available: 🪙${user.gold} gold`,
             ephemeral: true,
           })
         }

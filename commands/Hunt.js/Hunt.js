@@ -197,7 +197,7 @@ async function startNewEncounter(
     )
 
     if (playerWins) {
-      const goldReward = calculateReward(adjustedCR)
+      const goldReward = calculateReward(Math.floor(adjustedCR))
       await addGoldToUser(user, goldReward)
 
       const continueEmbed = new EmbedBuilder()
