@@ -119,7 +119,7 @@ async function startNewEncounter(interaction, user, currentCR, difficulty = 'eas
       monster = pullMonsterByCR(adjustedCR)
     } while (!monster || !monster.index)
   
-    const imageUrl = `https://raw.githubusercontent.com/theoperatore/dnd-monster-api/master/src/db/assets/${monster.index}.jpg`
+    const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
     let monsterScore = monster.cr * (monster.hp / 10) + 10
     if (difficulty === 'easy') monsterScore *= difficultyOptions[difficulty]
   
@@ -240,7 +240,7 @@ async function runBattlePhases(
   let monsterWins = 0
   let momentum = 15
   const maxMomentum = 15
-  const imageUrl = `https://raw.githubusercontent.com/theoperatore/dnd-monster-api/master/src/db/assets/${monster.index}.jpg`
+  const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
 
   for (let phase = 1; phase <= 7; phase++) {
     const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore

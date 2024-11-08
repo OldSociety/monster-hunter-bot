@@ -62,7 +62,7 @@ async function cacheMonstersByTier() {
 
       if (cr === undefined || cr === null) continue
 
-      const imageUrl = `https://raw.githubusercontent.com/theoperatore/dnd-monster-api/master/src/db/assets/${monster.index}.jpg`
+      const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
       const matchingTier = defaultTiers.find(
         (tier) => cr >= tier.crRange[0] && cr <= tier.crRange[1]
       )
