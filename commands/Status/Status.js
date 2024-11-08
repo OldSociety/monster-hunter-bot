@@ -27,7 +27,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('stats')
     .setDescription(
-      'View your Monster Hunter game stats and collection progress'
+      'View your Blood Hunter game stats and collection progress'
     )
     .addStringOption((option) =>
       option
@@ -118,7 +118,7 @@ module.exports = {
 
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
-          .setTitle(`Blood Hunter Stats`)
+          .setTitle(`Blood Hunter Game Stats`)
           .addFields(
             {
               name: '**-- Category Scores --**',

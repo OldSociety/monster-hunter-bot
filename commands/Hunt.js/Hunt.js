@@ -203,7 +203,7 @@ async function startNewEncounter(
       const continueEmbed = new EmbedBuilder()
         .setTitle('Battle Complete')
         .setDescription(
-          `You defeated the ${monster.name} and earned ${goldReward} gold. Continue or collect rewards?`
+          `You defeated the ${monster.name} and earned 🪙${goldReward} gold. Continue or collect rewards?`
         )
         .setColor('#00FF00')
 
@@ -213,7 +213,7 @@ async function startNewEncounter(
         .setStyle(ButtonStyle.Success)
       const endHuntButton = new ButtonBuilder()
         .setCustomId('end_hunt')
-        .setLabel('End Hunt and Collect Rewards')
+        .setLabel('End Hunt')
         .setStyle(ButtonStyle.Danger)
       const continueRow = new ActionRowBuilder().addComponents(
         continueButton,
@@ -320,8 +320,8 @@ async function runBattlePhases(
 
     const healthBar = createHealthBar(momentum, maxMomentum)
     const winChanceText = winChance
-      ? `**Chance of Winning:** ${winChance.base}%${
-          isAdvantaged ? ` -> ${winChance.adjusted}% (Advantage)` : ''
+      ? `**Chance of Winning:** ${Math.floor(winChance.base)}%${
+          isAdvantaged ? ` (Advantage)` : ''
         }`
       : '**Chance of Winning:** N/A'
 
@@ -329,12 +329,12 @@ async function runBattlePhases(
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(
         `**CR:** ${monster.cr}\n` +
-          `**Player Score:** ${effectivePlayerScore}\n` +
-          `**Enemy Score:** ${monsterScore}\n` +
+          `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
+          `**Enemy Score:** ${Math.floor(monsterScore)}\n` +
           `${winChanceText}\n` +
-          `**Phase ${phase}**\n${phaseResult} Player rolled ${playerRoll.toFixed(
+          `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(playerRoll.toFixed(
             2
-          )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +
+          ))}, Monster rolled ${Math.floor(monsterRoll.toFixed(2))}\n\n` +
           `${healthBar}`
       )
       .setColor('#FF4500')
