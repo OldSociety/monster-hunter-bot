@@ -12,16 +12,13 @@ const {
 } = require('../../handlers/pullHandler')
 const {
   updateOrAddMonsterToCollection,
-} = require('../../handlers/monsterHandler')
+} = require('../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
 const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
 const { User } = require('../../Models/model')
-
-// Excluded types for normal packs
-const excludedTypes = new Set(['ooze', 'fiend', 'swarm of tiny beasts'])
 
 // Cache tracking variable
 let cachePopulated = false

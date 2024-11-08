@@ -4,7 +4,7 @@ const {
 } = require('../../../handlers/pullHandler')
 const {
   updateOrAddMonsterToCollection,
-} = require('../../../handlers/monsterHandler')
+} = require('../../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../../handlers/topCardsManager')
 const {
   generateMonsterRewardEmbed,
@@ -16,7 +16,8 @@ const rotatingMonsters = [
   'lemure',
   'dretch',
   'hell hound',
-  'nightmare',,
+  'nightmare',
+  ,
   'barbed devil',
   'night hag',
   'vrock',
@@ -52,7 +53,8 @@ async function grantDailyReward(user, interaction) {
     }
 
     // Retrieve monster
-    const monsterIndex = Math.floor(user.daily_streak / 10) % rotatingMonsters.length
+    const monsterIndex =
+      Math.floor(user.daily_streak / 10) % rotatingMonsters.length
     const monsterName = rotatingMonsters[monsterIndex]
     console.log(
       `Attempting to add rotating monster '${monsterName}' for user ${user.user_id}.`
@@ -64,13 +66,17 @@ async function grantDailyReward(user, interaction) {
       await updateTop5AndUserScore(user.user_id)
       const stars = getStarsBasedOnColor(monster.color)
       rewardEmbed = generateMonsterRewardEmbed(monster, stars)
-      rewardEmbed.setDescription(`You received ${monster.name}! Return tomorrow for your next reward.`)
+      rewardEmbed.setDescription(
+        `You received ${monster.name}! Return tomorrow for your next reward.`
+      )
       console.log(`Monster '${monster.name}' awarded to user ${user.user_id}.`)
     } else {
       rewardEmbed = new EmbedBuilder()
         .setColor('#ff0000')
         .setDescription(`The monster ${monsterName} could not be found.`)
-      console.error(`Error: Monster ${monsterName} not found for user ${user.user_id}.`)
+      console.error(
+        `Error: Monster ${monsterName} not found for user ${user.user_id}.`
+      )
     }
   } else {
     // Rewards for days 1-9
@@ -113,21 +119,30 @@ async function grantDailyReward(user, interaction) {
         rewardText = '🧪3 demon ichor'
         break
     }
-    await user.save({ fields: currentDay === 1 || currentDay === 4 || currentDay === 7 ? [] : ['currency'] })
+    await user.save({
+      fields:
+        currentDay === 1 || currentDay === 4 || currentDay === 7
+          ? []
+          : ['currency'],
+    })
     console.log(`User ${user.user_id} rewarded on day ${currentDay}.`)
 
     // Embed for days 1-9
     rewardEmbed = new EmbedBuilder()
       .setColor('#00FF00')
       .setTitle('Daily Reward Received')
-      .setDescription(`You received ${rewardText}! Return tomorrow for your next reward.`)
+      .setDescription(
+        `You received ${rewardText}! Return tomorrow for your next reward.`
+      )
   }
 
   // Increment and save user's progress
   user.daily_streak = (user.daily_streak % 80) + 1
   user.last_daily_claim = new Date()
   await user.save()
-  console.log(`User ${user.user_id} daily streak incremented to ${user.daily_streak}.`)
+  console.log(
+    `User ${user.user_id} daily streak incremented to ${user.daily_streak}.`
+  )
 
   return { embeds: [rewardEmbed] }
 }

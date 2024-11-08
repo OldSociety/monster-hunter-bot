@@ -2,7 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const { EmbedBuilder } = require('discord.js')
-const { updateOrAddMonsterToCollection } = require('./monsterHandler')
+const { updateOrAddMonsterToCollection } = require('./userMonsterHandler')
 
 // Read all filenames in the assets folder to create validCreatures set
 const assetsPath = path.join(__dirname, '..', 'assets')
@@ -81,7 +81,6 @@ async function cacheMonstersByTier() {
     }
   }
   cachePopulated = true
- 
 }
 
 // Function to select a tier based on cumulative chance
