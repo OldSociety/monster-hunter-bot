@@ -296,10 +296,12 @@ async function runBattlePhases(
       else segmentLoss = 1
 
       // Incremental bonus based on number of player wins
-      if (playerWins === 2) {
-        segmentLoss += 2 // Second win adds 2 segments
+      if (playerWins === 1) {
+        segmentLoss += 1
+      } else if (playerWins === 2) {
+        segmentLoss += 2
       } else if (playerWins === 3) {
-        segmentLoss += 3 // Third win adds 3 segments
+        segmentLoss += 3
       }
 
       momentum -= segmentLoss
