@@ -19,22 +19,6 @@ const difficultyOptions = {
   easy: 0.5,
 }
 
-// Function to determine monster type category with lowercase handling
-function determineCategory(type) {
-  const normalizedType = type.toLowerCase()
-  if (['construct', 'dragon', 'giant', 'monstrosity'].includes(normalizedType))
-    return 'brute'
-  if (
-    ['aberration', 'celestial', 'elemental', 'fey', 'fiend'].includes(
-      normalizedType
-    )
-  )
-    return 'caster'
-  if (['plant', 'ooze', 'humanoid', 'beast', 'undead'].includes(normalizedType))
-    return 'sneak'
-  return 'brute' // Default to 'brute' if type is unrecognized
-}
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hunt')
@@ -46,6 +30,7 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
     const user = await User.findOne({ where: { user_id: userId } })
+
     if (!user) {
       await interaction.editReply({
         content: "You don't have an account. Use `/account` to create one.",
@@ -88,8 +73,11 @@ module.exports = {
     })
 
     const filter = (i) => i.user.id === userId
+
+    // Create a collector with a limited lifespan and maximum interaction count
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
+      max: 1,
       time: 15000,
     })
 
@@ -194,25 +182,14 @@ async function startNewEncounter(
     time: 15000,
   })
 
+
   styleCollector.on('collect', async (styleInteraction) => {
     await styleInteraction.deferUpdate()
     const selectedStyle = styleInteraction.customId.split('_')[1]
-
     const playerScore = user[`${selectedStyle}_score`]
-    const isAdvantaged = checkAdvantage(selectedStyle, monster.type) // Check if advantage is active
-    const winChance = calculateWinChance(
-      playerScore,
-      monsterScore,
-      isAdvantaged
-    )
-    const playerWins = await runBattlePhases(
-      interaction,
-      playerScore,
-      monsterScore,
-      winChance,
-      monster,
-      isAdvantaged
-    )
+    const isAdvantaged = checkAdvantage(selectedStyle, monster.type)
+    const winChance = calculateWinChance(playerScore, monsterScore, isAdvantaged)
+    const playerWins = await runBattlePhases(interaction, playerScore, monsterScore, winChance, monster, isAdvantaged)
 
     if (playerWins) {
       const goldReward = calculateReward(adjustedCR)
@@ -220,9 +197,7 @@ async function startNewEncounter(
 
       const continueEmbed = new EmbedBuilder()
         .setTitle('Battle Complete')
-        .setDescription(
-          `You defeated the ${monster.name} and earned ${goldReward} gold. Continue or collect rewards?`
-        )
+        .setDescription(`You defeated the ${monster.name} and earned ${goldReward} gold. Continue or collect rewards?`)
         .setColor('#00FF00')
 
       const continueButton = new ButtonBuilder()
@@ -233,10 +208,7 @@ async function startNewEncounter(
         .setCustomId('end_hunt')
         .setLabel('End Hunt and Collect Rewards')
         .setStyle(ButtonStyle.Danger)
-      const continueRow = new ActionRowBuilder().addComponents(
-        continueButton,
-        endHuntButton
-      )
+      const continueRow = new ActionRowBuilder().addComponents(continueButton, endHuntButton)
 
       await interaction.followUp({
         embeds: [continueEmbed],
@@ -244,11 +216,11 @@ async function startNewEncounter(
         ephemeral: true,
       })
 
-      const continueCollector =
-        interaction.channel.createMessageComponentCollector({
-          filter,
-          time: 15000,
-        })
+      const continueCollector = interaction.channel.createMessageComponentCollector({
+        filter,
+        max: 1,
+        time: 15000,
+      })
 
       continueCollector.on('collect', async (continueInteraction) => {
         await continueInteraction.deferUpdate()
@@ -268,7 +240,7 @@ async function startNewEncounter(
 
 async function displayHuntSummary(interaction, user) {
   const summaryEmbed = new EmbedBuilder()
-    .setTitle('Hunt Summary')
+    .setTitle(`You've been defeated`)
     .setDescription(`**Total Monsters Defeated:** X\n**Total Gold Earned:** Y`)
     .setColor('#FFD700')
 
@@ -371,6 +343,20 @@ function checkAdvantage(playerStyle, monsterType) {
   return advantageMap[playerStyle] === monsterCategory
 }
 
+function determineCategory(type) {
+  const normalizedType = type.toLowerCase()
+  if (['construct', 'dragon', 'giant', 'monstrosity'].includes(normalizedType))
+    return 'brute'
+  if (
+    ['aberration', 'celestial', 'elemental', 'fey', 'fiend'].includes(
+      normalizedType
+    )
+  )
+    return 'caster'
+  if (['plant', 'ooze', 'humanoid', 'beast', 'undead'].includes(normalizedType))
+    return 'sneak'
+  return 'brute' // Default to 'brute' if type is unrecognized
+}
 
 function calculateWinChance(playerScore, monsterScore, isAdvantaged) {
   const baseWinChance = Math.round(
