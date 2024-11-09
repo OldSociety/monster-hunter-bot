@@ -1,4 +1,3 @@
-// huntCacheHandler.js
 const fs = require('fs')
 const path = require('path')
 const { classifyMonsterType } = require('../utils/huntUtility/huntUtils.js')
@@ -13,15 +12,14 @@ const validCreatures = new Set(
 // EXCLUDED TYPES
 const excludedTypes = new Set([
   'dragon',
-  'giant',
   // Add other types you want to exclude
 ])
 
-const monsterCacheByCR = {} // Cache monsters by CR
+const monsterCacheByCR = {} 
 let cachePopulated = false
 
 async function cacheHuntMonsters() {
-  if (cachePopulated) return // Skip if already cached
+  if (cachePopulated) return // 
 
   const fetch = (await import('node-fetch')).default
   const response = await fetch('https://www.dnd5eapi.co/api/monsters')
@@ -55,19 +53,17 @@ async function cacheHuntMonsters() {
         cr = numerator / denominator
       }
 
-      // Cache monsters by CR
       if (!monsterCacheByCR[cr]) {
         monsterCacheByCR[cr] = []
       }
 
-      // Cache relevant monster data
       monsterCacheByCR[cr].push({
         name: monster.name,
         cr,
         hp: monster.hit_points,
         type: monster.type,
         combatType,
-        index: monster.index, // Ensures index is included for imageUrl
+        index: monster.index, 
       })
     } catch (error) {
       console.log(`Error processing monster ${monsterSummary.name}:`, error)
@@ -77,7 +73,7 @@ async function cacheHuntMonsters() {
   console.log('Hunt monster cache populated with combat types.')
 }
 
-// **Function to pull a monster by CR**
+
 function pullMonsterByCR(cr) {
   const availableMonsters = monsterCacheByCR[cr]
   if (!availableMonsters || availableMonsters.length === 0) {

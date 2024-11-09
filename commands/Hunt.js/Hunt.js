@@ -417,18 +417,16 @@ async function runBattlePhases(
     }
 
     const healthBar = createHealthBar(momentum, maxMomentum)
-    const winChanceText = `Advantage:` ? ` **True**` : 'False'
 
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(
         `**CR:** ${monster.cr}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
-          `**Enemy Score:** ${Math.floor(monsterScore)}\n` +
-          `${winChanceText}\n` +
+          `**Enemy Score:** ${Math.floor(monsterScore)}\n` + ` \n ` +
           `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(
             playerRoll.toFixed(2)
-          )}, Monster rolled ${Math.floor(monsterRoll.toFixed(2))}\n\n` +
+          )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +
           `${healthBar}`
       )
       .setColor('#FF4500')

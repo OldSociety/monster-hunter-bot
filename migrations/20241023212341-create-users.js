@@ -63,6 +63,10 @@ module.exports = {
         type: Sequelize.JSON,
         defaultValue: [],
       },
+      completedLevels: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
       last_chat_message: {
         type: Sequelize.DATE,
         allowNull: true,
