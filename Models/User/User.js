@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     currency: {
       type: DataTypes.JSON,
       defaultValue: {
+        energy: 10,
         gems: 0,
         eggs: 0,
         ichor: 0,

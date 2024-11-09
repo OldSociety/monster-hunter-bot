@@ -20,6 +20,7 @@ module.exports = {
       currency: {
         type: Sequelize.JSON,
         defaultValue: {
+          energy: 10,
           gems: 0,
           eggs: 0,
           ichor: 0,

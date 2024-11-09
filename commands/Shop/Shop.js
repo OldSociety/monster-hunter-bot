@@ -87,11 +87,12 @@ module.exports = {
 
     const gold = user.gold || 0
     const currency = user.currency || {}
+    const energy = currency.energy || 0
     const gems = currency.gems || 0
     const eggs = currency.eggs || 0
     const ichor = currency.ichor || 0
 
-    const footerText = `Available: 🪙${gold} 💎${gems} 🥚${eggs} 🧪${ichor}`
+    const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
 
     // Shop embed setup after cache is loaded
     const shopEmbed = new EmbedBuilder()
