@@ -1,3 +1,5 @@
+// account.js
+
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { User, Collection } = require('../../Models/model.js')
 const { Op } = require('sequelize')
@@ -25,10 +27,8 @@ function getRaritySymbol(cr) {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('stats')
-    .setDescription(
-      'View your Blood Hunter game stats and collection progress'
-    )
+    .setName('account')
+    .setDescription('View your Blood Hunter game stats and collection progress')
     .addStringOption((option) =>
       option
         .setName('category')
@@ -49,15 +49,48 @@ module.exports = {
     const category = interaction.options.getString('category') || 'overview'
 
     try {
-      const user = await User.findOne({ where: { user_id: userId } })
+      let user = await User.findOne({ where: { user_id: userId } })
       if (!user) {
-        return interaction.reply({
-          content:
-            'You do not have any recorded stats yet. Start playing to track your progress!',
-          ephemeral: true,
+        // Create a new user account
+        user = await User.create({
+          user_id: userId,
+          user_name: interaction.user.username,
+          gold: 1000,
+          currency: {
+            energy: 10,
+            gems: 0,
+            eggs: 0,
+            ichor: 0,
+            dice: 0,
+          },
+          score: 0,
+          brute_score: 0,
+          caster_score: 0,
+          sneak_score: 0,
+          top_monsters: [],
+          top_brutes: [],
+          top_casters: [],
+          top_sneaks: [],
+          completedLevels: 0,
         })
+
+        // Send a welcome message
+        const welcomeEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('Welcome to Blood Hunter!')
+          .setDescription(
+            `Your account has been created.\n` +
+              `Use **/shop** to get your first card!`
+          )
+          .setFooter({
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 💎${user.currency.gems} 🥚${user.currency.eggs} 🧪${user.currency.ichor} 🎲${user.currency.dice}`,
+          })
+          .setThumbnail(interaction.user.displayAvatarURL())
+
+        return interaction.reply({ embeds: [welcomeEmbed], ephemeral: true })
       }
 
+      // User exists, display their stats
       // Set embed color based on category
       let embedColor
       switch (category) {
@@ -114,8 +147,9 @@ module.exports = {
         const gems = currency.gems || 0
         const eggs = currency.eggs || 0
         const ichor = currency.ichor || 0
-    
-        const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
+        const dice = currency.dice || 0
+
+        const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor} 🎲${dice}`
 
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
@@ -145,11 +179,11 @@ module.exports = {
           })
         })
 
-        await interaction.reply({ embeds: [statsEmbed] })
+        await interaction.reply({ embeds: [statsEmbed], ephemeral: true })
       } else {
-        // Determine whether to fetch top cards from a specific category or overall
+        // Handle category-specific top cards
         const categoryField =
-          category === 'all' ? 'top_monsters' : `top_${category}s`
+          category === 'monster' ? 'top_monsters' : `top_${category}s`
         const topCardsIds = user[categoryField] || []
 
         // Fetch top cards based on the category or overall selection
@@ -157,14 +191,14 @@ module.exports = {
           where: { id: topCardsIds },
           attributes: ['name', 'm_score', 'level', 'copies', 'cr'],
           order: [['m_score', 'DESC']],
-          limit: 3, // Limit to top 3 for the "all" category
+          limit: 3, // Limit to top 3
         })
 
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(
             `Top ${
-              category === 'all'
+              category === 'monster'
                 ? 'Overall'
                 : category.charAt(0).toUpperCase() + category.slice(1)
             } Cards`
@@ -207,7 +241,7 @@ module.exports = {
           })
         }
 
-        await interaction.reply({ embeds: [statsEmbed] })
+        await interaction.reply({ embeds: [statsEmbed], ephemeral: true })
       }
     } catch (error) {
       console.error('Error fetching user stats:', error)

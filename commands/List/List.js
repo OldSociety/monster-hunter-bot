@@ -5,6 +5,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
+const { checkUserAccount } = require('../Account/checkAccount.js')
 const fs = require('fs')
 const path = require('path')
 let cacheMonstersByTier
@@ -60,6 +61,10 @@ module.exports = {
       })
     }
     await interaction.deferReply()
+    const userId = interaction.user.id
+
+    const user = await checkUserAccount(interaction)
+    if (!user) return
 
     const fetch = (await import('node-fetch')).default
     const subcommand = interaction.options.getSubcommand()

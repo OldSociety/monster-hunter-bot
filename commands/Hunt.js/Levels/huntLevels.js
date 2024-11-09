@@ -3,7 +3,7 @@
 const levelData = {
   hunt1: {
     key: 'hunt1',
-    name: 'Hunt Level 1',
+    name: 'Hunt 1',
     description: 'Face a series of increasingly challenging monsters!',
     energyCost: 1,
     battles: generateHuntOneBattles(),

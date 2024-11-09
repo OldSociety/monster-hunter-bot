@@ -7,7 +7,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const { User } = require('../../Models/model.js')
+
+const { checkUserAccount } = require('../Account/checkAccount.js')
 const {
   cacheHuntMonsters,
   pullMonsterByCR,
@@ -17,11 +18,8 @@ const {
   calculateReward,
   addGoldToUser,
 } = require('../../handlers/rewardHandler')
-const {
-  checkAdvantage,
-  calculateWinChance,
-} = require('../../utils/huntUtility/huntUtils.js')
-const { levelData } = require('./huntLevels')
+const { checkAdvantage } = require('../../utils/huntUtility/huntUtils.js')
+const { levelData } = require('./Levels/huntLevels.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -32,16 +30,9 @@ module.exports = {
 
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true })
-    const userId = interaction.user.id
-    let user = await User.findOne({ where: { user_id: userId } })
 
-    if (!user) {
-      await interaction.editReply({
-        content: "You don't have an account. Use /account to create one.",
-        ephemeral: true,
-      })
-      return
-    }
+    const user = await checkUserAccount(interaction)
+    if (!user) return
 
     user.currency = user.currency || {}
     user.currency.energy =
@@ -167,6 +158,7 @@ async function showLevelSelection(interaction, user, huntData) {
         return
       }
       user.currency.ichor -= 3
+      user.changed('currency', true) // Notify Sequelize of the change
       await user.save()
       huntData.ichorUsed = true
 
@@ -188,6 +180,7 @@ async function showLevelSelection(interaction, user, huntData) {
       }
 
       user.currency.energy -= selectedLevel.energyCost
+      user.changed('currency', true) // Notify Sequelize of the change
       await user.save()
 
       huntData.level = selectedLevel
@@ -239,14 +232,12 @@ async function startNewEncounter(interaction, user, huntData) {
   }
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-  let monsterScore = monster.hit_points + 10
+  let monsterScore = monster.hp / 2
   monsterScore = Math.max(monsterScore, 10)
 
   const monsterEmbed = new EmbedBuilder()
     .setTitle(`A wild ${monster.name} appears!`)
-    .setDescription(
-      `**CR:** ${monster.challenge_rating}\n**Type:** ${monster.type}`
-    )
+    .setDescription(`**CR:** ${monster.cr}\n**Type:** ${monster.type}`)
     .setColor('#FFA500')
     .setThumbnail(imageUrl)
 
@@ -313,7 +304,7 @@ async function startNewEncounter(interaction, user, huntData) {
     )
 
     if (playerWins) {
-      const goldReward = calculateReward(Math.floor(monster.challenge_rating))
+      const goldReward = calculateReward(Math.floor(monster.cr))
       await addGoldToUser(user, goldReward)
 
       huntData.totalGoldEarned += goldReward
@@ -354,15 +345,13 @@ async function offerRetry(interaction, user, huntData) {
     .setTitle('You have been defeated!')
     .setDescription(
       `You were defeated by the ${huntData.lastMonster.name}. Would you like to try again?\n` +
-        `You have ${3 - huntData.retries} revives left. Cost: ⚡${
-          huntData.level.energyCost
-        } energy`
+        `You have ${3 - huntData.retries} revives left.`
     )
     .setColor('#FF0000')
 
   const retryButton = new ButtonBuilder()
     .setCustomId('retry_hunt')
-    .setLabel('Retry')
+    .setLabel(`Retry ⚡${huntData.level.energyCost}`)
     .setStyle(ButtonStyle.Success)
   const endHuntButton = new ButtonBuilder()
     .setCustomId('end_hunt')
@@ -402,6 +391,7 @@ async function offerRetry(interaction, user, huntData) {
       }
 
       user.currency.energy -= huntData.level.energyCost
+      user.changed('currency', true) // Notify Sequelize of the change
       await user.save()
 
       await startNewEncounter(interaction, user, huntData)
@@ -421,6 +411,8 @@ async function offerRetry(interaction, user, huntData) {
     }
   })
 }
+
+// ... Rest of your code remains unchanged ...
 
 async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   const summaryEmbed = new EmbedBuilder()
@@ -537,7 +529,7 @@ async function runBattlePhases(
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(
-        `**CR:** ${monster.challenge_rating}\n` +
+        `**CR:** ${monster.cr}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
           `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
           `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(

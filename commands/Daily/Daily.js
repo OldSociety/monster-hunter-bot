@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { grantDailyReward } = require('./helpers/dailyRewardsHandler')
 const { User } = require('../../Models/model')
+const { checkUserAccount } = require('../Account/checkAccount.js')
 const cron = require('node-cron')
 
 // Reset daily streak at 6 AM PST daily
@@ -16,15 +17,8 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply()
     const userId = interaction.user.id
-    const user = await User.findByPk(userId)
-
-    if (!user) {
-      user = await User.create({
-        user_id: userId,
-        user_name: interaction.user.username,
-        gold: 1000,
-      })
-    }
+    const user = await checkUserAccount(interaction)
+    if (!user) return
 
     // Check if the user has already claimed their daily reward today
     const lastClaim = new Date(user.last_daily_claim || 0)

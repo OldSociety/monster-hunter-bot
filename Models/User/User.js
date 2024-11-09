@@ -62,7 +62,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     completedLevels: {
       type: DataTypes.INTEGER,
-      defaultValue: 1,
+      defaultValue: 0,
     },
     last_chat_message: {
       type: DataTypes.DATE,

@@ -19,7 +19,7 @@ const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
-const { User } = require('../../Models/model')
+const { checkUserAccount } = require('../Account/checkAccount.js')
 
 // Cache tracking variable
 let cachePopulated = false
@@ -54,20 +54,11 @@ module.exports = {
 
   async execute(interaction) {
     await interaction.deferReply()
+    const userId = interaction.user.id
     console.log('Shop command started.')
 
-    const userId = interaction.user.id
-
-    // Ensure the user exists in the database
-    let user = await User.findOne({ where: { user_id: userId } })
-    if (!user) {
-      user = await User.create({
-        user_id: userId,
-        user_name: interaction.user.username,
-        gold: 1000,
-        currency: {},
-      })
-    }
+    const user = await checkUserAccount(interaction)
+    if (!user) return
 
     // Show loading embed if cache is not populated
     if (!cachePopulated) {
