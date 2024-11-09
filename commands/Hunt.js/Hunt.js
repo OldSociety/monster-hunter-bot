@@ -57,10 +57,17 @@ module.exports = {
         'You are about to embark on a monster hunt. Do you want to continue?'
       )
       .setColor('#FF0000')
+      .setFooter({
+        text: 'Use 🧪ichor to increase your chance of winning by 20%. Cost: 3 🧪ichor',
+      })
 
     const confirmButton = new ButtonBuilder()
       .setCustomId('confirm_hunt')
       .setLabel('Continue')
+      .setStyle(ButtonStyle.Success)
+    const useIchorButton = new ButtonBuilder()
+      .setCustomId('use_ichor')
+      .setLabel('Use 🧪ichor')
       .setStyle(ButtonStyle.Success)
     const cancelButton = new ButtonBuilder()
       .setCustomId('cancel_hunt')
@@ -68,6 +75,7 @@ module.exports = {
       .setStyle(ButtonStyle.Danger)
     const startRow = new ActionRowBuilder().addComponents(
       confirmButton,
+      useIchorButton,
       cancelButton
     )
 
@@ -96,7 +104,7 @@ module.exports = {
         collector.stop()
         return
       }
-      if (i.customId === 'confirm_hunt') {
+      if (i.customId === 'confirm_hunt' || i.customId === 'use_ichor') {
         await i.deferUpdate()
         collector.stop()
 
@@ -106,6 +114,22 @@ module.exports = {
           totalGoldEarned: 0,
           currentCR: 1,
           difficulty: 'easy',
+          ichorUsed: i.customId === 'use_ichor', 
+        }
+
+        if (huntData.ichorUsed) {
+          // Ensure user's currency is initialized
+          user.currency = user.currency || {}
+          if ((user.currency.ichor || 0) < 3) {
+            await interaction.followUp({
+              content: "You don't have enough 🧪ichor to use this option.",
+              ephemeral: true,
+            })
+            return
+          }
+          // Deduct ichor
+          user.currency.ichor -= 3
+          await user.save()
         }
 
         await startNewEncounter(interaction, user, huntData)
@@ -148,10 +172,10 @@ async function startNewEncounter(interaction, user, huntData) {
     }
   } while (!monster)
 
-  const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
-  //   let monsterScore = monster.cr * (monster.hp / 10) + 10
-  let monsterScore = Math.floor(monster.hp / 2) // test using flat
-  monsterScore <= 10 ? monsterScore === 10 : monsterScore
+  const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+  // let monsterScore = monster.cr * (monster.hp / 10) + 10
+  let monsterScore = monster.hp + 10 // test using flat
+  monsterScore <= 10 ? (monsterScore = 10) : monsterScore
 
   if (huntData.difficulty === 'easy')
     monsterScore *= difficultyOptions[huntData.difficulty]
@@ -161,6 +185,13 @@ async function startNewEncounter(interaction, user, huntData) {
     .setDescription(`**CR:** ${adjustedCR}\n**Type:** ${monster.type}`)
     .setColor('#FFA500')
     .setThumbnail(imageUrl)
+
+  if (huntData.ichorUsed) {
+    monsterEmbed.addFields({
+      name: 'Ichor Invigoration',
+      value: 'You are invigorated with 🧪ichor! Your strength increases.',
+    })
+  }
 
   const styleRow = new ActionRowBuilder()
   if (user.brute_score > 0) {
@@ -217,7 +248,8 @@ async function startNewEncounter(interaction, user, huntData) {
       monsterScore,
       winChance,
       monster,
-      isAdvantaged
+      isAdvantaged,
+      huntData.ichorUsed // Pass ichorUsed flag
     )
 
     if (playerWins) {
@@ -329,17 +361,27 @@ async function runBattlePhases(
   monsterScore,
   winChance,
   monster,
-  isAdvantaged
+  isAdvantaged,
+  ichorUsed // Add this parameter
 ) {
   let playerWins = 0
   let monsterWins = 0
   let momentum = 15
   const maxMomentum = 15
-  const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
+  const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
 
   for (let phase = 1; phase <= 7; phase++) {
     const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore
-    const playerRoll = Math.random() * effectivePlayerScore
+
+    let playerRoll
+    if (ichorUsed) {
+      // Apply minimum roll of 40% of effectivePlayerScore
+      const minRoll = 0.4 * effectivePlayerScore
+      playerRoll = Math.random() * (effectivePlayerScore - minRoll) + minRoll
+    } else {
+      playerRoll = Math.random() * effectivePlayerScore
+    }
+
     const monsterRoll = Math.random() * monsterScore
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
 
@@ -374,8 +416,9 @@ async function runBattlePhases(
     }
 
     const healthBar = createHealthBar(momentum, maxMomentum)
+    const winChancePercentage = ichorUsed ? 70 : Math.floor(winChance.base)
     const winChanceText = winChance
-      ? `**Chance of Winning:** ${Math.floor(winChance.base)}%${
+      ? `**Chance of Winning:** ${winChancePercentage}%${
           isAdvantaged ? ` (Advantage)` : ''
         }`
       : '**Chance of Winning:** N/A'

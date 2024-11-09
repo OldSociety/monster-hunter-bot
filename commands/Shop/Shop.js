@@ -45,7 +45,6 @@ const TIER_OPTIONS = {
       { name: 'Rare', chance: 0.08 },
     ],
   },
-  // No tier option needed for ichor pack since it doesn't pull a monster
 }
 
 module.exports = {
@@ -66,7 +65,7 @@ module.exports = {
         user_id: userId,
         user_name: interaction.user.username,
         gold: 1000,
-        currency: {}, // Initialize currency object
+        currency: {},
       })
     }
 
@@ -199,14 +198,11 @@ module.exports = {
           // Handle Ichor Pack purchase
           const ichorAmount = 10
 
-          // Add ichor to user's currency
           user.currency = user.currency || {}
           user.currency.ichor = (user.currency.ichor || 0) + ichorAmount
 
-          // Save the user
           await user.save()
 
-          // Create an embed to inform the user
           const ichorEmbed = new EmbedBuilder()
             .setColor(0x00ff00)
             .setTitle('Ichor Pack Purchased')
