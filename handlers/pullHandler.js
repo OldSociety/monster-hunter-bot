@@ -1,7 +1,7 @@
 // pullHandler.js
 const fs = require('fs')
 const path = require('path')
-const { EmbedBuilder } = require('discord.js')
+const { allowedMonstersByPack } = require('../utils/shopMonsters')
 const { updateOrAddMonsterToCollection } = require('./userMonsterHandler')
 
 // Read all filenames in the assets folder to create validCreatures set
@@ -18,14 +18,6 @@ const monsterCacheByTier = {
   'Very Rare': [],
   Legendary: [],
 }
-
-// EXCLUDED TYPES
-const excludedTypes = new Set([
-  'ooze',
-  'dragon',
-  'fiend',
-  'swarm of tiny beasts',
-])
 
 let cachePopulated = false
 
@@ -62,13 +54,15 @@ async function cacheMonstersByTier() {
 
       if (cr === undefined || cr === null) continue
 
-      const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
+      const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+
       const matchingTier = defaultTiers.find(
         (tier) => cr >= tier.crRange[0] && cr <= tier.crRange[1]
       )
       if (matchingTier) {
         monsterCacheByTier[matchingTier.name].push({
           name: monsterDetails.name,
+          index: monster.index,
           cr,
           type: monsterDetails.type,
           rarity: matchingTier.name,
@@ -83,37 +77,66 @@ async function cacheMonstersByTier() {
   cachePopulated = true
 }
 
-// Function to select a tier based on cumulative chance
-function selectTier(customTiers = defaultTiers) {
+// Adjusted selectTier function to accept custom tiers
+function selectTier(customTiers) {
   const roll = Math.random()
   let cumulative = 0
 
   for (const tier of customTiers) {
     cumulative += tier.chance
-    if (roll < cumulative) return tier
+    if (roll < cumulative) return tier.name
   }
-  return customTiers[0]
+  return customTiers[0].name
 }
 
-// Adjusted pullValidMonster to apply exclusions automatically
-async function pullValidMonster(tier, maxAttempts = 10) {
+// Adjusted pullValidMonster to handle custom tiers for the Elemental Pack
+async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
   let attempts = 0
   let monster
 
   do {
-    const eligibleMonsters = monsterCacheByTier[tier.name]
-    monster =
-      eligibleMonsters[Math.floor(Math.random() * eligibleMonsters.length)]
-
-    // Check for exclusion of "swarm" or any listed in excludedTypes
-    if (
-      monster &&
-      (excludedTypes.has(monster.type.toLowerCase()) ||
-        monster.type.toLowerCase().includes('swarm'))
-    ) {
-      console.log(`Excluded monster type: ${monster.type}`)
-      monster = null
+    let tierName
+    if (packType === 'elemental' && tierOption.customTiers) {
+      // For Elemental Pack, select tier based on custom chances
+      tierName = selectTier(tierOption.customTiers)
+    } else {
+      // For other packs, use the tier name provided
+      tierName = tierOption.name
     }
+
+    const eligibleMonsters = monsterCacheByTier[tierName]
+    if (!eligibleMonsters || eligibleMonsters.length === 0) {
+      console.log(`No eligible monsters in tier ${tierName}`)
+      return null
+    }
+
+    let filteredMonsters = eligibleMonsters
+
+    if (packType === 'elemental') {
+      // For Elemental Pack, filter by type 'elemental'
+      filteredMonsters = filteredMonsters.filter(
+        (m) => m.type.toLowerCase() === 'elemental'
+      )
+    } else {
+      const allowedMonsters = allowedMonstersByPack[packType]
+      if (allowedMonsters) {
+        // For other packs, filter by allowedMonstersByPack
+        filteredMonsters = filteredMonsters.filter((m) =>
+          allowedMonsters.has(m.index)
+        )
+      }
+    }
+
+    if (filteredMonsters.length === 0) {
+      console.log(
+        `No allowed monsters in tier ${tierName} for pack ${packType}`
+      )
+      return null
+    }
+
+    monster =
+      filteredMonsters[Math.floor(Math.random() * filteredMonsters.length)]
+
     attempts++
   } while (!monster && attempts < maxAttempts)
 

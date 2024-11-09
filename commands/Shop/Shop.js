@@ -1,3 +1,4 @@
+// shop.js
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -25,10 +26,10 @@ let cachePopulated = false
 
 // Pack costs
 const PACK_COSTS = {
-  common: 800, //800
-  uncommon: 3500, //3500
-  rare: 10000, //10000
-  dragon: 15000, //15000
+  common: 0, //800
+  uncommon: 0, //3500
+  rare: 0, //10000
+  elemental: 0, //15000
 }
 
 // Define tier options for each pack
@@ -36,7 +37,13 @@ const TIER_OPTIONS = {
   common: { name: 'Common' },
   uncommon: { name: 'Uncommon' },
   rare: { name: 'Rare' },
-  dragon: { name: 'Rare', type: 'dragon' }, // Dragon Pack: limited to dragons up to Rare
+  elemental: {
+    customTiers: [
+      { name: 'Common', chance: 0.55 },
+      { name: 'Uncommon', chance: 0.37 },
+      { name: 'Rare', chance: 0.08 },
+    ],
+  },
 }
 
 module.exports = {
@@ -110,8 +117,8 @@ module.exports = {
           inline: true,
         },
         {
-          name: 'Dragon Pack',
-          value: `🪙${PACK_COSTS.dragon}`,
+          name: 'Elemental Pack',
+          value: `🪙${PACK_COSTS.elemental}`,
           inline: true,
         }
       )
@@ -132,8 +139,8 @@ module.exports = {
         .setLabel('Rare Pack')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId('purchase_dragon_pack')
-        .setLabel('Dragon Pack')
+        .setCustomId('purchase_elemental_pack')
+        .setLabel('Elemental Pack')
         .setStyle(ButtonStyle.Primary)
     )
 
@@ -175,9 +182,8 @@ module.exports = {
           components: [],
         })
 
-        // Fetch monster, specifying Dragon pack if applicable
-        const isDragonPack = packType === 'dragon'
-        const monster = await pullValidMonster(tierOption, isDragonPack)
+        // Fetch monster, passing packType to pullValidMonster
+        const monster = await pullValidMonster(tierOption, packType)
 
         if (monster) {
           await updateOrAddMonsterToCollection(userId, monster)
@@ -192,7 +198,7 @@ module.exports = {
           })
         } else {
           await interaction.followUp(
-            'Could not retrieve a valid monster. Please try again later.'
+            `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
           )
         }
 

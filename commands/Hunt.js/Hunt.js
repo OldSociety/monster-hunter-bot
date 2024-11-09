@@ -149,7 +149,10 @@ async function startNewEncounter(interaction, user, huntData) {
   } while (!monster)
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.index}.jpg`
-  let monsterScore = monster.cr * (monster.hp / 10) + 10
+  //   let monsterScore = monster.cr * (monster.hp / 10) + 10
+  let monsterScore = Math.floor(monster.hp / 2) // test using flat
+  monsterScore <= 10 ? monsterScore === 10 : monsterScore
+
   if (huntData.difficulty === 'easy')
     monsterScore *= difficultyOptions[huntData.difficulty]
 
@@ -287,15 +290,15 @@ async function startNewEncounter(interaction, user, huntData) {
     }
   })
 
-
-styleCollector.on('end', async (collected, reason) => {
+  styleCollector.on('end', async (collected, reason) => {
     if (reason === 'time') {
       await interaction.followUp({
-        content: 'Session expired. You did not select a fighting style in time. Please use `/hunt` to try again.',
+        content:
+          'Session expired. You did not select a fighting style in time. Please use `/hunt` to try again.',
         ephemeral: true,
-      });
+      })
     }
-  });
+  })
 }
 
 async function displayHuntSummary(interaction, user, huntData) {

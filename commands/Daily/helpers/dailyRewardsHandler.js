@@ -17,7 +17,6 @@ const rotatingMonsters = [
   'dretch',
   'hell hound',
   'nightmare',
-  ,
   'barbed devil',
   'night hag',
   'vrock',
