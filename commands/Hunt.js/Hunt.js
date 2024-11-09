@@ -64,10 +64,10 @@ module.exports = {
     const confirmButton = new ButtonBuilder()
       .setCustomId('confirm_hunt')
       .setLabel('Continue')
-      .setStyle(ButtonStyle.Success)
+      .setStyle(ButtonStyle.Primary)
     const useIchorButton = new ButtonBuilder()
       .setCustomId('use_ichor')
-      .setLabel('Use 🧪ichor')
+      .setLabel('Drink 🧪ichor')
       .setStyle(ButtonStyle.Success)
     const cancelButton = new ButtonBuilder()
       .setCustomId('cancel_hunt')
@@ -120,6 +120,7 @@ module.exports = {
         if (huntData.ichorUsed) {
           // Ensure user's currency is initialized
           user.currency = user.currency || {}
+          console.log(user.currency.ichor)
           if ((user.currency.ichor || 0) < 3) {
             await interaction.followUp({
               content: "You don't have enough 🧪ichor to use this option.",
@@ -416,12 +417,7 @@ async function runBattlePhases(
     }
 
     const healthBar = createHealthBar(momentum, maxMomentum)
-    const winChancePercentage = ichorUsed ? 70 : Math.floor(winChance.base)
-    const winChanceText = winChance
-      ? `**Chance of Winning:** ${winChancePercentage}%${
-          isAdvantaged ? ` (Advantage)` : ''
-        }`
-      : '**Chance of Winning:** N/A'
+    const winChanceText = `Advantage:` ? ` **True**` : 'False'
 
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
