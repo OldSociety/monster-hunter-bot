@@ -20,6 +20,19 @@ function determineCategory(type) {
   return 'brute' // Default to 'brute' if type is unrecognized
 }
 
+
+function classifyMonsterType(type) {
+  const bruteTypes = ['giant', 'monstrosity', 'dragon', 'construct'];
+  const casterTypes = ['aberration', 'celestial', 'elemental', 'fey', 'fiend'];
+  const stealthTypes = ['humanoid', 'beast', 'undead', 'plant', 'ooze'];
+
+  if (bruteTypes.includes(type.toLowerCase())) return 'brute';
+  if (casterTypes.includes(type.toLowerCase())) return 'caster';
+  if (stealthTypes.includes(type.toLowerCase())) return 'stealth';
+  return 'brute'; // Default if type is unclassified
+}
+
+
 function calculateWinChance(playerScore, monsterScore, isAdvantaged) {
   const baseWinChance = Math.round(
     (playerScore / (playerScore + monsterScore)) * 100
@@ -42,6 +55,7 @@ function capitalize(str) {
 module.exports = {
   checkAdvantage,
   calculateWinChance,
+  classifyMonsterType,
   getEmbedColor,
   capitalize,
 }

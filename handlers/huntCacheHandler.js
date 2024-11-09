@@ -1,6 +1,7 @@
+// huntCacheHandler.js
 const fs = require('fs')
 const path = require('path')
-let monsterListCache = [] // Cache for hunt monsters
+const { classifyMonsterType } = require('../utils/huntUtility/huntUtils.js')
 
 // Path to the assets folder and setup for valid creatures
 const assetsPath = path.join(__dirname, '..', 'assets')
@@ -9,20 +10,18 @@ const validCreatures = new Set(
   creatureFiles.map((filename) => path.parse(filename).name)
 )
 
-// Function to classify monster types for combat advantage
-function classifyMonsterType(type) {
-  const bruteTypes = ['giant', 'monstrosity', 'dragon', 'construct']
-  const casterTypes = ['aberration', 'celestial', 'elemental', 'fey', 'fiend']
-  const stealthTypes = ['humanoid', 'beast', 'undead', 'plant', 'ooze']
+// EXCLUDED TYPES
+const excludedTypes = new Set([
+  'dragon',
+  'giant',
+  // Add other types you want to exclude
+])
 
-  if (bruteTypes.includes(type.toLowerCase())) return 'brute'
-  if (casterTypes.includes(type.toLowerCase())) return 'caster'
-  if (stealthTypes.includes(type.toLowerCase())) return 'stealth'
-  return 'brute' // Default if type is unclassified
-}
+const monsterCacheByCR = {} // Cache monsters by CR
+let cachePopulated = false
 
 async function cacheHuntMonsters() {
-  if (monsterListCache.length > 0) return // Skip if already cached
+  if (cachePopulated) return // Skip if already cached
 
   const fetch = (await import('node-fetch')).default
   const response = await fetch('https://www.dnd5eapi.co/api/monsters')
@@ -38,13 +37,33 @@ async function cacheHuntMonsters() {
       )
       const monster = await monsterResponse.json()
 
-      // Classify combat type based on monster type
+      // Exclude certain monster types
+      if (
+        excludedTypes.has(monster.type?.toLowerCase()) ||
+        monster.type?.toLowerCase().includes('swarm')
+      ) {
+        continue
+      }
+
+      // Use classifyMonsterType from huntUtils.js
       const combatType = classifyMonsterType(monster.type)
 
+      // Parse CR correctly
+      let cr = monster.challenge_rating
+      if (typeof cr === 'string' && cr.includes('/')) {
+        const [numerator, denominator] = cr.split('/').map(Number)
+        cr = numerator / denominator
+      }
+
+      // Cache monsters by CR
+      if (!monsterCacheByCR[cr]) {
+        monsterCacheByCR[cr] = []
+      }
+
       // Cache relevant monster data
-      monsterListCache.push({
+      monsterCacheByCR[cr].push({
         name: monster.name,
-        cr: monster.challenge_rating,
+        cr,
         hp: monster.hit_points,
         type: monster.type,
         combatType,
@@ -54,15 +73,18 @@ async function cacheHuntMonsters() {
       console.log(`Error processing monster ${monsterSummary.name}:`, error)
     }
   }
+  cachePopulated = true
   console.log('Hunt monster cache populated with combat types.')
 }
 
-// Function to pull a monster by CR
+// **Function to pull a monster by CR**
 function pullMonsterByCR(cr) {
-  const monstersByCR = monsterListCache.filter((monster) => monster.cr === cr)
-  return monstersByCR.length > 0
-    ? monstersByCR[Math.floor(Math.random() * monstersByCR.length)]
-    : null
+  const availableMonsters = monsterCacheByCR[cr]
+  if (!availableMonsters || availableMonsters.length === 0) {
+    console.log(`No monsters available for CR ${cr}.`)
+    return null
+  }
+  return availableMonsters[Math.floor(Math.random() * availableMonsters.length)]
 }
 
 module.exports = { cacheHuntMonsters, pullMonsterByCR }

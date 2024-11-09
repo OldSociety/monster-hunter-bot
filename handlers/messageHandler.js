@@ -40,7 +40,7 @@ module.exports = (client, User) => {
       const minutesSinceLastMessage = (now - lastMessageTime) / (1000 * 60)
 
       if (minutesSinceLastMessage >= 1) {
-        const goldToAdd = Math.floor(Math.random() * 3) + 1 // Award 1-3 gold randomly every minute
+        const goldToAdd = Math.floor(Math.random() * 5) + 1 // Award 1-3 gold randomly every minute
         const newGoldAmount = userData.gold + goldToAdd
 
         // Update user's gold and last message time
