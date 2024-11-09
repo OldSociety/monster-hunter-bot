@@ -30,6 +30,7 @@ const PACK_COSTS = {
   uncommon: 3500, //3500
   rare: 10000, //10000
   elemental: 15000, //15000
+  ichor: 650, //650
 }
 
 // Define tier options for each pack
@@ -44,6 +45,7 @@ const TIER_OPTIONS = {
       { name: 'Rare', chance: 0.08 },
     ],
   },
+  // No tier option needed for ichor pack since it doesn't pull a monster
 }
 
 module.exports = {
@@ -64,6 +66,7 @@ module.exports = {
         user_id: userId,
         user_name: interaction.user.username,
         gold: 1000,
+        currency: {}, // Initialize currency object
       })
     }
 
@@ -99,7 +102,7 @@ module.exports = {
       .setColor(0x00ff00)
       .setTitle(`Store`)
       .setDescription(
-        `Welcome to the Monster Shop! Here you can purchase packs containing monsters of various tiers.`
+        `Welcome to the Monster Shop! Here you can purchase packs containing monsters or resources.`
       )
       .addFields(
         {
@@ -120,6 +123,11 @@ module.exports = {
         {
           name: 'Elemental Pack',
           value: `🪙${PACK_COSTS.elemental}`,
+          inline: true,
+        },
+        {
+          name: 'Ichor Pack',
+          value: `🪙${PACK_COSTS.ichor}\nReceive 🧪10 ichor`,
           inline: true,
         }
       )
@@ -142,7 +150,11 @@ module.exports = {
       new ButtonBuilder()
         .setCustomId('purchase_elemental_pack')
         .setLabel('Elemental Pack')
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('purchase_ichor_pack')
+        .setLabel('Ichor Pack')
+        .setStyle(ButtonStyle.Success)
     )
 
     // Update embed with shop options
@@ -183,24 +195,49 @@ module.exports = {
           components: [],
         })
 
-        // Fetch monster, passing packType to pullValidMonster
-        const monster = await pullValidMonster(tierOption, packType)
+        if (packType === 'ichor') {
+          // Handle Ichor Pack purchase
+          const ichorAmount = 10
 
-        if (monster) {
-          await updateOrAddMonsterToCollection(userId, monster)
-          await updateTop5AndUserScore(userId)
+          // Add ichor to user's currency
+          user.currency = user.currency || {}
+          user.currency.ichor = (user.currency.ichor || 0) + ichorAmount
 
-          const stars = getStarsBasedOnColor(monster.color)
-          const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
+          // Save the user
+          await user.save()
+
+          // Create an embed to inform the user
+          const ichorEmbed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle('Ichor Pack Purchased')
+            .setDescription(
+              `You have received 🧪${ichorAmount} ichor! You can spend ichor to increase your chances of winning by 20%.`
+            )
 
           await interaction.followUp({
-            content: `You pulled a monster from the **${packType} pack!**`,
-            embeds: [monsterEmbed],
+            content: `You purchased an **Ichor Pack**!`,
+            embeds: [ichorEmbed],
           })
         } else {
-          await interaction.followUp(
-            `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
-          )
+          // Fetch monster, passing packType to pullValidMonster
+          const monster = await pullValidMonster(tierOption, packType)
+
+          if (monster) {
+            await updateOrAddMonsterToCollection(userId, monster)
+            await updateTop5AndUserScore(userId)
+
+            const stars = getStarsBasedOnColor(monster.color)
+            const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
+
+            await interaction.followUp({
+              content: `You pulled a monster from the **${packType} pack!**`,
+              embeds: [monsterEmbed],
+            })
+          } else {
+            await interaction.followUp(
+              `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
+            )
+          }
         }
 
         collector.stop('completed')
