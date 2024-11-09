@@ -26,10 +26,10 @@ let cachePopulated = false
 
 // Pack costs
 const PACK_COSTS = {
-  common: 0, //800
-  uncommon: 0, //3500
-  rare: 0, //10000
-  elemental: 0, //15000
+  common: 800, //800
+  uncommon: 3500, //3500
+  rare: 10000, //10000
+  elemental: 15000, //15000
 }
 
 // Define tier options for each pack
