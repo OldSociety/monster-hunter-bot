@@ -1,7 +1,5 @@
 // huntLevels.js
 
-const CR_VALUES = [0, 0.125, 0.25, 0.5, 1]
-
 const levelData = {
   hunt1: {
     key: 'hunt1',
@@ -10,30 +8,56 @@ const levelData = {
     energyCost: 1,
     battles: generateHuntOneBattles(),
   },
-  hunt2: {
-    key: 'hunt2',
-    name: 'Hunt Level 2',
-    description: 'New challenges await!',
-    energyCost: 1,
-    battles: generateHuntTwoBattles(), // To be implemented
-  },
   // Future levels can be added here
 }
 
 function generateHuntOneBattles() {
   const battles = []
 
-  for (const cr of CR_VALUES) {
-    for (let i = 0; i < 4; i++) {
-      battles.push({
-        type: 'normal',
-        cr: cr,
-      })
-    }
+  // Add 3 battles with CR 0
+  for (let i = 0; i < 3; i++) {
+    battles.push({
+      type: 'normal',
+      cr: 0,
+    })
   }
 
+  // Add 5 battles with CR 1/8
+  for (let i = 0; i < 5; i++) {
+    battles.push({
+      type: 'normal',
+      cr: 0.125,
+    })
+  }
+
+  // Add 4 battles with CR 1/4
+  for (let i = 0; i < 4; i++) {
+    battles.push({
+      type: 'normal',
+      cr: 0.25,
+    })
+  }
+
+  // Add 5 battles with CR 1/2
+  for (let i = 0; i < 5; i++) {
+    battles.push({
+      type: 'normal',
+      cr: 0.5,
+    })
+  }
+
+  // Add 3 battles with CR 1
+  for (let i = 0; i < 3; i++) {
+    battles.push({
+      type: 'normal',
+      cr: 1,
+    })
+  }
+
+  // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
+  // Add the mini-boss at the end
   battles.push({
     type: 'mini-boss',
     cr: 2,
@@ -41,12 +65,6 @@ function generateHuntOneBattles() {
   })
 
   return battles
-}
-
-// Placeholder for Hunt 2
-function generateHuntTwoBattles() {
-  // Implementation for Hunt 2
-  return []
 }
 
 module.exports = { levelData }

@@ -11,6 +11,7 @@ const { User } = require('../../Models/model.js')
 const {
   cacheHuntMonsters,
   pullMonsterByCR,
+  pullSpecificMonster,
 } = require('../../handlers/huntCacheHandler')
 const {
   calculateReward,
@@ -20,9 +21,7 @@ const {
   checkAdvantage,
   calculateWinChance,
 } = require('../../utils/huntUtility/huntUtils.js')
-const difficultyOptions = {
-  easy: 0.5,
-}
+const { levelData } = require('./huntLevels')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -34,15 +33,21 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
-    const user = await User.findOne({ where: { user_id: userId } })
+    let user = await User.findOne({ where: { user_id: userId } })
 
     if (!user) {
       await interaction.editReply({
-        content: "You don't have an account. Use `/account` to create one.",
+        content: "You don't have an account. Use /account to create one.",
         ephemeral: true,
       })
       return
     }
+
+    user.currency = user.currency || {}
+    user.currency.energy =
+      user.currency.energy !== undefined ? user.currency.energy : 10
+    user.currency.ichor = user.currency.ichor || 0
+    user.maxCompletedLevel = user.maxCompletedLevel || 0
 
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xffcc00)
@@ -51,139 +56,197 @@ module.exports = {
 
     await cacheHuntMonsters()
 
-    const startHuntEmbed = new EmbedBuilder()
-      .setTitle('Prepare for the Hunt')
-      .setDescription(
-        'You are about to embark on a monster hunt. Do you want to continue?'
-      )
-      .setColor('#FF0000')
-      .setFooter({
-        text: 'Use 🧪ichor to increase your chance of winning by 20%. Cost: 3 🧪ichor',
-      })
+    // Initialize huntData
+    let huntData = {
+      totalMonstersDefeated: 0,
+      totalGoldEarned: 0,
+      currentBattleIndex: 0,
+      ichorUsed: false,
+      level: null,
+      retries: 0,
+      lastMonster: null,
+      inProgress: false,
+    }
 
-    const confirmButton = new ButtonBuilder()
-      .setCustomId('confirm_hunt')
-      .setLabel('Continue')
-      .setStyle(ButtonStyle.Primary)
-    const useIchorButton = new ButtonBuilder()
-      .setCustomId('use_ichor')
-      .setLabel('Drink 🧪ichor')
-      .setStyle(ButtonStyle.Success)
-    const cancelButton = new ButtonBuilder()
-      .setCustomId('cancel_hunt')
-      .setLabel('Cancel')
-      .setStyle(ButtonStyle.Danger)
-    const startRow = new ActionRowBuilder().addComponents(
-      confirmButton,
-      useIchorButton,
-      cancelButton
-    )
-
-    await interaction.editReply({
-      embeds: [startHuntEmbed],
-      components: [startRow],
-      ephemeral: true,
-    })
-
-    const filter = (i) => i.user.id === userId
-
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter,
-      max: 1,
-      time: 15000,
-    })
-
-    collector.on('collect', async (i) => {
-      if (i.customId === 'cancel_hunt') {
-        await i.update({
-          content: 'Hunt cancelled.',
-          embeds: [],
-          components: [],
-          ephemeral: true,
-        })
-        collector.stop()
-        return
-      }
-      if (i.customId === 'confirm_hunt' || i.customId === 'use_ichor') {
-        await i.deferUpdate()
-        collector.stop()
-
-        // Initialize huntData
-        let huntData = {
-          totalMonstersDefeated: 0,
-          totalGoldEarned: 0,
-          currentCR: 1,
-          difficulty: 'easy',
-          ichorUsed: i.customId === 'use_ichor', 
-        }
-
-        if (huntData.ichorUsed) {
-          // Ensure user's currency is initialized
-          user.currency = user.currency || {}
-          console.log(user.currency.ichor)
-          if ((user.currency.ichor || 0) < 3) {
-            await interaction.followUp({
-              content: "You don't have enough 🧪ichor to use this option.",
-              ephemeral: true,
-            })
-            return
-          }
-          // Deduct ichor
-          user.currency.ichor -= 3
-          await user.save()
-        }
-
-        await startNewEncounter(interaction, user, huntData)
-      }
-    })
-
-    collector.on('end', async (collected, reason) => {
-      if (reason === 'time') {
-        await interaction.editReply({
-          content: 'Session expired. Please start again.',
-          components: [],
-          ephemeral: true,
-        })
-      }
-    })
+    await showLevelSelection(interaction, user, huntData)
   },
 }
 
-async function startNewEncounter(interaction, user, huntData) {
-  let adjustedCR =
-    huntData.currentCR === 1
-      ? 0.25
-      : huntData.currentCR === 2
-      ? 0.5
-      : huntData.currentCR - 1
+async function showLevelSelection(interaction, user, huntData) {
+  const levels = Object.keys(levelData)
 
-  let monster
-  do {
-    monster = pullMonsterByCR(adjustedCR)
-    if (!monster) {
-      // If no monster is found for the adjusted CR, reduce CR by 1
-      adjustedCR -= 1
-      if (adjustedCR < 0.25) {
+  // Filter levels based on user's maxCompletedLevel
+  user.maxCompletedLevel = user.maxCompletedLevel || 0
+
+  const availableLevels = levels.filter((levelKey) => {
+    const levelNumber = parseInt(levelKey.replace('hunt', ''))
+    return levelNumber <= user.maxCompletedLevel + 1
+  })
+
+  if (availableLevels.length === 0) {
+    await interaction.editReply({
+      content: 'No levels are available. Please complete previous hunts first.',
+      ephemeral: true,
+    })
+    return
+  }
+
+  const levelButtons = availableLevels.map((levelKey) => {
+    const level = levelData[levelKey]
+    return new ButtonBuilder()
+      .setCustomId(`level_${levelKey}`)
+      .setLabel(`${level.name} ⚡${level.energyCost}`)
+      .setStyle(ButtonStyle.Primary)
+  })
+
+  // Add the ichor option
+  const ichorButton = new ButtonBuilder()
+    .setCustomId('use_ichor')
+    .setLabel('Drink 🧪ichor')
+    .setStyle(ButtonStyle.Success)
+
+  const cancelButton = new ButtonBuilder()
+    .setCustomId('cancel_hunt')
+    .setLabel('Cancel')
+    .setStyle(ButtonStyle.Danger)
+
+  const actionRow = new ActionRowBuilder().addComponents(...levelButtons)
+  const actionRow2 = new ActionRowBuilder().addComponents(
+    ichorButton,
+    cancelButton
+  )
+
+  const startHuntEmbed = new EmbedBuilder()
+    .setTitle('Select a Hunt Level')
+    .setDescription('Choose a level to begin your hunt.')
+    .setColor('#FF0000')
+    .setFooter({
+      text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
+    })
+
+  if (huntData.ichorUsed) {
+    startHuntEmbed.addFields({
+      name: 'Ichor Invigoration',
+      value: 'You are invigorated with 🧪ichor! Your strength increases.',
+    })
+  }
+
+  await interaction.editReply({
+    embeds: [startHuntEmbed],
+    components: [actionRow, actionRow2],
+    ephemeral: true,
+  })
+
+  const filter = (i) => i.user.id === interaction.user.id
+
+  const collector = interaction.channel.createMessageComponentCollector({
+    filter,
+    max: 1,
+    time: 15000,
+  })
+
+  collector.on('collect', async (i) => {
+    if (i.customId === 'cancel_hunt') {
+      await i.update({
+        content: 'Hunt cancelled.',
+        embeds: [],
+        components: [],
+        ephemeral: true,
+      })
+      collector.stop()
+      return
+    }
+    if (i.customId === 'use_ichor') {
+      await i.deferUpdate()
+
+      if ((user.currency.ichor || 0) < 3) {
         await interaction.followUp({
-          content: 'No monsters available for the current challenge rating.',
+          content: "You don't have enough 🧪ichor to use this option.",
           ephemeral: true,
         })
         return
       }
+      user.currency.ichor -= 3
+      await user.save()
+      huntData.ichorUsed = true
+
+      // Show the level selection again with ichor effect noted
+      await showLevelSelection(interaction, user, huntData)
+    } else if (i.customId.startsWith('level_')) {
+      await i.deferUpdate()
+      collector.stop()
+
+      const selectedLevelKey = i.customId.replace('level_', '')
+      const selectedLevel = levelData[selectedLevelKey]
+
+      if (user.currency.energy < selectedLevel.energyCost) {
+        await interaction.followUp({
+          content: `You don't have enough energy to start ${selectedLevel.name}. It costs ⚡${selectedLevel.energyCost} energy.`,
+          ephemeral: true,
+        })
+        return
+      }
+
+      user.currency.energy -= selectedLevel.energyCost
+      await user.save()
+
+      huntData.level = selectedLevel
+      huntData.inProgress = true
+
+      await startNewEncounter(interaction, user, huntData)
     }
-  } while (!monster)
+  })
+
+  collector.on('end', async (collected, reason) => {
+    if (reason === 'time') {
+      await interaction.editReply({
+        content: 'Session expired. Please start again.',
+        components: [],
+        ephemeral: true,
+      })
+    }
+  })
+}
+
+async function startNewEncounter(interaction, user, huntData) {
+  const currentBattle = huntData.level.battles[huntData.currentBattleIndex]
+
+  let monster
+
+  if (huntData.lastMonster && huntData.retries > 0) {
+    // Use the last monster if player is retrying
+    monster = huntData.lastMonster
+  } else {
+    const battleType = currentBattle.type
+
+    if (battleType === 'mini-boss' || battleType === 'boss') {
+      monster = pullSpecificMonster(currentBattle.monsterIndex)
+    } else {
+      const crKey = currentBattle.cr
+      monster = pullMonsterByCR(crKey)
+    }
+
+    if (!monster) {
+      await interaction.followUp({
+        content: 'No monsters available for the current challenge rating.',
+        ephemeral: true,
+      })
+      return
+    }
+
+    // Store the monster for potential retries
+    huntData.lastMonster = monster
+  }
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-  // let monsterScore = monster.cr * (monster.hp / 10) + 10
-  let monsterScore = monster.hp + 10 // test using flat
-  monsterScore <= 10 ? (monsterScore = 10) : monsterScore
-
-  if (huntData.difficulty === 'easy')
-    monsterScore *= difficultyOptions[huntData.difficulty]
+  let monsterScore = monster.hit_points + 10
+  monsterScore = Math.max(monsterScore, 10)
 
   const monsterEmbed = new EmbedBuilder()
     .setTitle(`A wild ${monster.name} appears!`)
-    .setDescription(`**CR:** ${adjustedCR}\n**Type:** ${monster.type}`)
+    .setDescription(
+      `**CR:** ${monster.challenge_rating}\n**Type:** ${monster.type}`
+    )
     .setColor('#FFA500')
     .setThumbnail(imageUrl)
 
@@ -238,88 +301,40 @@ async function startNewEncounter(interaction, user, huntData) {
     const selectedStyle = styleInteraction.customId.split('_')[1]
     const playerScore = user[`${selectedStyle}_score`]
     const isAdvantaged = checkAdvantage(selectedStyle, monster.type)
-    const winChance = calculateWinChance(
-      playerScore,
-      monsterScore,
-      isAdvantaged
-    )
+
     const playerWins = await runBattlePhases(
       interaction,
       playerScore,
       monsterScore,
-      winChance,
       monster,
       isAdvantaged,
-      huntData.ichorUsed // Pass ichorUsed flag
+      huntData,
+      currentBattle.type // pass battleType
     )
 
     if (playerWins) {
-      const goldReward = calculateReward(Math.floor(adjustedCR))
+      const goldReward = calculateReward(Math.floor(monster.challenge_rating))
       await addGoldToUser(user, goldReward)
 
-      // Increment huntData totals
       huntData.totalGoldEarned += goldReward
       huntData.totalMonstersDefeated += 1
+      huntData.currentBattleIndex += 1
 
-      const continueEmbed = new EmbedBuilder()
-        .setTitle('Battle Complete')
-        .setDescription(
-          `You defeated the ${monster.name} and earned 🪙${goldReward} gold. Continue or collect rewards?`
-        )
-        .setColor('#00FF00')
+      huntData.retries = 0
+      huntData.lastMonster = null
 
-      const continueButton = new ButtonBuilder()
-        .setCustomId('continue_hunt')
-        .setLabel('Continue Hunt')
-        .setStyle(ButtonStyle.Success)
-      const endHuntButton = new ButtonBuilder()
-        .setCustomId('end_hunt')
-        .setLabel('End Hunt')
-        .setStyle(ButtonStyle.Danger)
-      const continueRow = new ActionRowBuilder().addComponents(
-        continueButton,
-        endHuntButton
-      )
-
-      await interaction.followUp({
-        embeds: [continueEmbed],
-        components: [continueRow],
-        ephemeral: true,
-      })
-
-      const continueCollector =
-        interaction.channel.createMessageComponentCollector({
-          filter,
-          max: 1,
-          time: 15000,
-        })
-
-      continueCollector.on('collect', async (continueInteraction) => {
-        await continueInteraction.deferUpdate()
-        if (continueInteraction.customId === 'continue_hunt') {
-          continueCollector.stop()
-
-          // Increment currentCR
-          huntData.currentCR += 1
-
-          await startNewEncounter(interaction, user, huntData)
-        } else if (continueInteraction.customId === 'end_hunt') {
-          continueCollector.stop()
-          await displayHuntSummary(interaction, user, huntData)
-        }
-      })
-
-      continueCollector.on('end', async (collected, reason) => {
-        if (reason === 'time') {
-          await interaction.followUp({
-            content:
-              'Session expired. You did not choose to continue or end the hunt in time.',
-            ephemeral: true,
-          })
-        }
-      })
+      if (huntData.currentBattleIndex >= huntData.level.battles.length) {
+        await displayHuntSummary(interaction, user, huntData, true)
+      } else {
+        await startNewEncounter(interaction, user, huntData)
+      }
     } else {
-      await displayHuntSummary(interaction, user, huntData)
+      huntData.retries += 1
+      if (huntData.retries < 3) {
+        await offerRetry(interaction, user, huntData)
+      } else {
+        await displayHuntSummary(interaction, user, huntData, false)
+      }
     }
   })
 
@@ -327,43 +342,135 @@ async function startNewEncounter(interaction, user, huntData) {
     if (reason === 'time') {
       await interaction.followUp({
         content:
-          'Session expired. You did not select a fighting style in time. Please use `/hunt` to try again.',
+          'Session expired. You did not select a fighting style in time. Please use /hunt to try again.',
         ephemeral: true,
       })
     }
   })
 }
 
-async function displayHuntSummary(interaction, user, huntData) {
+async function offerRetry(interaction, user, huntData) {
+  const retryEmbed = new EmbedBuilder()
+    .setTitle('You have been defeated!')
+    .setDescription(
+      `You were defeated by the ${huntData.lastMonster.name}. Would you like to try again?\n` +
+        `You have ${3 - huntData.retries} revives left. Cost: ⚡${
+          huntData.level.energyCost
+        } energy`
+    )
+    .setColor('#FF0000')
+
+  const retryButton = new ButtonBuilder()
+    .setCustomId('retry_hunt')
+    .setLabel('Retry')
+    .setStyle(ButtonStyle.Success)
+  const endHuntButton = new ButtonBuilder()
+    .setCustomId('end_hunt')
+    .setLabel('End Hunt')
+    .setStyle(ButtonStyle.Danger)
+
+  const actionRow = new ActionRowBuilder().addComponents(
+    retryButton,
+    endHuntButton
+  )
+
+  await interaction.followUp({
+    embeds: [retryEmbed],
+    components: [actionRow],
+    ephemeral: true,
+  })
+
+  const filter = (i) => i.user.id === interaction.user.id
+
+  const collector = interaction.channel.createMessageComponentCollector({
+    filter,
+    max: 1,
+    time: 15000,
+  })
+
+  collector.on('collect', async (i) => {
+    await i.deferUpdate()
+    if (i.customId === 'retry_hunt') {
+      if (user.currency.energy < huntData.level.energyCost) {
+        await interaction.followUp({
+          content: `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.`,
+          ephemeral: true,
+        })
+        await displayHuntSummary(interaction, user, huntData, false)
+        collector.stop()
+        return
+      }
+
+      user.currency.energy -= huntData.level.energyCost
+      await user.save()
+
+      await startNewEncounter(interaction, user, huntData)
+    } else if (i.customId === 'end_hunt') {
+      await displayHuntSummary(interaction, user, huntData, false)
+    }
+    collector.stop()
+  })
+
+  collector.on('end', async (collected, reason) => {
+    if (reason === 'time') {
+      await interaction.followUp({
+        content:
+          'Session expired. You did not choose to retry or end the hunt in time.',
+        ephemeral: true,
+      })
+    }
+  })
+}
+
+async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   const summaryEmbed = new EmbedBuilder()
-    .setTitle(`Hunt Summary`)
+    .setTitle('Hunt Summary')
     .setDescription(
       `**Total Monsters Defeated:** ${huntData.totalMonstersDefeated}\n` +
         `**Total Gold Earned:** 🪙${huntData.totalGoldEarned}`
     )
     .setColor('#FFD700')
 
+  if (levelCompleted) {
+    summaryEmbed.addFields({
+      name: 'Level Completed!',
+      value: `Congratulations! You have completed ${huntData.level.name}.`,
+    })
+
+    user.maxCompletedLevel = user.maxCompletedLevel || 0
+    const levelNumber = parseInt(huntData.level.key.replace('hunt', ''))
+    if (user.maxCompletedLevel < levelNumber) {
+      user.maxCompletedLevel = levelNumber
+      await user.save()
+    }
+  } else {
+    summaryEmbed.addFields({
+      name: 'Hunt Ended',
+      value: 'Better luck next time!',
+    })
+  }
+
   await interaction.followUp({ embeds: [summaryEmbed], ephemeral: false })
 }
 
 function createHealthBar(currentHealth, maxHealth) {
-  const totalSegments = 15 // Total number of segments for the health bar
+  const totalSegments = 15
   let filledSegments = Math.round((currentHealth / maxHealth) * totalSegments)
   if (currentHealth > 0 && filledSegments < 1) filledSegments = 1
   let unfilledSegments = totalSegments - filledSegments
   const filledBar = '🟥'.repeat(filledSegments)
   const unfilledBar = '⬛'.repeat(unfilledSegments)
-  return '`' + '『' + `${filledBar}${unfilledBar}` + '』' + '`'
+  return '' + '『' + `${filledBar}${unfilledBar}` + '』' + ''
 }
 
 async function runBattlePhases(
   interaction,
   playerScore,
   monsterScore,
-  winChance,
   monster,
   isAdvantaged,
-  ichorUsed // Add this parameter
+  huntData,
+  battleType // accept battleType
 ) {
   let playerWins = 0
   let monsterWins = 0
@@ -375,28 +482,37 @@ async function runBattlePhases(
     const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore
 
     let playerRoll
-    if (ichorUsed) {
-      // Apply minimum roll of 40% of effectivePlayerScore
+    if (huntData.ichorUsed) {
       const minRoll = 0.4 * effectivePlayerScore
       playerRoll = Math.random() * (effectivePlayerScore - minRoll) + minRoll
     } else {
       playerRoll = Math.random() * effectivePlayerScore
     }
 
-    const monsterRoll = Math.random() * monsterScore
+    let monsterRoll
+    if (battleType === 'boss') {
+      const minMonsterRoll = 0.5 * monsterScore
+      monsterRoll =
+        Math.random() * (monsterScore - minMonsterRoll) + minMonsterRoll
+    } else if (battleType === 'mini-boss') {
+      const minMonsterRoll = 0.25 * monsterScore
+      monsterRoll =
+        Math.random() * (monsterScore - minMonsterRoll) + minMonsterRoll
+    } else {
+      monsterRoll = Math.random() * monsterScore
+    }
+
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
 
     let segmentLoss = 0
-    if (phaseResult.includes('Hit!')) {
+    if (phaseResult === 'Hit!') {
       playerWins++
       const margin = playerRoll - monsterRoll
 
-      // Determine base segment loss based on margin
       if (margin > 15) segmentLoss = 3
       else if (margin > 5) segmentLoss = 2
       else segmentLoss = 1
 
-      // Incremental bonus based on number of player wins
       if (playerWins === 1) {
         segmentLoss += 1
       } else if (playerWins === 2) {
@@ -421,9 +537,9 @@ async function runBattlePhases(
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(
-        `**CR:** ${monster.cr}\n` +
+        `**CR:** ${monster.challenge_rating}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
-          `**Enemy Score:** ${Math.floor(monsterScore)}\n` + ` \n ` +
+          `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
           `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(
             playerRoll.toFixed(2)
           )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +

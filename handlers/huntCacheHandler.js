@@ -82,5 +82,9 @@ function pullMonsterByCR(cr) {
   }
   return availableMonsters[Math.floor(Math.random() * availableMonsters.length)]
 }
+function pullSpecificMonster(index) {
+  return huntMonsters.find((monster) => monster.index === index) || null;
+}
 
-module.exports = { cacheHuntMonsters, pullMonsterByCR }
+
+module.exports = { cacheHuntMonsters, pullMonsterByCR, pullSpecificMonster }
