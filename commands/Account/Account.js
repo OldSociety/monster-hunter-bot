@@ -77,7 +77,7 @@ module.exports = {
           .setColor('#00FF00')
           .setTitle('Welcome to Blood Hunter!')
           .setDescription(
-            `Your account has been created.\n Use ` +
+            `You have joined the hunt!\n Use ` +
               '``' +
               `/shop` +
               '``' +
@@ -149,7 +149,7 @@ module.exports = {
         const ichor = currency.ichor || 0
         const dice = currency.dice || 0
 
-        const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor} 🎲${dice}`
+        const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${gems} 🧪${ichor}`
 
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)

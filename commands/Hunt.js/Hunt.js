@@ -7,6 +7,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
+const { Collection } = require('../../Models/model.js')
 
 const { checkUserAccount } = require('../Account/checkAccount.js')
 const {
@@ -33,6 +34,36 @@ module.exports = {
 
     const user = await checkUserAccount(interaction)
     if (!user) return
+
+    // Check if the user has an empty collection
+    let userCollection
+    try {
+      userCollection = await Collection.findOne({ where: { userId: user.id } })
+      if (!userCollection) {
+        const noMonstersEmbed = new EmbedBuilder()
+          .setColor('#FF0000')
+          .setTitle('No Monsters Found')
+          .setDescription(
+            `You currently do not have any monsters in your collection. You need at least one card to go on a hunt.\n\nUse ` +
+              '``' +
+              `/shop` +
+              '``' +
+              `to recieve a starter pack.`
+          )
+          .setFooter({
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+          })
+
+        await interaction.editReply({ embeds: [noMonstersEmbed] })
+        return
+      }
+    } catch (error) {
+      console.error('Error querying Collection model:', error)
+      return interaction.reply({
+        content: 'An error occurred while accessing the collection data.',
+        ephemeral: true,
+      })
+    }
 
     user.currency = user.currency || {}
     user.currency.energy =
