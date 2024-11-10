@@ -53,7 +53,7 @@ module.exports = {
         user = await User.create({
           user_id: userId,
           user_name: interaction.user.username,
-          gold: 1000,
+          gold: 500,
           currency: {
             energy: 10,
             gems: 0,
