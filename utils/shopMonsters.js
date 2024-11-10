@@ -3,6 +3,11 @@
 const allowedMonstersByPack = {
   common: new Set([
     'dark-mantle',
+    'dryad',
+    'violet-fungus',
+  ]),
+  common: new Set([
+    'dark-mantle',
     'homunculus',
     'dust-mephit',
     'gnoll',

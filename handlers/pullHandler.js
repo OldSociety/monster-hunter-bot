@@ -89,18 +89,22 @@ function selectTier(customTiers) {
   return customTiers[0].name
 }
 
-// Adjusted pullValidMonster to handle custom tiers for the Elemental Pack
 async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
   let attempts = 0
   let monster
 
+  if (packType === 'starter') {
+    const starterMonsters = Array.from(allowedMonstersByPack['starter'])
+    const randomIndex = Math.floor(Math.random() * starterMonsters.length)
+    const monsterName = starterMonsters[randomIndex]
+    return await fetchMonsterByName(monsterName)
+  }
+
   do {
     let tierName
     if (packType === 'elemental' && tierOption.customTiers) {
-      // For Elemental Pack, select tier based on custom chances
       tierName = selectTier(tierOption.customTiers)
     } else {
-      // For other packs, use the tier name provided
       tierName = tierOption.name
     }
 
@@ -113,14 +117,12 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
     let filteredMonsters = eligibleMonsters
 
     if (packType === 'elemental') {
-      // For Elemental Pack, filter by type 'elemental'
       filteredMonsters = filteredMonsters.filter(
         (m) => m.type.toLowerCase() === 'elemental'
       )
     } else {
       const allowedMonsters = allowedMonstersByPack[packType]
       if (allowedMonsters) {
-        // For other packs, filter by allowedMonstersByPack
         filteredMonsters = filteredMonsters.filter((m) =>
           allowedMonsters.has(m.index)
         )
@@ -152,7 +154,6 @@ async function fetchMonsterByName(name) {
     console.log('Cache populated successfully.')
   }
 
-  // Iterate through each tier's cached monsters to find the specified monster
   for (const tier of Object.values(monsterCacheByTier)) {
     const monster = tier.find(
       (m) => m.name.toLowerCase() === name.toLowerCase()

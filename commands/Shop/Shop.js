@@ -6,6 +6,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
+const { Collection } = require('../../Models/model.js')
 
 const {
   cacheMonstersByTier,
@@ -26,6 +27,7 @@ let cachePopulated = false
 
 // Pack costs
 const PACK_COSTS = {
+  starter: 0, //free
   common: 800, //800
   uncommon: 3500, //3500
   rare: 10000, //10000
@@ -59,6 +61,20 @@ module.exports = {
 
     const user = await checkUserAccount(interaction)
     if (!user) return
+
+    // Check if the user has an empty collection
+    let userCollection
+    try {
+      userCollection = await Collection.findOne({ where: { id: userId } })
+    } catch (error) {
+      console.error('Error querying Collection model:', error)
+      return interaction.reply({
+        content: 'An error occurred while accessing the collection data.',
+        ephemeral: true,
+      })
+    }
+    const isStarterPackAvailable = !userCollection
+    console.log('Starter:', isStarterPackAvailable)
 
     // Show loading embed if cache is not populated
     if (!cachePopulated) {
@@ -95,59 +111,78 @@ module.exports = {
       .setDescription(
         `Welcome to the Monster Shop! Here you can purchase packs containing monsters or resources.`
       )
-      .addFields(
-        {
-          name: 'Common Pack',
-          value: `🪙${PACK_COSTS.common}`,
-          inline: true,
-        },
-        {
-          name: 'Uncommon Pack',
-          value: `🪙${PACK_COSTS.uncommon}`,
-          inline: true,
-        },
-        {
-          name: 'Rare Pack',
-          value: `🪙${PACK_COSTS.rare}`,
-          inline: true,
-        },
-        {
-          name: 'Elemental Pack',
-          value: `🪙${PACK_COSTS.elemental}`,
-          inline: true,
-        },
-        {
-          name: 'Ichor Pack',
-          value: `🪙${PACK_COSTS.ichor}\nReceive 🧪10 ichor`,
-          inline: true,
-        }
+
+    const row = new ActionRowBuilder()
+
+    if (isStarterPackAvailable) {
+      // Only show Starter Pack
+      shopEmbed.addFields({
+        name: 'Starter Pack',
+        value: `🆓 Free for new adventurers!`,
+        inline: true,
+      })
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId('purchase_starter_pack')
+          .setLabel('Starter Pack')
+          .setStyle(ButtonStyle.Secondary)
       )
-      .setFooter({ text: `${footerText}` })
+    } else {
+      // Shop embed setup after cache is loaded
+      shopEmbed
+        .addFields(
+          {
+            name: 'Common Pack',
+            value: `🪙${PACK_COSTS.common}`,
+            inline: true,
+          },
+          {
+            name: 'Uncommon Pack',
+            value: `🪙${PACK_COSTS.uncommon}`,
+            inline: true,
+          },
+          {
+            name: 'Rare Pack',
+            value: `🪙${PACK_COSTS.rare}`,
+            inline: true,
+          },
+          {
+            name: 'Elemental Pack',
+            value: `🪙${PACK_COSTS.elemental}`,
+            inline: true,
+          },
+          {
+            name: '🧪Ichor Pack (12)',
+            value: `🪙${PACK_COSTS.ichor}\n`,
+            inline: true,
+          }
+        )
+        .setFooter({ text: `${footerText}` })
 
-    // Add buttons for each pack
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('purchase_common_pack')
-        .setLabel('Common Pack')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('purchase_uncommon_pack')
-        .setLabel('Uncommon Pack')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('purchase_rare_pack')
-        .setLabel('Rare Pack')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('purchase_elemental_pack')
-        .setLabel('Elemental Pack')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('purchase_ichor_pack')
-        .setLabel('Ichor Pack')
-        .setStyle(ButtonStyle.Success)
-    )
-
+      // Add buttons for each pack
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('purchase_common_pack')
+          .setLabel('Common Pack')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('purchase_uncommon_pack')
+          .setLabel('Uncommon Pack')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('purchase_rare_pack')
+          .setLabel('Rare Pack')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('purchase_elemental_pack')
+          .setLabel('Elemental Pack')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('purchase_ichor_pack')
+          .setLabel('Ichor Pack')
+          .setStyle(ButtonStyle.Success)
+      )
+    }
     // Update embed with shop options
     await interaction.editReply({ embeds: [shopEmbed], components: [row] })
 
