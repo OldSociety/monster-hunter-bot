@@ -29,17 +29,17 @@ module.exports = {
       'Embark on a hunt and engage in combat with a series of monsters'
     ),
 
-    async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true })
-        const userId = interaction.user.id
-    
-        const user = await checkUserAccount(interaction)
-        if (!user) return
-    
-        // Check if the user has an empty collection
-        let userCollection
-        try {
-          userCollection = await Collection.findOne({ where: { userId: userId } })
+  async execute(interaction) {
+    await interaction.deferReply({ ephemeral: true })
+    const userId = interaction.user.id
+
+    const user = await checkUserAccount(interaction)
+    if (!user) return
+
+    // Check if the user has an empty collection
+    let userCollection
+    try {
+      userCollection = await Collection.findOne({ where: { userId: userId } })
       if (!userCollection) {
         const noMonstersEmbed = new EmbedBuilder()
           .setColor('#FF0000')

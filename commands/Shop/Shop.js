@@ -270,15 +270,15 @@ module.exports = {
             if (isStarterPackAvailable) {
               await interaction.followUp({
                 content:
-                  `You have received your first monster and increased one of your fighting style scores!\n When ready, use ` +
+                  `You have received your first monster and increased one of your fighting style scores!\nWhen ready, use ` +
                   '``' +
                   `/account` +
                   '``' +
-                  `to see your current stats including scores and collection. When ready, use ` +
+                  `to see your current collection or use ` +
                   '``' +
                   `/hunt` +
                   '``' +
-                  `to continue your hunt.`,
+                  `to begin your first hunt.`,
                 embeds: [monsterEmbed],
               })
             } else {
