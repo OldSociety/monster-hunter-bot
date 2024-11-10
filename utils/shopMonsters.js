@@ -2,12 +2,12 @@
 
 const allowedMonstersByPack = {
   starter: new Set([
-    'dark-mantle',
+    'darkmantle',
     'dryad',
     'ghoul',
   ]),
   common: new Set([
-    'dark-mantle',
+    'darkmantle',
     'homunculus',
     'dust-mephit',
     'gnoll',
