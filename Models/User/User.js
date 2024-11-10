@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     gold: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 1000,
+      defaultValue: 500,
     },
     currency: {
       type: DataTypes.JSON,

@@ -104,13 +104,21 @@ module.exports = {
     // const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
     const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${gems} 🧪${ichor}`
 
+    
     // Shop embed setup after cache is loaded
     const shopEmbed = new EmbedBuilder()
       .setColor(0x00ff00)
       .setTitle(`Store`)
-      .setDescription(
-        `Welcome to the Monster Shop! Here you can purchase packs containing monsters or resources.`
-      )
+      
+      if (isStarterPackAvailable) {
+        shopEmbed.setDescription(
+          `Welcome to the Store! Here's a complimentary starter pack to get you started! Use ` + '``' + `/help store` + '``' + ` for a detailed description of each pack.`
+        )
+      } else {
+        shopEmbed.setDescription(
+          `Purchase packs containing monsters or resources.`
+        )
+      }
 
     const row = new ActionRowBuilder()
 
@@ -118,7 +126,7 @@ module.exports = {
       // Only show Starter Pack
       shopEmbed.addFields({
         name: 'Starter Pack',
-        value: `🆓 Free for new adventurers!`,
+        value: `🆓 Free for new hunters!`,
         inline: true,
       })
       row.addComponents(

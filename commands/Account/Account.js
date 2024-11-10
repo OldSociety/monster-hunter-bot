@@ -55,7 +55,7 @@ module.exports = {
         user = await User.create({
           user_id: userId,
           user_name: interaction.user.username,
-          gold: 1000,
+          gold: 500,
           currency: {
             energy: 10,
             gems: 0,
@@ -94,7 +94,6 @@ module.exports = {
       }
 
       // User exists, display their stats
-      // Set embed color based on category
       let embedColor
       switch (category) {
         case 'brute':

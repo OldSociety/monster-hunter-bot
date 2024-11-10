@@ -15,7 +15,7 @@ module.exports = {
       gold: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 1000,
+        defaultValue: 500,
       },
       currency: {
         type: Sequelize.JSON,
