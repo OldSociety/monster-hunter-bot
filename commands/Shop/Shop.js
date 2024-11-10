@@ -65,7 +65,7 @@ module.exports = {
     // Check if the user has an empty collection
     let userCollection
     try {
-      userCollection = await Collection.findOne({ where: { id: userId } })
+      userCollection = await Collection.findOne({ where: { userId: userId } })
     } catch (error) {
       console.error('Error querying Collection model:', error)
       return interaction.reply({
@@ -160,7 +160,7 @@ module.exports = {
         .setFooter({ text: `${footerText}` })
 
       // Add buttons for each pack
-      const row = new ActionRowBuilder().addComponents(
+      row.addComponents(
         new ButtonBuilder()
           .setCustomId('purchase_common_pack')
           .setLabel('Common Pack')
@@ -183,8 +183,8 @@ module.exports = {
           .setStyle(ButtonStyle.Success)
       )
     }
-    // Update embed with shop options
-    await interaction.editReply({ embeds: [shopEmbed], components: [row] })
+    const components = row.components.length > 0 ? [row] : []
+    await interaction.editReply({ embeds: [shopEmbed], components })
 
     // Set up button interaction collector
     const filter = (i) => i.user.id === userId

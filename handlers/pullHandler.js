@@ -94,7 +94,13 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
   let monster
 
   if (packType === 'starter') {
-    const starterMonsters = Array.from(allowedMonstersByPack['starter'])
+    const starterMonstersSet = allowedMonstersByPack['starter']
+    if (!starterMonstersSet || !starterMonstersSet.size) {
+      console.error('No monsters defined for the Starter Pack')
+      return null
+    }
+    const starterMonsters = Array.from(starterMonstersSet)
+    console.log(`Starter Pack contains: ${starterMonsters.join(', ')}`)
     const randomIndex = Math.floor(Math.random() * starterMonsters.length)
     const monsterName = starterMonsters[randomIndex]
     return await fetchMonsterByName(monsterName)
@@ -130,11 +136,14 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
     }
 
     if (filteredMonsters.length === 0) {
-      console.log(
-        `No allowed monsters in tier ${tierName} for pack ${packType}`
-      )
+      console.log(`No allowed monsters in tier ${tierName} for pack ${packType}`)
       return null
     }
+
+    // Log the filtered monsters
+    console.log(
+      `Pack Type: ${packType}, Tier: ${tierName}, Monsters: ${filteredMonsters.map(m => m.name).join(', ')}`
+    )
 
     monster =
       filteredMonsters[Math.floor(Math.random() * filteredMonsters.length)]
@@ -144,6 +153,8 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
 
   return monster
 }
+
+
 
 async function fetchMonsterByName(name) {
   // Check if cache is populated; if not, populate it first

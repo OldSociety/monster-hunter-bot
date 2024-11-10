@@ -1,10 +1,10 @@
 // shopMonsters.js
 
 const allowedMonstersByPack = {
-  common: new Set([
+  starter: new Set([
     'dark-mantle',
     'dryad',
-    'violet-fungus',
+    'ghoul',
   ]),
   common: new Set([
     'dark-mantle',
