@@ -101,6 +101,26 @@ module.exports = {
 async function showLevelSelection(interaction, user, huntData) {
   const levels = Object.keys(levelData)
 
+  // Check if user has enough energy
+  if ((user.currency.energy || 0) < 1) {
+    const noEnergyEmbed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('Insufficient Energy')
+      .setDescription(
+        'You do not have enough energy to start a hunt. Energy regenerates every 10 minutes.'
+      )
+      .setFooter({
+        text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
+      })
+
+    await interaction.editReply({
+      embeds: [noEnergyEmbed],
+      components: [],
+      ephemeral: true,
+    })
+    return
+  }
+
   // Filter levels based on user's maxCompletedLevel
   user.maxCompletedLevel = user.maxCompletedLevel || 0
 
@@ -126,27 +146,29 @@ async function showLevelSelection(interaction, user, huntData) {
       .setStyle(ButtonStyle.Primary)
   })
 
-  // Add the ichor option
-  const ichorButton = new ButtonBuilder()
-    .setCustomId('use_ichor')
-    .setLabel('Drink 🧪ichor')
-    .setStyle(ButtonStyle.Success)
+  // Add the ichor option if the user has enough ichor
+  const actionRowComponents = [...levelButtons]
+  if ((user.currency.ichor || 0) >= 1) {
+    const ichorButton = new ButtonBuilder()
+      .setCustomId('use_ichor')
+      .setLabel('Drink 🧪ichor')
+      .setStyle(ButtonStyle.Success)
+    actionRowComponents.push(ichorButton)
+  }
 
   const cancelButton = new ButtonBuilder()
     .setCustomId('cancel_hunt')
     .setLabel('Cancel')
     .setStyle(ButtonStyle.Danger)
 
-  const actionRow = new ActionRowBuilder().addComponents(...levelButtons)
-  const actionRow2 = new ActionRowBuilder().addComponents(
-    ichorButton,
-    cancelButton
-  )
+  actionRowComponents.push(cancelButton)
+
+  const actionRow = new ActionRowBuilder().addComponents(...actionRowComponents)
 
   const startHuntEmbed = new EmbedBuilder()
     .setTitle('Select a Hunt Level')
     .setDescription(
-      'Choose a level to begin your hunt.⚡Cost is display.\n Drinking 🧪ichor before your hunt increases your chances.'
+      'Choose a level to begin your hunt.⚡Cost is display.\n Drinking 🧪ichor before your hunt increases your chances.\n'
     )
     .setColor('#FF0000')
     .setFooter({
@@ -162,7 +184,7 @@ async function showLevelSelection(interaction, user, huntData) {
 
   await interaction.editReply({
     embeds: [startHuntEmbed],
-    components: [actionRow, actionRow2],
+    components: [actionRow],
     ephemeral: true,
   })
 
@@ -188,14 +210,14 @@ async function showLevelSelection(interaction, user, huntData) {
     if (i.customId === 'use_ichor') {
       await i.deferUpdate()
 
-      if ((user.currency.ichor || 0) < 3) {
+      if ((user.currency.ichor || 0) < 1) {
         await interaction.followUp({
           content: "You don't have enough 🧪ichor to use this option.",
           ephemeral: true,
         })
         return
       }
-      user.currency.ichor -= 3
+      user.currency.ichor -= 1
       user.changed('currency', true) // Notify Sequelize of the change
       await user.save()
       huntData.ichorUsed = true
@@ -379,6 +401,22 @@ async function startNewEncounter(interaction, user, huntData) {
 }
 
 async function offerRetry(interaction, user, huntData) {
+  // Prevent retry if out of energy
+  if (user.currency.energy < huntData.level.energyCost) {
+    const noEnergyRetryEmbed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('Out of Energy')
+      .setDescription(
+        `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
+      )
+    await interaction.followUp({
+      embeds: [noEnergyRetryEmbed],
+      ephemeral: true,
+    })
+    await displayHuntSummary(interaction, user, huntData, false)
+    return
+  }
+
   const retryEmbed = new EmbedBuilder()
     .setTitle('You have been defeated!')
     .setDescription(
@@ -419,8 +457,14 @@ async function offerRetry(interaction, user, huntData) {
     await i.deferUpdate()
     if (i.customId === 'retry_hunt') {
       if (user.currency.energy < huntData.level.energyCost) {
+        const noEnergyRetryEmbed = new EmbedBuilder()
+          .setColor('#FF0000')
+          .setTitle('Out of Energy')
+          .setDescription(
+            `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
+          )
         await interaction.followUp({
-          content: `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.`,
+          embeds: [noEnergyRetryEmbed],
           ephemeral: true,
         })
         await displayHuntSummary(interaction, user, huntData, false)
@@ -429,7 +473,7 @@ async function offerRetry(interaction, user, huntData) {
       }
 
       user.currency.energy -= huntData.level.energyCost
-      user.changed('currency', true) // Notify Sequelize of the change
+      user.changed('currency', true)
       await user.save()
 
       await startNewEncounter(interaction, user, huntData)
@@ -446,6 +490,7 @@ async function offerRetry(interaction, user, huntData) {
           'Session expired. You did not choose to retry or end the hunt in time.',
         ephemeral: true,
       })
+      await displayHuntSummary(interaction, user, huntData, false)
     }
   })
 }
@@ -488,7 +533,7 @@ function createHealthBar(currentHealth, maxHealth) {
   let unfilledSegments = totalSegments - filledSegments
   const filledBar = '🟥'.repeat(filledSegments)
   const unfilledBar = '⬛'.repeat(unfilledSegments)
-  return '' + '『' + `${filledBar}${unfilledBar}` + '』' + ''
+  return '``' + '『' + `${filledBar}${unfilledBar}` + '』' + '``'
 }
 
 async function runBattlePhases(
@@ -595,4 +640,3 @@ async function runBattlePhases(
   }
   return playerWins >= 4
 }
-

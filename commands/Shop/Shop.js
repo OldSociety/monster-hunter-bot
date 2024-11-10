@@ -239,7 +239,7 @@ module.exports = {
 
         if (packType === 'ichor') {
           // Handle Ichor Pack purchase
-          const ichorAmount = 10
+          const ichorAmount = 12
 
           user.currency = user.currency || {}
           user.currency.ichor = (user.currency.ichor || 0) + ichorAmount
