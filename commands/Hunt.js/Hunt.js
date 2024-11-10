@@ -141,7 +141,7 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const startHuntEmbed = new EmbedBuilder()
     .setTitle('Select a Hunt Level')
-    .setDescription('Choose a level to begin your hunt.')
+    .setDescription('Choose a level to begin your hunt or drink 🧪ichor to strengthen up before battle.')
     .setColor('#FF0000')
     .setFooter({
       text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
@@ -265,7 +265,7 @@ async function startNewEncounter(interaction, user, huntData) {
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
   let monsterScore = monster.hp / 2
-  monsterScore = Math.max(monsterScore, 10)
+  monsterScore = Math.max(monsterScore, 8)
 
   const monsterEmbed = new EmbedBuilder()
     .setTitle(`A wild ${monster.name} appears!`)
@@ -443,8 +443,6 @@ async function offerRetry(interaction, user, huntData) {
     }
   })
 }
-
-// ... Rest of your code remains unchanged ...
 
 async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   const summaryEmbed = new EmbedBuilder()

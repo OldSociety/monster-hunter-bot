@@ -99,7 +99,7 @@ cron.schedule('*/10 * * * *', async () => {
 
     for (const user of users) {
       let currency = user.currency || {
-        energy: 10,
+        energy: 15,
         gems: 0,
         eggs: 0,
         ichor: 0,
@@ -107,13 +107,13 @@ cron.schedule('*/10 * * * *', async () => {
       }
 
       if (typeof currency !== 'object') {
-        currency = { energy: 10, gems: 0, eggs: 0, ichor: 0, dice: 0 }
+        currency = { energy: 15, gems: 0, eggs: 0, ichor: 0, dice: 0 }
       }
 
       const currentEnergy = currency.energy || 0
 
-      if (currentEnergy < 10) {
-        currency.energy = Math.min(currentEnergy + 1, 10)
+      if (currentEnergy < 15) {
+        currency.energy = Math.min(currentEnergy + 1, 15)
         user.currency = currency
         user.changed('currency', true)
         await user.save()

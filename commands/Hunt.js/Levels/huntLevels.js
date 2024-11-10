@@ -3,7 +3,7 @@
 const levelData = {
   hunt1: {
     key: 'hunt1',
-    name: 'Hunt 1',
+    name: '[1]',
     description: 'Face a series of increasingly challenging monsters!',
     energyCost: 1,
     battles: generateHuntOneBattles(),
@@ -12,6 +12,30 @@ const levelData = {
 }
 
 function generateHuntOneBattles() {
+  const battles = []
+
+  // Add 3 battles with CR 0
+  for (let i = 0; i < 3; i++) {
+    battles.push({
+      type: 'normal',
+      cr: 0,
+    })
+  }
+ 
+  // Shuffle the battles to randomize the order
+  battles.sort(() => Math.random() - 0.5)
+
+  // Add the mini-boss at the end
+  battles.push({
+    type: 'mini-boss',
+    cr: 0.25,
+    monsterIndex: 'steam-mephit',
+  })
+
+  return battles
+}
+
+function generateHuntTwoBattles() {
   const battles = []
 
   // Add 3 battles with CR 0

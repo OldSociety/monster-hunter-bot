@@ -83,8 +83,13 @@ function pullMonsterByCR(cr) {
   return availableMonsters[Math.floor(Math.random() * availableMonsters.length)]
 }
 function pullSpecificMonster(index) {
-  return huntMonsters.find((monster) => monster.index === index) || null;
+  for (const cr in monsterCacheByCR) {
+    const foundMonster = monsterCacheByCR[cr].find((monster) => monster.index === index)
+    if (foundMonster) {
+      return foundMonster
+    }
+  }
+  return null
 }
-
 
 module.exports = { cacheHuntMonsters, pullMonsterByCR, pullSpecificMonster }

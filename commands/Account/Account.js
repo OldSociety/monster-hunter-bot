@@ -2,19 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { User, Collection } = require('../../Models/model.js')
 const { Op } = require('sequelize')
 
-// Copies needed for each level
-const copiesNeededPerLevel = {
-  1: 3,
-  2: 4,
-  3: 4,
-  4: 5,
-  5: 6,
-  6: 6,
-  7: 7,
-  8: 7,
-  9: 8,
-}
-
 function getRaritySymbol(cr) {
   if (cr >= 20) return '⭐⭐⭐⭐⭐' // Legendary
   if (cr >= 16) return '⭐⭐⭐⭐★' // Very Rare
