@@ -82,8 +82,11 @@ module.exports = {
             `Your account has been created.\n` +
               `Use **/shop** to get your first card!`
           )
+          // .setFooter({
+          //   text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 💎${user.currency.gems} 🥚${user.currency.eggs} 🧪${user.currency.ichor} 🎲${user.currency.dice}`,
+          // })
           .setFooter({
-            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 💎${user.currency.gems} 🥚${user.currency.eggs} 🧪${user.currency.ichor} 🎲${user.currency.dice}`,
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
           })
           .setThumbnail(interaction.user.displayAvatarURL())
 

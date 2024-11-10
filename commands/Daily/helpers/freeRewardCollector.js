@@ -80,7 +80,7 @@ async function setupFreeRewardCollector(rewardMessage) {
           typeof selectedReward === 'number'
             ? `🪙 ${selectedReward} gold`
             : selectedReward === 'gems'
-            ? '💎 10 gems'
+            ? '🧿 10 gems'
             : `the ${transformRarityIdentifier(
                 selectedReward.rarity
               )} monster: **${selectedReward.name}**`

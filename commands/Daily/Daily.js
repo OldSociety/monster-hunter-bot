@@ -29,13 +29,13 @@ module.exports = {
 
     const rewards = [
       '🪙200 coins',
-      '💎3 gems',
+      '🧿3 gems',
       '🧪2 demon ichor',
       '🪙600 coins',
-      '💎3 gems',
+      '🧿3 gems',
       '🧪3 demon ichor',
       '🪙1000 coins',
-      '💎3 gems',
+      '🧿3 gems',
       '🧪3 demon ichor',
       'demon card',
     ]
