@@ -19,7 +19,7 @@ module.exports = {
       list: 'ADMIN ONLY: Lists the number of monsters by CR tier or search by monster name.',
       shop: 'Buy monster packs to expand your collection.',
       free: 'Claim a free reward every 8 hours.',
-      status: 'See current score and collection progress, specify `/status <brute/caster/sneak>` to see category specifics'
+      status: 'See current score and collection progress, specify `/status <brute/spellsword/stealth>` to see category specifics'
     }
 
     if (commandName) {

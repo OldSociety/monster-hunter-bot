@@ -36,8 +36,8 @@ module.exports = {
         .setRequired(false)
         .addChoices(
           { name: 'Brute', value: 'brute' },
-          { name: 'Spellsword', value: 'caster' },
-          { name: 'Stealth', value: 'sneak' },
+          { name: 'Spellsword', value: 'spellsword' },
+          { name: 'Stealth', value: 'stealth' },
           { name: 'All', value: 'monster' }
         )
     ),
@@ -63,12 +63,12 @@ module.exports = {
           },
           score: 0,
           brute_score: 0,
-          caster_score: 0,
-          sneak_score: 0,
+          spellsword_score: 0,
+          stealth_score: 0,
           top_monsters: [],
           top_brutes: [],
-          top_casters: [],
-          top_sneaks: [],
+          top_spellswords: [],
+          top_stealths: [],
           completedLevels: 1,
         })
 
@@ -97,11 +97,11 @@ module.exports = {
         case 'brute':
           embedColor = '#FF0000' // Red for Brutes
           break
-        case 'caster':
-          embedColor = '#0000FF' // Blue for Casters
+        case 'spellsword':
+          embedColor = '#0000FF' // Blue for spellswords
           break
-        case 'sneak':
-          embedColor = '#800080' // Purple for Sneaks
+        case 'stealth':
+          embedColor = '#800080' // Purple for stealths
           break
         default:
           embedColor = '#00FF00' // Green for Overview
@@ -157,7 +157,7 @@ module.exports = {
           .addFields(
             {
               name: '-- Style Scores --',
-              value: `\n**Brute**: ${user.brute_score}\n**Spellsword**: ${user.caster_score}\n**Stealth**: ${user.sneak_score}`,
+              value: `\n**Brute**: ${user.brute_score}\n**Spellsword**: ${user.spellsword_score}\n**Stealth**: ${user.stealth_score}`,
               inline: true,
             },
             {
@@ -189,7 +189,7 @@ module.exports = {
         // Fetch top cards based on the category or overall selection
         const topCards = await Collection.findAll({
           where: { id: topCardsIds },
-          attributes: ['name', 'm_score', 'level', 'copies', 'cr'],
+          attributes: ['name', 'm_score', 'level', 'copies', 'cr', 'type'],
           order: [['m_score', 'DESC']],
           limit: 3, // Limit to top 3
         })
@@ -203,11 +203,14 @@ module.exports = {
                 : category.charAt(0).toUpperCase() + category.slice(1)
             } Cards`
           )
+          .setFooter({
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+          })
           .setThumbnail(interaction.user.displayAvatarURL())
 
         if (topCards.length > 0) {
           topCards.forEach((card) => {
-            const copiesNeeded = copiesNeededPerLevel[card.level] || 'Max'
+            // const copiesNeeded = copiesNeededPerLevel[card.level] || 'Max'
             const raritySymbol = getRaritySymbol(card.cr)
 
             statsEmbed.addFields(
@@ -223,12 +226,12 @@ module.exports = {
               },
               {
                 name: 'Level',
-                value: '`' + `${card.level}` + '`',
+                value: '`' + `${card.level} / 8` + '`',
                 inline: true,
               },
               {
-                name: 'Copies',
-                value: '`' + `${card.copies} / ${copiesNeeded}` + '`',
+                name: 'Type',
+                value: '`' + `${card.type}` + '`',
                 inline: true,
               }
             )

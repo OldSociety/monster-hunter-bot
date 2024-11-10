@@ -34,12 +34,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0,
     },
-    caster_score: {
+    spellsword_score: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
-    sneak_score: {
+    stealth_score: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
@@ -52,11 +52,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       defaultValue: [], 
     },
-    top_casters: {
+    top_spellswords: {
       type: DataTypes.JSON,
       defaultValue: [],
     },
-    top_sneaks: {
+    top_stealths: {
       type: DataTypes.JSON,
       defaultValue: [], 
     },

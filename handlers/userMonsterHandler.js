@@ -73,18 +73,18 @@ function calculateMScore(cr, rarity, level) {
 
 function determineCategory(type) {
   const bruteTypes = new Set(['construct', 'dragon', 'giant', 'monstrosity'])
-  const casterTypes = new Set([
+  const spellswordTypes = new Set([
     'aberration',
     'celestial',
     'elemental',
     'fey',
     'fiend',
   ])
-  const sneakTypes = new Set(['plant', 'ooze', 'humanoid', 'beast', 'undead'])
+  const stealthTypes = new Set(['plant', 'ooze', 'humanoid', 'beast', 'undead'])
 
   if (bruteTypes.has(type.toLowerCase())) return 'brute'
-  if (casterTypes.has(type.toLowerCase())) return 'caster'
-  if (sneakTypes.has(type.toLowerCase())) return 'sneak'
+  if (spellswordTypes.has(type.toLowerCase())) return 'spellsword'
+  if (stealthTypes.has(type.toLowerCase())) return 'stealth'
   return null
 }
 
@@ -131,7 +131,7 @@ async function updateUserScores(userId, category, monster) {
     )}`
   )
 
-  // For updatedTopCategory, include only IDs for monsters of the specified category (brute, caster, etc.)
+  // For updatedTopCategory, include only IDs for monsters of the specified category (brute, spellsword, etc.)
   const updatedTopCategory = Array.from(
     new Set([...currentTopCategory, monster.id])
   )

@@ -1,7 +1,7 @@
 // huntUtils.js
 function checkAdvantage(playerStyle, monsterType) {
   const monsterCategory = determineCategory(monsterType)
-  const advantageMap = { brute: 'sneak', sneak: 'caster', caster: 'brute' }
+  const advantageMap = { brute: 'stealth', stealth: 'spellsword', spellsword: 'brute' }
   return advantageMap[playerStyle] === monsterCategory
 }
 
@@ -14,20 +14,20 @@ function determineCategory(type) {
       normalizedType
     )
   )
-    return 'caster'
+    return 'spellsword'
   if (['plant', 'ooze', 'humanoid', 'beast', 'undead'].includes(normalizedType))
-    return 'sneak'
+    return 'stealth'
   return 'brute' // Default to 'brute' if type is unrecognized
 }
 
 
 function classifyMonsterType(type) {
   const bruteTypes = ['giant', 'monstrosity', 'dragon', 'construct'];
-  const casterTypes = ['aberration', 'celestial', 'elemental', 'fey', 'fiend'];
+  const spellswordTypes = ['aberration', 'celestial', 'elemental', 'fey', 'fiend'];
   const stealthTypes = ['humanoid', 'beast', 'undead', 'plant', 'ooze'];
 
   if (bruteTypes.includes(type.toLowerCase())) return 'brute';
-  if (casterTypes.includes(type.toLowerCase())) return 'caster';
+  if (spellswordTypes.includes(type.toLowerCase())) return 'spellsword';
   if (stealthTypes.includes(type.toLowerCase())) return 'stealth';
   return 'brute'; // Default if type is unclassified
 }
@@ -44,7 +44,7 @@ function calculateWinChance(playerScore, monsterScore, isAdvantaged) {
 }
 
 function getEmbedColor(style) {
-  const colorMap = { brute: '#FF0000', caster: '#0000FF', sneak: '#800080' }
+  const colorMap = { brute: '#FF0000', spellsword: '#0000FF', stealth: '#800080' }
   return colorMap[style]
 }
 

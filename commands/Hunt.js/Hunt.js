@@ -289,19 +289,19 @@ async function startNewEncounter(interaction, user, huntData) {
         .setStyle(ButtonStyle.Primary)
     )
   }
-  if (user.caster_score > 0) {
+  if (user.spellsword_score > 0) {
     styleRow.addComponents(
       new ButtonBuilder()
-        .setCustomId('style_caster')
-        .setLabel(`Caster: ${user.caster_score}`)
+        .setCustomId('style_spellsword')
+        .setLabel(`Spellsword: ${user.spellsword_score}`)
         .setStyle(ButtonStyle.Secondary)
     )
   }
-  if (user.sneak_score > 0) {
+  if (user.stealth_score > 0) {
     styleRow.addComponents(
       new ButtonBuilder()
-        .setCustomId('style_sneak')
-        .setLabel(`Sneak: ${user.sneak_score}`)
+        .setCustomId('style_stealth')
+        .setLabel(`stealth: ${user.stealth_score}`)
         .setStyle(ButtonStyle.Success)
     )
   }
