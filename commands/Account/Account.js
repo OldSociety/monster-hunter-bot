@@ -1,5 +1,3 @@
-// account.js
-
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { User, Collection } = require('../../Models/model.js')
 const { Op } = require('sequelize')
@@ -31,22 +29,22 @@ module.exports = {
     .setDescription('View your Blood Hunter game stats and collection progress')
     .addStringOption((option) =>
       option
-        .setName('category')
+        .setName('style')
         .setDescription(
-          'Specify which top cards to view (brute, caster, sneak, or all)'
+          'Specify which top cards to view (brute, spellsword, stealth, or all)'
         )
         .setRequired(false)
         .addChoices(
           { name: 'Brute', value: 'brute' },
-          { name: 'Caster', value: 'caster' },
-          { name: 'Sneak', value: 'sneak' },
+          { name: 'Spellsword', value: 'caster' },
+          { name: 'Stealth', value: 'sneak' },
           { name: 'All', value: 'monster' }
         )
     ),
 
   async execute(interaction) {
     const userId = interaction.user.id
-    const category = interaction.options.getString('category') || 'overview'
+    const category = interaction.options.getString('style') || 'overview'
 
     try {
       let user = await User.findOne({ where: { user_id: userId } })
@@ -55,7 +53,7 @@ module.exports = {
         user = await User.create({
           user_id: userId,
           user_name: interaction.user.username,
-          gold: 500,
+          gold: 1000,
           currency: {
             energy: 10,
             gems: 0,
@@ -71,7 +69,7 @@ module.exports = {
           top_brutes: [],
           top_casters: [],
           top_sneaks: [],
-          completedLevels: 0,
+          completedLevels: 1,
         })
 
         // Send a welcome message
@@ -79,12 +77,12 @@ module.exports = {
           .setColor('#00FF00')
           .setTitle('Welcome to Blood Hunter!')
           .setDescription(
-            `Your account has been created.\n` +
-              `Use **/shop** to get your first card!`
+            `Your account has been created.\n Use ` +
+              '``' +
+              `/shop` +
+              '``' +
+              `to get your first card.`
           )
-          // .setFooter({
-          //   text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 💎${user.currency.gems} 🥚${user.currency.eggs} 🧪${user.currency.ichor} 🎲${user.currency.dice}`,
-          // })
           .setFooter({
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
           })
@@ -155,11 +153,11 @@ module.exports = {
 
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
-          .setTitle(`Blood Hunter Game Stats`)
+          .setTitle(`Blood Hunter | Total Score: ${user.score}`)
           .addFields(
             {
-              name: '**-- Category Scores --**',
-              value: `**Overall**: ${user.score}\n**Brutes**: ${user.brute_score}\n**Casters**: ${user.caster_score}\n**Sneaks**: ${user.sneak_score}`,
+              name: '-- Style Scores --',
+              value: `\n**Brute**: ${user.brute_score}\n**Spellsword**: ${user.caster_score}\n**Stealth**: ${user.sneak_score}`,
               inline: true,
             },
             {

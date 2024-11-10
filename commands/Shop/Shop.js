@@ -104,21 +104,29 @@ module.exports = {
     // const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
     const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${gems} 🧪${ichor}`
 
-    
     // Shop embed setup after cache is loaded
     const shopEmbed = new EmbedBuilder()
       .setColor(0x00ff00)
-      .setTitle(`Store`)
-      
-      if (isStarterPackAvailable) {
-        shopEmbed.setDescription(
-          `Welcome to the Store! Here's a complimentary starter pack to get you started! Use ` + '``' + `/help store` + '``' + ` for a detailed description of each pack.`
-        )
-      } else {
-        shopEmbed.setDescription(
-          `Purchase packs containing monsters or resources.`
-        )
-      }
+      .setTitle(`-- Hunter Store --`)
+
+    if (isStarterPackAvailable) {
+      shopEmbed.setDescription(
+        `Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!`
+      )
+    } else {
+      shopEmbed.setDescription(
+        `Purchase packs containing monsters or resources.  Use ` +
+          '``' +
+          `/help store` +
+          '``' +
+          ` for a detailed description of each pack.` +
+          `Use ` +
+          '``' +
+          `/account` +
+          '``' +
+          `at any time to see your style scores and collection.`
+      )
+    }
 
     const row = new ActionRowBuilder()
 
@@ -259,11 +267,26 @@ module.exports = {
 
             const stars = getStarsBasedOnColor(monster.color)
             const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
-
-            await interaction.followUp({
-              content: `You pulled a monster from the **${packType} pack!**`,
-              embeds: [monsterEmbed],
-            })
+            if (isStarterPackAvailable) {
+              await interaction.followUp({
+                content:
+                  `You have received your first monster and increased one of your fighting style scores!\n When ready, use ` +
+                  '``' +
+                  `/account` +
+                  '``' +
+                  `to see your current stats including scores and collection. When ready, use ` +
+                  '``' +
+                  `/hunt` +
+                  '``' +
+                  `to continue your hunt.`,
+                embeds: [monsterEmbed],
+              })
+            } else {
+              await interaction.followUp({
+                content: `You pulled a monster from the **${packType} pack!**`,
+                embeds: [monsterEmbed],
+              })
+            }
           } else {
             await interaction.followUp(
               `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
