@@ -19,7 +19,10 @@ const {
   calculateReward,
   addGoldToUser,
 } = require('../../handlers/rewardHandler')
-const { checkAdvantage } = require('../../utils/huntUtility/huntUtils.js')
+const {
+  checkAdvantage,
+  energyCostToEmoji,
+} = require('../../utils/huntUtility/huntUtils.js')
 const { levelData } = require('./Levels/huntLevels.js')
 
 module.exports = {
@@ -116,9 +119,10 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const levelButtons = availableLevels.map((levelKey) => {
     const level = levelData[levelKey]
+    const energyEmoji = energyCostToEmoji(level.energyCost) // Convert energy cost to emojis
     return new ButtonBuilder()
       .setCustomId(`level_${levelKey}`)
-      .setLabel(`${level.name} ⚡${level.energyCost}`)
+      .setLabel(`[ ${level.name} ] ${energyEmoji}`) // Use the emoji string here
       .setStyle(ButtonStyle.Primary)
   })
 
@@ -141,7 +145,9 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const startHuntEmbed = new EmbedBuilder()
     .setTitle('Select a Hunt Level')
-    .setDescription('Choose a level to begin your hunt or drink 🧪ichor to strengthen up before battle.')
+    .setDescription(
+      'Choose a level to begin your hunt.⚡Cost is display.\n Drinking 🧪ichor before your hunt increases your chances.'
+    )
     .setColor('#FF0000')
     .setFooter({
       text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
@@ -556,12 +562,23 @@ async function runBattlePhases(
 
     const healthBar = createHealthBar(momentum, maxMomentum)
 
+    // Determine the effects to display
+    let effects = 'Effects: None'
+    if (isAdvantaged && huntData.ichorUsed) {
+      effects = 'Effects: ⏫Advantage, 🧪Boost'
+    } else if (isAdvantaged) {
+      effects = 'Effects: ⏫Advantage'
+    } else if (huntData.ichorUsed) {
+      effects = 'Effects: 🧪Boost'
+    }
+
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(
         `**CR:** ${monster.cr}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
           `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
+          `${effects}\n\n` + // Add the effects line here
           `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(
             playerRoll.toFixed(2)
           )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +
@@ -578,3 +595,4 @@ async function runBattlePhases(
   }
   return playerWins >= 4
 }
+

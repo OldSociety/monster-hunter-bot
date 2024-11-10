@@ -20,6 +20,10 @@ function determineCategory(type) {
   return 'brute' // Default to 'brute' if type is unrecognized
 }
 
+function energyCostToEmoji(cost) {
+  const boltEmoji = '⚡'
+  return boltEmoji.repeat(cost)
+}
 
 function classifyMonsterType(type) {
   const bruteTypes = ['giant', 'monstrosity', 'dragon', 'construct'];
@@ -56,6 +60,7 @@ module.exports = {
   checkAdvantage,
   calculateWinChance,
   classifyMonsterType,
+  energyCostToEmoji,
   getEmbedColor,
   capitalize,
 }
