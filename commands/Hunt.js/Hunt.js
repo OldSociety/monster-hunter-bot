@@ -121,11 +121,11 @@ async function showLevelSelection(interaction, user, huntData) {
     return
   }
 
+  // Filter levels based on user's completedLevels
   user.completedLevels = user.completedLevels || 0
-
   const availableLevels = levels.filter((levelKey) => {
     const levelNumber = parseInt(levelKey.replace('hunt', ''))
-    return levelNumber <= user.completedLevels + 1 && levelNumber > 0
+    return levelNumber <= user.completedLevels + 1
   })
 
   if (availableLevels.length === 0) {
@@ -138,10 +138,10 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const levelButtons = availableLevels.map((levelKey) => {
     const level = levelData[levelKey]
-    const energyEmoji = energyCostToEmoji(level.energyCost)
+    const energyEmoji = energyCostToEmoji(level.energyCost) // Convert energy cost to emojis
     return new ButtonBuilder()
       .setCustomId(`level_${levelKey}`)
-      .setLabel(`[ ${level.name} ] ${energyEmoji}`)
+      .setLabel(`[ ${level.name} ] ${energyEmoji}`) // Use the emoji string here
       .setStyle(ButtonStyle.Primary)
   })
 
@@ -164,25 +164,56 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const actionRow = new ActionRowBuilder().addComponents(...actionRowComponents)
 
-  const startHuntEmbed = new EmbedBuilder()
-    .setTitle('Select a Hunt Level')
-    .setDescription(
-      'Choose a level to begin your hunt.⚡Cost is displayed.\n Drinking 🧪ichor before your hunt increases your chances.\n'
-    )
-    .setColor('#FF0000')
-    .setFooter({
-      text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
-    })
+  // Display the appropriate embed based on completedLevels
+  let embedToShow
+  if (user.completedLevels === 0) {
+    embedToShow = new EmbedBuilder()
+      .setColor('#00FF00')
+      .setTitle('Welcome to the Hunt!')
+      .setDescription(
+        'Before you begin your journey, here are some important things to know:\n\n' +
+          `**Fighting Styles**: Each battle you'll choose one of three styles: ` +
+          '``' +
+          `Brute / Spellsword / Stealth` +
+          '``' +
+          `. Each monster contributes to a fighting style score based on their type. Use ` +
+          '``' +
+          `/account` +
+          '``' +
+          ` to check current scores.\n\n` +
+          '**⏫Advantage**: Monster types are vulnerable to specific fighting styles. Learning to leverage advantage will grant a substantial bonus in battle.\n\n' +
+          `**🧪Ichor**: Temporarily boosts your strength substantially for all battles in a hunt. You can purchase more in the ` +
+          '``' +
+          `/shop` +
+          '``' +
+          `.\n\n` +
+          `**Defeat/Revival**: You have 3 chances to complete a hunt. Spend ⚡energy to revive from where you lost. ` +
+          "New levels unlock as you progress. When you're ready, click [1] below to start your first hunt!"
+      )
+      .setFooter({
+        text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
+      })
+  } else {
+    embedToShow = new EmbedBuilder()
+      .setTitle('Select a Hunt Level')
+      .setDescription(
+        'Choose a level to begin your hunt. ⚡Cost is displayed.\nDrinking 🧪ichor before your hunt increases your chances.\n'
+      )
+      .setColor('#FF0000')
+      .setFooter({
+        text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
+      })
 
-  if (huntData.ichorUsed) {
-    startHuntEmbed.addFields({
-      name: 'Ichor Invigoration',
-      value: 'You are invigorated with 🧪ichor! Your strength increases.',
-    })
+    if (huntData.ichorUsed) {
+      embedToShow.addFields({
+        name: 'Ichor Invigoration',
+        value: 'You are invigorated with 🧪ichor! Your strength increases.',
+      })
+    }
   }
 
   await interaction.editReply({
-    embeds: [startHuntEmbed],
+    embeds: [embedToShow],
     components: [actionRow],
     ephemeral: true,
   })
@@ -313,7 +344,7 @@ async function startNewEncounter(interaction, user, huntData) {
       new ButtonBuilder()
         .setCustomId('style_brute')
         .setLabel(`Brute: ${user.brute_score}`)
-        .setStyle(ButtonStyle.Warning)
+        .setStyle(ButtonStyle.Danger)
     )
   }
   if (user.spellsword_score > 0) {

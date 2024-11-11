@@ -113,7 +113,7 @@ cron.schedule('*/10 * * * *', async () => {
       const currentEnergy = currency.energy || 0
 
       if (currentEnergy < 15) {
-        currency.energy = Math.min(currentEnergy + 1, 15)
+        currency.energy = Math.min(currentEnergy + 3, 15)
         user.currency = currency
         user.changed('currency', true)
         await user.save()

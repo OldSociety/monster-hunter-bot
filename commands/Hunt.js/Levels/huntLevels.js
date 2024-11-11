@@ -11,7 +11,8 @@ const levelData = {
   hunt2: {
     key: 'hunt2',
     name: '2',
-    description: 'Kill the sea hag before more fall under her drowned man curse!',
+    description:
+      'Kill the sea hag before more fall under her drowned man curse!',
     energyCost: 1,
     battles: generateHuntTwoBattles(),
   },
@@ -28,7 +29,7 @@ function generateHuntOneBattles() {
       cr: 0,
     })
   }
- 
+
   // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
@@ -44,22 +45,6 @@ function generateHuntOneBattles() {
 
 function generateHuntTwoBattles() {
   const battles = []
-
-  // Add 3 battles with CR 0
-  for (let i = 0; i < 3; i++) {
-    battles.push({
-      type: 'normal',
-      cr: 0,
-    })
-  }
-
-  // Add 5 battles with CR 1/8
-  for (let i = 0; i < 5; i++) {
-    battles.push({
-      type: 'normal',
-      cr: 0.125,
-    })
-  }
 
   // Add 4 battles with CR 1/4
   for (let i = 0; i < 4; i++) {
@@ -77,8 +62,8 @@ function generateHuntTwoBattles() {
     })
   }
 
-  // Add 3 battles with CR 1
-  for (let i = 0; i < 3; i++) {
+  // Add 2 battles with CR 1
+  for (let i = 0; i < 2; i++) {
     battles.push({
       type: 'normal',
       cr: 1,
