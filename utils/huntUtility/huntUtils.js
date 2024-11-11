@@ -7,7 +7,7 @@ function checkAdvantage(playerStyle, monsterType) {
 
 function determineCategory(type) {
   const normalizedType = type.toLowerCase()
-  if (['construct', 'dragon', 'giant', 'monstrosity'].includes(normalizedType))
+  if (['beast', 'construct', 'dragon', 'giant', 'monstrosity'].includes(normalizedType))
     return 'brute'
   if (
     ['aberration', 'celestial', 'elemental', 'fey', 'fiend'].includes(
@@ -15,9 +15,9 @@ function determineCategory(type) {
     )
   )
     return 'spellsword'
-  if (['plant', 'ooze', 'humanoid', 'beast', 'undead'].includes(normalizedType))
+  if (['plant', 'ooze', 'humanoid','undead'].includes(normalizedType))
     return 'stealth'
-  return 'brute' // Default to 'brute' if type is unrecognized
+  return 'brute'
 }
 
 function energyCostToEmoji(cost) {

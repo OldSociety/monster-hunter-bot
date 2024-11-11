@@ -27,12 +27,12 @@ let cachePopulated = false
 
 // Pack costs
 const PACK_COSTS = {
-  starter: 0, //free
-  common: 800, //800
-  uncommon: 3500, //3500
-  rare: 10000, //10000
-  elemental: 15000, //15000
-  ichor: 650, //650
+  starter: 0,
+  common: 800,
+  uncommon: 3500,
+  rare: 10000, 
+  elemental: 5000, 
+  ichor: 650,
 }
 
 // Define tier options for each pack
@@ -42,9 +42,8 @@ const TIER_OPTIONS = {
   rare: { name: 'Rare' },
   elemental: {
     customTiers: [
-      { name: 'Common', chance: 0.55 },
-      { name: 'Uncommon', chance: 0.37 },
-      { name: 'Rare', chance: 0.08 },
+      { name: 'Uncommon', chance: 0.98 },
+      { name: 'Rare', chance: 0.02 },
     ],
   },
 }
@@ -238,7 +237,6 @@ module.exports = {
         })
 
         if (packType === 'ichor') {
-          // Handle Ichor Pack purchase
           const ichorAmount = 12
 
           user.currency = user.currency || {}

@@ -141,7 +141,7 @@ async function showLevelSelection(interaction, user, huntData) {
     const energyEmoji = energyCostToEmoji(level.energyCost)
     return new ButtonBuilder()
       .setCustomId(`level_${levelKey}`)
-      .setLabel(`[ ${level.name} ] ${energyEmoji}`) 
+      .setLabel(`[ ${level.name} ] ${energyEmoji}`)
       .setStyle(ButtonStyle.Primary)
   })
 
@@ -291,7 +291,7 @@ async function startNewEncounter(interaction, user, huntData) {
   }
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-  let monsterScore = monster.hp
+  let monsterScore = monster.hp / 2
   monsterScore = Math.max(monsterScore, 8)
 
   const monsterEmbed = new EmbedBuilder()
@@ -408,6 +408,9 @@ async function offerRetry(interaction, user, huntData) {
       .setDescription(
         `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
       )
+      .setFooter({
+        text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+      })
     await interaction.followUp({
       embeds: [noEnergyRetryEmbed],
       ephemeral: true,
@@ -423,6 +426,9 @@ async function offerRetry(interaction, user, huntData) {
         `You have ${3 - huntData.retries} revives left.`
     )
     .setColor('#FF0000')
+    .setFooter({
+      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+    })
 
   const retryButton = new ButtonBuilder()
     .setCustomId('retry_hunt')

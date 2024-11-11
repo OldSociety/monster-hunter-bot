@@ -45,7 +45,7 @@ module.exports = {
             energy: 10,
             gems: 0,
             eggs: 0,
-            ichor: 0,
+            ichor: 3,
             dice: 0,
           },
           score: 0,
@@ -56,7 +56,7 @@ module.exports = {
           top_brutes: [],
           top_spellswords: [],
           top_stealths: [],
-          completedLevels: 1,
+          completedLevels: 0,
         })
 
         // Send a welcome message
@@ -178,7 +178,7 @@ module.exports = {
           where: { id: topCardsIds },
           attributes: ['name', 'm_score', 'level', 'copies', 'cr', 'type'],
           order: [['m_score', 'DESC']],
-          limit: 3, // Limit to top 3
+          limit: 3,
         })
 
         const statsEmbed = new EmbedBuilder()
