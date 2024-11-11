@@ -72,7 +72,13 @@ function calculateMScore(cr, rarity, level) {
 }
 
 function determineCategory(type) {
-  const bruteTypes = new Set(['construct', 'dragon', 'giant', 'monstrosity'])
+  const bruteTypes = new Set([
+    'construct',
+    'dragon',
+    'giant',
+    'humanoid',
+    'monstrosity',
+  ])
   const spellswordTypes = new Set([
     'aberration',
     'celestial',
@@ -80,7 +86,7 @@ function determineCategory(type) {
     'fey',
     'fiend',
   ])
-  const stealthTypes = new Set(['plant', 'ooze', 'humanoid', 'beast', 'undead'])
+  const stealthTypes = new Set(['plant', 'ooze', 'beast', 'undead'])
 
   if (bruteTypes.has(type.toLowerCase())) return 'brute'
   if (spellswordTypes.has(type.toLowerCase())) return 'spellsword'

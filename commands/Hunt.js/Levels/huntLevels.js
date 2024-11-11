@@ -4,9 +4,16 @@ const levelData = {
   hunt1: {
     key: 'hunt1',
     name: '1',
-    description: 'Face a series of increasingly challenging monsters!',
+    description: 'You hunt begins here...',
     energyCost: 1,
     battles: generateHuntOneBattles(),
+  },
+  hunt2: {
+    key: 'hunt2',
+    name: '2',
+    description: 'Kill the sea hag before more fall under her drowned man curse!',
+    energyCost: 1,
+    battles: generateHuntTwoBattles(),
   },
   // Future levels can be added here
 }

@@ -73,7 +73,7 @@ module.exports = {
     user.currency.energy =
       user.currency.energy !== undefined ? user.currency.energy : 10
     user.currency.ichor = user.currency.ichor || 0
-    user.maxCompletedLevel = user.maxCompletedLevel || 0
+    user.completedLevels = user.completedLevels || 0
 
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xffcc00)
@@ -121,12 +121,11 @@ async function showLevelSelection(interaction, user, huntData) {
     return
   }
 
-  // Filter levels based on user's maxCompletedLevel
-  user.maxCompletedLevel = user.maxCompletedLevel || 0
+  user.completedLevels = user.completedLevels || 0
 
   const availableLevels = levels.filter((levelKey) => {
     const levelNumber = parseInt(levelKey.replace('hunt', ''))
-    return levelNumber <= user.maxCompletedLevel + 1
+    return levelNumber <= user.completedLevels + 1 && levelNumber > 0
   })
 
   if (availableLevels.length === 0) {
@@ -139,10 +138,10 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const levelButtons = availableLevels.map((levelKey) => {
     const level = levelData[levelKey]
-    const energyEmoji = energyCostToEmoji(level.energyCost) // Convert energy cost to emojis
+    const energyEmoji = energyCostToEmoji(level.energyCost)
     return new ButtonBuilder()
       .setCustomId(`level_${levelKey}`)
-      .setLabel(`[ ${level.name} ] ${energyEmoji}`) // Use the emoji string here
+      .setLabel(`[ ${level.name} ] ${energyEmoji}`) 
       .setStyle(ButtonStyle.Primary)
   })
 
@@ -168,7 +167,7 @@ async function showLevelSelection(interaction, user, huntData) {
   const startHuntEmbed = new EmbedBuilder()
     .setTitle('Select a Hunt Level')
     .setDescription(
-      'Choose a level to begin your hunt.⚡Cost is display.\n Drinking 🧪ichor before your hunt increases your chances.\n'
+      'Choose a level to begin your hunt.⚡Cost is displayed.\n Drinking 🧪ichor before your hunt increases your chances.\n'
     )
     .setColor('#FF0000')
     .setFooter({
@@ -292,7 +291,7 @@ async function startNewEncounter(interaction, user, huntData) {
   }
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-  let monsterScore = monster.hp / 2
+  let monsterScore = monster.hp
   monsterScore = Math.max(monsterScore, 8)
 
   const monsterEmbed = new EmbedBuilder()
@@ -314,7 +313,7 @@ async function startNewEncounter(interaction, user, huntData) {
       new ButtonBuilder()
         .setCustomId('style_brute')
         .setLabel(`Brute: ${user.brute_score}`)
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Warning)
     )
   }
   if (user.spellsword_score > 0) {
@@ -322,14 +321,14 @@ async function startNewEncounter(interaction, user, huntData) {
       new ButtonBuilder()
         .setCustomId('style_spellsword')
         .setLabel(`Spellsword: ${user.spellsword_score}`)
-        .setStyle(ButtonStyle.Secondary)
+        .setStyle(ButtonStyle.Primary)
     )
   }
   if (user.stealth_score > 0) {
     styleRow.addComponents(
       new ButtonBuilder()
         .setCustomId('style_stealth')
-        .setLabel(`stealth: ${user.stealth_score}`)
+        .setLabel(`Stealth: ${user.stealth_score}`)
         .setStyle(ButtonStyle.Success)
     )
   }
@@ -510,10 +509,10 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       value: `Congratulations! You have completed ${huntData.level.name}.`,
     })
 
-    user.maxCompletedLevel = user.maxCompletedLevel || 0
+    user.completedLevels = user.completedLevels || 0
     const levelNumber = parseInt(huntData.level.key.replace('hunt', ''))
-    if (user.maxCompletedLevel < levelNumber) {
-      user.maxCompletedLevel = levelNumber
+    if (user.completedLevels < levelNumber) {
+      user.completedLevels = levelNumber
       await user.save()
     }
   } else {
