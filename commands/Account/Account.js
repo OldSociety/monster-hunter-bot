@@ -181,6 +181,16 @@ module.exports = {
           limit: 3,
         })
 
+        const categoryThumbnailMap = {
+          monster: 'https://wiki.uestrpg.com/images/a/ad/Symbol-Warrior.png', // Example URL for 'monster'
+          spellsword: 'https://wiki.uestrpg.com/images/7/71/Symbol-Spellsword.png',
+          stealth: 'https://wiki.uestrpg.com/images/8/8c/Symbol-Nightblade.png',
+          // Add more categories and corresponding URLs as needed
+        };
+        
+        // Determine thumbnail based on the category, fallback to user's avatar if no match found
+        const thumbnailUrl = categoryThumbnailMap[category] || interaction.user.displayAvatarURL();
+        
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(
@@ -193,7 +203,8 @@ module.exports = {
           .setFooter({
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
           })
-          .setThumbnail(interaction.user.displayAvatarURL())
+          .setThumbnail(thumbnailUrl);
+        
 
         if (topCards.length > 0) {
           topCards.forEach((card) => {

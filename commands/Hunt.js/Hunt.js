@@ -349,9 +349,9 @@ async function startNewEncounter(interaction, user, huntData) {
 
   let title
   if (currentBattle.type === 'boss') {
-    title = `${monster.name} ` + '``' + `Boss` + '``'
+    title = `${monster.name}    ` + '``' + `Boss!` + '``'
   } else if (currentBattle.type === 'mini-boss') {
-    title = `${monster.name}` + '``' + `Mini-boss` + '``'
+    title = `${monster.name}    ` + '``' + `Mini-boss` + '``'
   } else {
     const encounterNumber = huntData.currentBattleIndex + 1
     const totalBattles =
