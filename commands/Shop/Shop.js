@@ -30,8 +30,8 @@ const PACK_COSTS = {
   starter: 0,
   common: 800,
   uncommon: 3500,
-  rare: 10000, 
-  elemental: 5000, 
+  rare: 10000,
+  elemental: 5000,
   ichor: 650,
 }
 
@@ -85,6 +85,7 @@ module.exports = {
             .setDescription('Loading shop data, please wait...'),
         ],
         components: [],
+        ephemeral: true,
       })
 
       // Populate cache and set flag
@@ -199,7 +200,11 @@ module.exports = {
       )
     }
     const components = row.components.length > 0 ? [row] : []
-    await interaction.editReply({ embeds: [shopEmbed], components, ephemeral: true })
+    await interaction.editReply({
+      embeds: [shopEmbed],
+      components,
+      ephemeral: true,
+    })
 
     // Set up button interaction collector
     const filter = (i) => i.user.id === userId
