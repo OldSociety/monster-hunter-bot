@@ -182,15 +182,19 @@ module.exports = {
         })
 
         const categoryThumbnailMap = {
-          brute: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteA.png', // Example URL for 'monster'
-          spellsword: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordA.png',
-          stealth: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/stealthA.png',
+          brute:
+            'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteC.png', // Example URL for 'monster'
+          spellsword:
+            'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordC.png',
+          stealth:
+            'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/stealthC.png',
           // Add more categories and corresponding URLs as needed
-        };
-        
+        }
+
         // Determine thumbnail based on the category, fallback to user's avatar if no match found
-        const thumbnailUrl = categoryThumbnailMap[category] || interaction.user.displayAvatarURL();
-        
+        const thumbnailUrl =
+          categoryThumbnailMap[category] || interaction.user.displayAvatarURL()
+
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(
@@ -203,8 +207,7 @@ module.exports = {
           .setFooter({
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
           })
-          .setThumbnail(thumbnailUrl);
-        
+          .setThumbnail(thumbnailUrl)
 
         if (topCards.length > 0) {
           topCards.forEach((card) => {
