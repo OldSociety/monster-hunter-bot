@@ -34,17 +34,17 @@ function generateHuntOneBattles() {
     battles.push({
       type: 'normal',
       cr: 0,
+      difficulty: 'easy', // hp / 2
     })
   }
 
-  // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
-  // Add the mini-boss at the end
   battles.push({
     type: 'mini-boss',
     cr: 0.25,
     monsterIndex: 'orc',
+    difficulty: 'boss-full', // Custom setting for boss
   })
 
   return battles
@@ -58,6 +58,7 @@ function generateHuntTwoBattles() {
     battles.push({
       type: 'normal',
       cr: 0.25,
+      difficulty: 'easy',
     })
   }
 
@@ -65,6 +66,7 @@ function generateHuntTwoBattles() {
   for (let i = 0; i < 5; i++) {
     battles.push({
       type: 'normal',
+      difficulty: 'easy',
       cr: 0.5,
     })
   }
@@ -76,7 +78,8 @@ function generateHuntTwoBattles() {
   battles.push({
     type: 'mini-boss',
     cr: 2,
-    monsterIndex: 'sea-hag',
+    monsterIndex: 'harpy',
+    difficulty: 'boss-half', 
   })
 
   return battles
@@ -117,6 +120,7 @@ function generateHuntThreeBattles() {
     type: 'mini-boss',
     cr: 2,
     monsterIndex: 'sea-hag',
+    difficulty: 'boss-full', 
   })
 
   return battles
