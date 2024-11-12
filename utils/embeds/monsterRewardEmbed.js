@@ -10,9 +10,9 @@ const { EmbedBuilder } = require('discord.js')
 function generateMonsterRewardEmbed(monster, category, rarityStars) {
   // Map category to corresponding thumbnail image URL
   const categoryThumbnailMap = {
-    brute: 'https://wiki.uestrpg.com/images/a/ad/Symbol-Warrior.png',
-    spellsword: 'https://wiki.uestrpg.com/images/7/71/Symbol-Spellsword.png',
-    stealth: 'https://wiki.uestrpg.com/images/8/8c/Symbol-Nightblade.png'
+    brute: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteA.png',
+    spellsword: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordA.png',
+    stealth: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/stealthA.png'
   };
 
   // Determine the thumbnail based on category, fallback to monster image if category not recognized

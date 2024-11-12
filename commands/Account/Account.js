@@ -182,9 +182,9 @@ module.exports = {
         })
 
         const categoryThumbnailMap = {
-          monster: 'https://wiki.uestrpg.com/images/a/ad/Symbol-Warrior.png', // Example URL for 'monster'
-          spellsword: 'https://wiki.uestrpg.com/images/7/71/Symbol-Spellsword.png',
-          stealth: 'https://wiki.uestrpg.com/images/8/8c/Symbol-Nightblade.png',
+          brute: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteA.png', // Example URL for 'monster'
+          spellsword: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordA.png',
+          stealth: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/stealthA.png',
           // Add more categories and corresponding URLs as needed
         };
         
