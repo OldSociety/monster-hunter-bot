@@ -7,12 +7,13 @@ const { EmbedBuilder } = require('discord.js')
  * @param {String} rarityStars - Star rating based on rarity.
  * @returns {EmbedBuilder} - Configured embed for the monster reward.
  */
-function generateMonsterRewardEmbed(monster, rarityStars) {
+function generateMonsterRewardEmbed(monster, category, rarityStars) {
   return new EmbedBuilder()
     .setColor(monster.color)
     .setTitle(monster.name)
-    .setDescription(`**Type:** ${monster.type}`)
-    .addFields({name: `**Challenge**`, value: `${monster.cr}`})
+    .setDescription(`**Type:** ${monster.type} (${category})`)
+    .addFields({name: `**Challenge**`, value: `${monster.cr}`},
+    )
     .setThumbnail(monster.imageUrl)
     .setFooter({ text: `Rarity: ${rarityStars}` })
 }

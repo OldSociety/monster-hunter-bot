@@ -3,4 +3,4 @@ async function addGoldToUser(user, amount) {
   await user.save()
 }
 
-module.exports = { calculateReward, addGoldToUser }
+module.exports = { addGoldToUser }

@@ -232,4 +232,4 @@ async function updateOrAddMonsterToCollection(userId, monster) {
   }
 }
 
-module.exports = { updateOrAddMonsterToCollection }
+module.exports = { determineCategory, updateOrAddMonsterToCollection }

@@ -154,8 +154,6 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
   return monster
 }
 
-
-
 async function fetchMonsterByName(name) {
   // Check if cache is populated; if not, populate it first
   if (!cachePopulated) {

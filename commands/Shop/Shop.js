@@ -13,6 +13,7 @@ const {
   pullValidMonster,
 } = require('../../handlers/pullHandler')
 const {
+  determineCategory,
   updateOrAddMonsterToCollection,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
@@ -269,7 +270,9 @@ module.exports = {
             await updateTop5AndUserScore(userId)
 
             const stars = getStarsBasedOnColor(monster.color)
-            const monsterEmbed = generateMonsterRewardEmbed(monster, stars)
+            const category = determineCategory(monster.type)
+            console.log(category)
+            const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
             if (isStarterPackAvailable) {
               await interaction.followUp({
                 content:

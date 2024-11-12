@@ -15,9 +15,7 @@ const {
   pullMonsterByCR,
   pullSpecificMonster,
 } = require('../../handlers/huntCacheHandler')
-const {
-  addGoldToUser,
-} = require('../../handlers/rewardHandler')
+const { addGoldToUser } = require('../../handlers/rewardHandler')
 const {
   checkAdvantage,
   energyCostToEmoji,
@@ -144,9 +142,9 @@ async function showLevelSelection(interaction, user, huntData) {
       .setStyle(ButtonStyle.Primary)
   })
 
-  // Add the ichor option if the user has enough ichor
+  // Add the ichor option if the user has enough ichor and has not used it
   const actionRowComponents = [...levelButtons]
-  if ((user.currency.ichor || 0) >= 1) {
+  if ((user.currency.ichor || 0) >= 1 && !huntData.ichorUsed) {
     const ichorButton = new ButtonBuilder()
       .setCustomId('use_ichor')
       .setLabel('Drink 🧪ichor')
@@ -251,7 +249,7 @@ async function showLevelSelection(interaction, user, huntData) {
       await user.save()
       huntData.ichorUsed = true
 
-      // Show the level selection again with ichor effect noted
+      // Call showLevelSelection again without the ichor button
       await showLevelSelection(interaction, user, huntData)
     } else if (i.customId.startsWith('level_')) {
       await i.deferUpdate()
@@ -292,9 +290,9 @@ async function showLevelSelection(interaction, user, huntData) {
 
 async function startNewEncounter(interaction, user, huntData) {
   const currentBattle = huntData.level.battles[huntData.currentBattleIndex]
-
   let monster
 
+  // Fetch the monster based on the battle type
   if (huntData.lastMonster && huntData.retries > 0) {
     // Use the last monster if player is retrying
     monster = huntData.lastMonster
@@ -321,6 +319,7 @@ async function startNewEncounter(interaction, user, huntData) {
   }
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+
   // Set monster's health based on difficulty
   let monsterScore = monster.hp
   switch (currentBattle.difficulty) {
@@ -342,15 +341,26 @@ async function startNewEncounter(interaction, user, huntData) {
     case 'boss-full':
       monsterScore = monster.hp // Use full health
       break
-    // Add more cases as needed for custom settings
     default:
       monsterScore = monster.hp // Default to full health if not specified
   }
 
   monsterScore = Math.max(monsterScore, 8) // Ensure a minimum score
 
+  let title
+  if (currentBattle.type === 'boss') {
+    title = `${monster.name} ` + '``' + `Boss` + '``'
+  } else if (currentBattle.type === 'mini-boss') {
+    title = `${monster.name}` + '``' + `Mini-boss` + '``'
+  } else {
+    const encounterNumber = huntData.currentBattleIndex + 1
+    const totalBattles =
+      huntData.level.totalBattles || huntData.level.battles.length
+    title = `A wild ${monster.name} appears! - ${encounterNumber}/${totalBattles}`
+  }
+
   const monsterEmbed = new EmbedBuilder()
-    .setTitle(`A wild ${monster.name} appears!`)
+    .setTitle(title)
     .setDescription(`**CR:** ${monster.cr}\n**Type:** ${monster.type}`)
     .setColor('#FFA500')
     .setThumbnail(imageUrl)
@@ -418,11 +428,26 @@ async function startNewEncounter(interaction, user, huntData) {
     )
 
     if (playerWins) {
-      const rewardAmount = huntData.level.goldReward || 0
+      let rewardAmount = currentBattle.goldReward || 0 // Default to 'goldReward' if no 'firstGoldReward' is present
+
+      // Check if the current battle is a boss or mini-boss and if it is the first defeat
+      if (
+        (currentBattle.type === 'boss' || currentBattle.type === 'mini-boss') &&
+        huntData.level
+      ) {
+        const levelNumber = parseInt(huntData.level.key.replace('hunt', ''))
+        const isFirstDefeat = user.completedLevels < levelNumber
+
+        if (
+          isFirstDefeat &&
+          typeof currentBattle.firstGoldReward !== 'undefined'
+        ) {
+          rewardAmount = currentBattle.firstGoldReward // Use the larger first-time reward if specified
+        }
+      }
       await addGoldToUser(user, rewardAmount)
       huntData.totalGoldEarned += rewardAmount
 
-      huntData.totalGoldEarned += goldReward
       huntData.totalMonstersDefeated += 1
       huntData.currentBattleIndex += 1
 
@@ -566,16 +591,22 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
     .setColor('#FFD700')
 
   if (levelCompleted) {
-    summaryEmbed.addFields({
-      name: 'Level Completed!',
-      value: `Congratulations! You have completed ${huntData.level.name}.`,
-    })
-
     user.completedLevels = user.completedLevels || 0
     const levelNumber = parseInt(huntData.level.key.replace('hunt', ''))
-    if (user.completedLevels < levelNumber) {
-      user.completedLevels = levelNumber
+    const isFirstCompletion = user.completedLevels < levelNumber
+
+    if (isFirstCompletion) {
+      summaryEmbed.addFields({
+        name: 'Congratulations!',
+        value: `You have defeated the ${huntData.level.name} and unlocked the next hunt.`,
+      })
+      user.completedLevels = levelNumber // Update completed level
       await user.save()
+    } else {
+      summaryEmbed.addFields({
+        name: 'Hunt Completed',
+        value: `You have completed the ${huntData.level.name} again.`,
+      })
     }
   } else {
     summaryEmbed.addFields({
