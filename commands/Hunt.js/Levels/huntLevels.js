@@ -23,7 +23,6 @@ const levelData = {
     energyCost: 1,
     battles: generateHuntThreeBattles(),
   },
-  // Future levels can be added here
 }
 
 function generateHuntOneBattles() {
@@ -35,6 +34,7 @@ function generateHuntOneBattles() {
       type: 'normal',
       cr: 0,
       difficulty: 'easy', // hp / 2
+      goldReward: 24,
     })
   }
 
@@ -45,6 +45,7 @@ function generateHuntOneBattles() {
     cr: 0.25,
     monsterIndex: 'orc',
     difficulty: 'boss-full', // Custom setting for boss
+    goldReward: 700
   })
 
   return battles

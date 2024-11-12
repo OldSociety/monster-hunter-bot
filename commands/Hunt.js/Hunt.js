@@ -16,7 +16,6 @@ const {
   pullSpecificMonster,
 } = require('../../handlers/huntCacheHandler')
 const {
-  calculateReward,
   addGoldToUser,
 } = require('../../handlers/rewardHandler')
 const {
@@ -293,6 +292,7 @@ async function showLevelSelection(interaction, user, huntData) {
 
 async function startNewEncounter(interaction, user, huntData) {
   const currentBattle = huntData.level.battles[huntData.currentBattleIndex]
+
   let monster
 
   if (huntData.lastMonster && huntData.retries > 0) {
@@ -321,7 +321,6 @@ async function startNewEncounter(interaction, user, huntData) {
   }
 
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-
   // Set monster's health based on difficulty
   let monsterScore = monster.hp
   switch (currentBattle.difficulty) {
@@ -402,7 +401,58 @@ async function startNewEncounter(interaction, user, huntData) {
     time: 15000,
   })
 
-  // Rest of the function remains unchanged
+  styleCollector.on('collect', async (styleInteraction) => {
+    await styleInteraction.deferUpdate()
+    const selectedStyle = styleInteraction.customId.split('_')[1]
+    const playerScore = user[`${selectedStyle}_score`]
+    const isAdvantaged = checkAdvantage(selectedStyle, monster.type)
+
+    const playerWins = await runBattlePhases(
+      interaction,
+      playerScore,
+      monsterScore,
+      monster,
+      isAdvantaged,
+      huntData,
+      currentBattle.type // pass battleType
+    )
+
+    if (playerWins) {
+      const rewardAmount = huntData.level.goldReward || 0
+      await addGoldToUser(user, rewardAmount)
+      huntData.totalGoldEarned += rewardAmount
+
+      huntData.totalGoldEarned += goldReward
+      huntData.totalMonstersDefeated += 1
+      huntData.currentBattleIndex += 1
+
+      huntData.retries = 0
+      huntData.lastMonster = null
+
+      if (huntData.currentBattleIndex >= huntData.level.battles.length) {
+        await displayHuntSummary(interaction, user, huntData, true)
+      } else {
+        await startNewEncounter(interaction, user, huntData)
+      }
+    } else {
+      huntData.retries += 1
+      if (huntData.retries < 3) {
+        await offerRetry(interaction, user, huntData)
+      } else {
+        await displayHuntSummary(interaction, user, huntData, false)
+      }
+    }
+  })
+
+  styleCollector.on('end', async (collected, reason) => {
+    if (reason === 'time') {
+      await interaction.followUp({
+        content:
+          'Session expired. You did not select a fighting style in time. Please use /hunt to try again.',
+        ephemeral: true,
+      })
+    }
+  })
 }
 
 async function offerRetry(interaction, user, huntData) {
@@ -563,7 +613,7 @@ async function runBattlePhases(
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
 
   for (let phase = 1; phase <= 7; phase++) {
-    const effectivePlayerScore = isAdvantaged ? playerScore * 1.15 : playerScore
+    const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore
 
     let playerRoll
     if (huntData.ichorUsed) {
