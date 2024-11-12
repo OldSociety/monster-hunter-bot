@@ -42,7 +42,7 @@ module.exports = {
           user_name: interaction.user.username,
           gold: 500,
           currency: {
-            energy: 10,
+            energy: 15,
             gems: 0,
             eggs: 0,
             ichor: 3,

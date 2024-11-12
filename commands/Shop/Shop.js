@@ -199,7 +199,7 @@ module.exports = {
       )
     }
     const components = row.components.length > 0 ? [row] : []
-    await interaction.editReply({ embeds: [shopEmbed], components })
+    await interaction.editReply({ embeds: [shopEmbed], components, ephemeral: true })
 
     // Set up button interaction collector
     const filter = (i) => i.user.id === userId
