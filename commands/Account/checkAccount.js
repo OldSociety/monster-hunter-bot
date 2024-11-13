@@ -13,10 +13,10 @@ async function checkUserAccount(interaction) {
       .setTitle('No Account Found')
       .setDescription(
         `You need to create an account before using this command.\nPlease ` +
-              '``' +
-              `/account` +
-              '``' +
-              `to get started.`
+          '``' +
+          `/account` +
+          '``' +
+          `to get started.`
       )
       .setFooter({ text: 'Use /account to create your game account.' })
       .setThumbnail(interaction.user.displayAvatarURL())

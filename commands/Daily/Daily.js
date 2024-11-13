@@ -25,7 +25,10 @@ module.exports = {
     const now = new Date()
     const hoursSinceLastClaim = Math.abs(now - lastClaim) / 36e5
 
-    const displayDay = user.daily_streak % 10 === 0 && user.daily_streak > 0 ? 10 : user.daily_streak % 10 || 1;
+    const displayDay =
+      user.daily_streak % 10 === 0 && user.daily_streak > 0
+        ? 10
+        : user.daily_streak % 10 || 1
 
     const rewards = [
       '🪙200 coins',

@@ -8,25 +8,25 @@ const { EmbedBuilder } = require('discord.js')
  * @returns {EmbedBuilder} - Configured embed for the monster reward.
  */
 function generateMonsterRewardEmbed(monster, category, rarityStars) {
-  // Map category to corresponding thumbnail image URL
   const categoryThumbnailMap = {
-    brute: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteC.png',
-    spellsword: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordC.png',
-    stealth: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/stealthC.png'
-  };
+    brute:
+      'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteC.png',
+    spellsword:
+      'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordC.png',
+    stealth:
+      'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/stealthC.png',
+  }
 
-  // Determine the thumbnail based on category, fallback to monster image if category not recognized
-  const thumbnailUrl = categoryThumbnailMap[category] || monster.imageUrl;
+  const thumbnailUrl = categoryThumbnailMap[category] || monster.imageUrl
 
   return new EmbedBuilder()
     .setColor(monster.color)
     .setTitle(monster.name)
     .setDescription(`**Type:** ${monster.type} (${category})`)
     .addFields({ name: `**Challenge**`, value: `${monster.cr}` })
-    .setImage(monster.imageUrl) // Keeping the main image unchanged
-    .setThumbnail(thumbnailUrl) // Set the determined thumbnail
-    .setFooter({ text: `Rarity: ${rarityStars}` });
+    .setImage(monster.imageUrl)
+    .setThumbnail(thumbnailUrl)
+    .setFooter({ text: `Rarity: ${rarityStars}` })
 }
-
 
 module.exports = { generateMonsterRewardEmbed }

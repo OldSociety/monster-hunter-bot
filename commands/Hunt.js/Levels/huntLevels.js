@@ -65,7 +65,7 @@ function generateHuntOneBattles() {
     type: 'mini-boss',
     cr: 0.25,
     monsterIndex: 'darkmantle',
-    difficulty: 'boss-half', // Custom setting for boss
+    difficulty: 'boss-half',
     firstGoldReward: 700,
     goldReward: 28,
   })
@@ -76,7 +76,6 @@ function generateHuntOneBattles() {
 function generateHuntTwoBattles() {
   const battles = []
 
-  // Add 2 battles with CR 1/4
   for (let i = 0; i < 2; i++) {
     battles.push({
       type: 'normal',
@@ -86,7 +85,6 @@ function generateHuntTwoBattles() {
     })
   }
 
-  // Add 3 battles with CR 1/2
   for (let i = 0; i < 3; i++) {
     battles.push({
       type: 'normal',
@@ -96,10 +94,8 @@ function generateHuntTwoBattles() {
     })
   }
 
-  // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
-  // Add the mini-boss at the end
   battles.push({
     type: 'mini-boss',
     cr: 2,
@@ -115,7 +111,6 @@ function generateHuntTwoBattles() {
 function generateHuntThreeBattles() {
   const battles = []
 
-  // Add 4 battles with CR 1/4
   for (let i = 0; i < 4; i++) {
     battles.push({
       type: 'normal',
@@ -125,7 +120,6 @@ function generateHuntThreeBattles() {
     })
   }
 
-  // Add 4 battles with CR 1/2
   for (let i = 0; i < 4; i++) {
     battles.push({
       type: 'normal',
@@ -135,10 +129,8 @@ function generateHuntThreeBattles() {
     })
   }
 
-  // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
-  // Add the mini-boss at the end
   battles.push({
     type: 'mini-boss',
     cr: 2,
@@ -154,7 +146,6 @@ function generateHuntThreeBattles() {
 function generateHuntFourBattles() {
   const battles = []
 
-  // Add 4 battles with CR 1/4
   for (let i = 0; i < 4; i++) {
     battles.push({
       type: 'normal',
@@ -164,7 +155,6 @@ function generateHuntFourBattles() {
     })
   }
 
-  // Add 4 battles with CR 1/2
   for (let i = 0; i < 4; i++) {
     battles.push({
       type: 'normal',
@@ -174,7 +164,6 @@ function generateHuntFourBattles() {
     })
   }
 
-  // Add 2 battles with CR 1
   for (let i = 0; i < 2; i++) {
     battles.push({
       type: 'normal',
@@ -184,10 +173,8 @@ function generateHuntFourBattles() {
     })
   }
 
-  // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
-  // Add the mini-boss at the end
   battles.push({
     type: 'mini-boss',
     cr: 2,
@@ -203,7 +190,6 @@ function generateHuntFourBattles() {
 function generateHuntFiveBattles() {
   const battles = []
 
-  // Add 4 battles with CR 1/4
   for (let i = 0; i < 4; i++) {
     battles.push({
       type: 'normal',
@@ -213,7 +199,6 @@ function generateHuntFiveBattles() {
     })
   }
 
-  // Add 4 battles with CR 1/2
   for (let i = 0; i < 4; i++) {
     battles.push({
       type: 'normal',
@@ -223,7 +208,6 @@ function generateHuntFiveBattles() {
     })
   }
 
-  // Add 2 battles with CR 1
   for (let i = 0; i < 2; i++) {
     battles.push({
       type: 'normal',
@@ -233,7 +217,6 @@ function generateHuntFiveBattles() {
     })
   }
 
-  // Shuffle the battles to randomize the order
   battles.sort(() => Math.random() - 0.5)
 
   // Add the mini-boss at the end

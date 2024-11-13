@@ -98,7 +98,6 @@ module.exports = {
 async function showLevelSelection(interaction, user, huntData) {
   const levels = Object.keys(levelData)
 
-  // Check if user has enough energy
   if ((user.currency.energy || 0) < 1) {
     const noEnergyEmbed = new EmbedBuilder()
       .setColor('#FF0000')
@@ -135,10 +134,10 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const levelButtons = availableLevels.map((levelKey) => {
     const level = levelData[levelKey]
-    const energyEmoji = energyCostToEmoji(level.energyCost) // Convert energy cost to emojis
+    const energyEmoji = energyCostToEmoji(level.energyCost) 
     return new ButtonBuilder()
       .setCustomId(`level_${levelKey}`)
-      .setLabel(`[ ${level.name} ] ${energyEmoji}`) // Use the emoji string here
+      .setLabel(`[ ${level.name} ] ${energyEmoji}`) 
       .setStyle(ButtonStyle.Primary)
   })
 
@@ -245,11 +244,10 @@ async function showLevelSelection(interaction, user, huntData) {
         return
       }
       user.currency.ichor -= 1
-      user.changed('currency', true) // Notify Sequelize of the change
+      user.changed('currency', true) 
       await user.save()
       huntData.ichorUsed = true
 
-      // Call showLevelSelection again without the ichor button
       await showLevelSelection(interaction, user, huntData)
     } else if (i.customId.startsWith('level_')) {
       await i.deferUpdate()
@@ -267,7 +265,7 @@ async function showLevelSelection(interaction, user, huntData) {
       }
 
       user.currency.energy -= selectedLevel.energyCost
-      user.changed('currency', true) // Notify Sequelize of the change
+      user.changed('currency', true) 
       await user.save()
 
       huntData.level = selectedLevel
@@ -294,7 +292,6 @@ async function startNewEncounter(interaction, user, huntData) {
 
   // Fetch the monster based on the battle type
   if (huntData.lastMonster && huntData.retries > 0) {
-    // Use the last monster if player is retrying
     monster = huntData.lastMonster
   } else {
     const battleType = currentBattle.type
@@ -339,13 +336,13 @@ async function startNewEncounter(interaction, user, huntData) {
       monsterScore = monster.hp / 2
       break
     case 'boss-full':
-      monsterScore = monster.hp // Use full health
+      monsterScore = monster.hp 
       break
     default:
-      monsterScore = monster.hp // Default to full health if not specified
+      monsterScore = monster.hp 
   }
 
-  monsterScore = Math.max(monsterScore, 8) // Ensure a minimum score
+  monsterScore = Math.max(monsterScore, 8) 
 
   let title
   if (currentBattle.type === 'boss') {
@@ -428,7 +425,7 @@ async function startNewEncounter(interaction, user, huntData) {
     )
 
     if (playerWins) {
-      let rewardAmount = currentBattle.goldReward || 0 // Default to 'goldReward' if no 'firstGoldReward' is present
+      let rewardAmount = currentBattle.goldReward || 0 
 
       // Check if the current battle is a boss or mini-boss and if it is the first defeat
       if (
@@ -442,7 +439,7 @@ async function startNewEncounter(interaction, user, huntData) {
           isFirstDefeat &&
           typeof currentBattle.firstGoldReward !== 'undefined'
         ) {
-          rewardAmount = currentBattle.firstGoldReward // Use the larger first-time reward if specified
+          rewardAmount = currentBattle.firstGoldReward 
         }
       }
       await addGoldToUser(user, rewardAmount)
@@ -715,7 +712,7 @@ async function runBattlePhases(
         `**CR:** ${monster.cr}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
           `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
-          `${effects}\n\n` + // Add the effects line here
+          `${effects}\n\n` + 
           `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(
             playerRoll.toFixed(2)
           )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +

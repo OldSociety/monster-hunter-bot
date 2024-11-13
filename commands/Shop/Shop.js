@@ -145,7 +145,6 @@ module.exports = {
           .setStyle(ButtonStyle.Secondary)
       )
     } else {
-      // Shop embed setup after cache is loaded
       shopEmbed
         .addFields(
           {
@@ -176,7 +175,6 @@ module.exports = {
         )
         .setFooter({ text: `${footerText}` })
 
-      // Add buttons for each pack
       row.addComponents(
         new ButtonBuilder()
           .setCustomId('purchase_common_pack')
@@ -222,7 +220,6 @@ module.exports = {
       try {
         await buttonInteraction.deferUpdate()
 
-        // Check if user has enough gold
         if (user.gold < packCost) {
           return buttonInteraction.followUp({
             content: `You don't have enough gold to buy a ${packType} pack. Available: 🪙${user.gold} gold`,
@@ -230,7 +227,6 @@ module.exports = {
           })
         }
 
-        // Deduct gold
         await user.decrement('gold', { by: packCost })
 
         await interaction.editReply({
@@ -262,7 +258,6 @@ module.exports = {
             embeds: [ichorEmbed],
           })
         } else {
-          // Fetch monster, passing packType to pullValidMonster
           const monster = await pullValidMonster(tierOption, packType)
 
           if (monster) {
