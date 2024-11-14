@@ -5,6 +5,7 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
+  StringSelectMenuBuilder,
   ButtonStyle,
 } = require('discord.js')
 const { Collection } = require('../../Models/model.js')
@@ -117,7 +118,6 @@ async function showLevelSelection(interaction, user, huntData) {
     return
   }
 
-  // Filter levels based on user's completedLevels
   user.completedLevels = user.completedLevels || 0
   const availableLevels = levels.filter((levelKey) => {
     const levelNumber = parseInt(levelKey.replace('hunt', ''))
@@ -132,23 +132,31 @@ async function showLevelSelection(interaction, user, huntData) {
     return
   }
 
-  const levelButtons = availableLevels.map((levelKey) => {
+  const levelOptions = availableLevels.map((levelKey) => {
     const level = levelData[levelKey]
-    const energyEmoji = energyCostToEmoji(level.energyCost) 
-    return new ButtonBuilder()
-      .setCustomId(`level_${levelKey}`)
-      .setLabel(`[ ${level.name} ] ${energyEmoji}`) 
-      .setStyle(ButtonStyle.Primary)
+    const energyEmoji = energyCostToEmoji(level.energyCost)
+    return {
+      label: level.name,
+      description: `Energy Cost: ${energyEmoji}`,
+      value: `level_${levelKey}`,
+    }
   })
 
-  // Add the ichor option if the user has enough ichor and has not used it
-  const actionRowComponents = [...levelButtons]
+  const selectMenu = new StringSelectMenuBuilder()
+    .setCustomId('level_select')
+    .setPlaceholder('Choose a level to begin your hunt')
+    .addOptions(levelOptions)
+
+  const dropdownRow = new ActionRowBuilder().addComponents(selectMenu)
+
+  const buttonComponents = []
+
   if ((user.currency.ichor || 0) >= 1 && !huntData.ichorUsed) {
     const ichorButton = new ButtonBuilder()
       .setCustomId('use_ichor')
       .setLabel('Drink 🧪ichor')
       .setStyle(ButtonStyle.Success)
-    actionRowComponents.push(ichorButton)
+    buttonComponents.push(ichorButton)
   }
 
   const cancelButton = new ButtonBuilder()
@@ -156,11 +164,10 @@ async function showLevelSelection(interaction, user, huntData) {
     .setLabel('Cancel')
     .setStyle(ButtonStyle.Danger)
 
-  actionRowComponents.push(cancelButton)
+  buttonComponents.push(cancelButton)
 
-  const actionRow = new ActionRowBuilder().addComponents(...actionRowComponents)
+  const buttonRow = new ActionRowBuilder().addComponents(...buttonComponents)
 
-  // Display the appropriate embed based on completedLevels
   let embedToShow
   if (user.completedLevels === 0) {
     embedToShow = new EmbedBuilder()
@@ -168,23 +175,10 @@ async function showLevelSelection(interaction, user, huntData) {
       .setTitle('Welcome to the Hunt!')
       .setDescription(
         'Before you begin your journey, here are some important things to know:\n\n' +
-          `**Fighting Styles**: Each battle you'll choose one of three styles: ` +
-          '``' +
-          `Brute / Spellsword / Stealth` +
-          '``' +
-          `. Each monster contributes to a fighting style score based on their type. Use ` +
-          '``' +
-          `/account` +
-          '``' +
-          ` to check current scores.\n\n` +
-          '**⏫Advantage**: Monster types are vulnerable to specific fighting styles. Learning to leverage advantage will grant a substantial bonus in battle.\n\n' +
-          `**🧪Ichor**: Temporarily boosts your strength substantially for all battles in a hunt. You can purchase more in the ` +
-          '``' +
-          `/shop` +
-          '``' +
-          `.\n\n` +
-          `**Defeat/Revival**: You have 3 chances to complete a hunt. Spend ⚡energy to revive from where you lost. ` +
-          "New levels unlock as you progress. When you're ready, click [1] below to start your first hunt!"
+          '**Fighting Styles**: Brute / Spellsword / Stealth.\n\n' +
+          '**⏫Advantage**: Monsters are vulnerable to specific fighting styles, granting a bonus.\n\n' +
+          '**🧪Ichor**: Temporarily boosts your strength for all battles in a hunt.\n\n' +
+          '**Defeat/Revival**: You have 3 chances to complete a hunt.'
       )
       .setFooter({
         text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
@@ -192,9 +186,7 @@ async function showLevelSelection(interaction, user, huntData) {
   } else {
     embedToShow = new EmbedBuilder()
       .setTitle('Select a Hunt Level')
-      .setDescription(
-        'Choose a level to begin your hunt. ⚡Cost is displayed.\nDrinking 🧪ichor before your hunt increases your chances.\n'
-      )
+      .setDescription('Choose a level to begin your hunt. ⚡Cost is displayed.')
       .setColor('#FF0000')
       .setFooter({
         text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
@@ -210,12 +202,11 @@ async function showLevelSelection(interaction, user, huntData) {
 
   await interaction.editReply({
     embeds: [embedToShow],
-    components: [actionRow],
+    components: [dropdownRow, buttonRow],
     ephemeral: true,
   })
 
   const filter = (i) => i.user.id === interaction.user.id
-
   const collector = interaction.channel.createMessageComponentCollector({
     filter,
     max: 1,
@@ -233,9 +224,9 @@ async function showLevelSelection(interaction, user, huntData) {
       collector.stop()
       return
     }
+
     if (i.customId === 'use_ichor') {
       await i.deferUpdate()
-
       if ((user.currency.ichor || 0) < 1) {
         await interaction.followUp({
           content: "You don't have enough 🧪ichor to use this option.",
@@ -243,17 +234,16 @@ async function showLevelSelection(interaction, user, huntData) {
         })
         return
       }
+
       user.currency.ichor -= 1
-      user.changed('currency', true) 
+      user.changed('currency', true)
       await user.save()
       huntData.ichorUsed = true
 
       await showLevelSelection(interaction, user, huntData)
-    } else if (i.customId.startsWith('level_')) {
+    } else if (i.customId === 'level_select') {
       await i.deferUpdate()
-      collector.stop()
-
-      const selectedLevelKey = i.customId.replace('level_', '')
+      const selectedLevelKey = i.values[0].replace('level_', '')
       const selectedLevel = levelData[selectedLevelKey]
 
       if (user.currency.energy < selectedLevel.energyCost) {
@@ -265,12 +255,11 @@ async function showLevelSelection(interaction, user, huntData) {
       }
 
       user.currency.energy -= selectedLevel.energyCost
-      user.changed('currency', true) 
+      user.changed('currency', true)
       await user.save()
 
       huntData.level = selectedLevel
       huntData.inProgress = true
-
       await startNewEncounter(interaction, user, huntData)
     }
   })
@@ -336,13 +325,13 @@ async function startNewEncounter(interaction, user, huntData) {
       monsterScore = monster.hp / 2
       break
     case 'boss-full':
-      monsterScore = monster.hp 
+      monsterScore = monster.hp
       break
     default:
-      monsterScore = monster.hp 
+      monsterScore = monster.hp
   }
 
-  monsterScore = Math.max(monsterScore, 8) 
+  monsterScore = Math.max(monsterScore, 8)
 
   let title
   if (currentBattle.type === 'boss') {
@@ -425,7 +414,7 @@ async function startNewEncounter(interaction, user, huntData) {
     )
 
     if (playerWins) {
-      let rewardAmount = currentBattle.goldReward || 0 
+      let rewardAmount = currentBattle.goldReward || 0
 
       // Check if the current battle is a boss or mini-boss and if it is the first defeat
       if (
@@ -439,7 +428,7 @@ async function startNewEncounter(interaction, user, huntData) {
           isFirstDefeat &&
           typeof currentBattle.firstGoldReward !== 'undefined'
         ) {
-          rewardAmount = currentBattle.firstGoldReward 
+          rewardAmount = currentBattle.firstGoldReward
         }
       }
       await addGoldToUser(user, rewardAmount)
@@ -597,12 +586,12 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
         name: 'Congratulations!',
         value: `You have defeated the ${huntData.level.name} and unlocked the next hunt.`,
       })
-      user.completedLevels = levelNumber // Update completed level
+      user.completedLevels = levelNumber 
       await user.save()
     } else {
       summaryEmbed.addFields({
         name: 'Hunt Completed',
-        value: `You have completed the ${huntData.level.name} again.`,
+        value: `Another ${huntData.level.name} falls to your blade.`,
       })
     }
   } else {
@@ -712,7 +701,7 @@ async function runBattlePhases(
         `**CR:** ${monster.cr}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
           `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
-          `${effects}\n\n` + 
+          `${effects}\n\n` +
           `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(
             playerRoll.toFixed(2)
           )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +
