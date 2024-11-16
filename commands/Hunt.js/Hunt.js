@@ -586,7 +586,7 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
         name: 'Congratulations!',
         value: `You have defeated the ${huntData.level.name} and unlocked the next hunt.`,
       })
-      user.completedLevels = levelNumber 
+      user.completedLevels = levelNumber
       await user.save()
     } else {
       summaryEmbed.addFields({
