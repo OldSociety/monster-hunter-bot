@@ -103,8 +103,8 @@ async function updateUserScores(userId, category, monster) {
     `Monster received for update: ID=${monster.id}, m_score=${monster.m_score}`
   )
 
-  const topCategoryField = `top_${category}s` // e.g., top_brutes
-  const categoryScoreField = `${category}_score` // e.g., brute_score
+  const topCategoryField = `top_${category}s` 
+  const categoryScoreField = `${category}_score` 
 
   // Retrieve current top monsters (IDs only) and top category list (IDs only)
   const currentTopMonsters = user.top_monsters || []
@@ -203,7 +203,7 @@ async function updateOrAddMonsterToCollection(userId, monster) {
 
   if (collectionEntry) {
     collectionEntry.copies += 1
-    if (collectionEntry.copies >= 1) {
+    if (collectionEntry.copies >= 1 && collectionEntry.level < 10) {
       collectionEntry.level += 1
       collectionEntry.copies = 0
       collectionEntry.m_score = calculateMScore(
