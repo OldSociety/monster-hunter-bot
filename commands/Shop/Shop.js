@@ -290,7 +290,7 @@ module.exports = {
             if (isStarterPackAvailable) {
               await interaction.followUp({
                 content:
-                  `You have received your first monster and increased one of your fighting style scores! You now have enough power to fight your first hunt.\n\nWhen ready, use ` +
+                  `You have received your first monster and increased one of your fighting style scores! Keep in mind, only your top 3 cards of a style add to its score.\n\nWhen ready, use ` +
                   '``' +
                   `/account` +
                   '``' +

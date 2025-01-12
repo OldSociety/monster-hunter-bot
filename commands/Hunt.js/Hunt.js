@@ -178,6 +178,7 @@ async function showLevelSelection(interaction, user, huntData) {
           '**Fighting Styles**: Brute / Spellsword / Stealth.\n\n' +
           '**⏫Advantage**: Monsters are vulnerable to specific fighting styles, granting a bonus.\n\n' +
           '**🧪Ichor**: Temporarily boosts your strength for all battles in a hunt.\n\n' +
+          '**🧿Tokens**: You earn a token for every kill which can be spent in minigames.\n\n' +
           '**Defeat/Revival**: You have 3 chances to complete a hunt.'
       )
       .setFooter({
@@ -405,6 +406,7 @@ async function startNewEncounter(interaction, user, huntData) {
 
     const playerWins = await runBattlePhases(
       interaction,
+      user,
       playerScore,
       monsterScore,
       monster,
@@ -571,9 +573,14 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   const summaryEmbed = new EmbedBuilder()
     .setTitle('Hunt Summary')
     .setDescription(
-      `**Total Monsters Defeated:** ${huntData.totalMonstersDefeated}\n` +
-        `**Total Gold Earned:** 🪙${huntData.totalGoldEarned}`
+      `**Gold Earned:** 🪙${huntData.totalGoldEarned}\n` +
+        `**Tokens Earned:** 🧿${huntData.totalMonstersDefeated}`
     )
+    .setFooter({
+      text:
+        `Tokens can be spent by using /slots and future minigames.`,
+    })
+
     .setColor('#FFD700')
 
   if (levelCompleted) {
@@ -616,6 +623,7 @@ function createHealthBar(currentHealth, maxHealth) {
 
 async function runBattlePhases(
   interaction,
+  user,
   playerScore,
   monsterScore,
   monster,
@@ -676,6 +684,9 @@ async function runBattlePhases(
       if (momentum < 0) momentum = 0
 
       if (playerWins >= 4) {
+        user.currency.gems = (user.currency.gems || 0) + 1
+        user.changed('currency', true)
+        await user.save()
         momentum = 0
         break
       }
