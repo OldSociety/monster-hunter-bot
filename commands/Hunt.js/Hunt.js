@@ -702,9 +702,10 @@ async function runBattlePhases(
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
           `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
           `${effects}\n\n` +
-          `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.floor(
-            playerRoll.toFixed(2)
-          )}, Monster rolled ${monsterRoll.toFixed(2)}\n\n` +
+          `**Phase ${phase}**\n${phaseResult} Player rolled ${Math.max(
+            Math.floor(playerRoll.toFixed(2)),
+            1
+          )}, Monster rolled ${Math.max(monsterRoll.toFixed(2), 1)}\n\n` +
           `${healthBar}`
       )
       .setColor('#FF4500')

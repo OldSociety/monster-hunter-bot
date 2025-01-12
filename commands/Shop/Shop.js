@@ -259,19 +259,38 @@ module.exports = {
           })
         } else {
           const monster = await pullValidMonster(tierOption, packType)
-
-          if (monster) {
-            await updateOrAddMonsterToCollection(userId, monster)
-            await updateTop5AndUserScore(userId)
-
-            const stars = getStarsBasedOnColor(monster.color)
+          const stars = getStarsBasedOnColor(monster.color)
             const category = determineCategory(monster.type)
             console.log(category)
-            const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
+            const monsterEmbed = generateMonsterRewardEmbed(
+              monster,
+              category,
+              stars
+            )
+
+          if (monster) {
+            const result = await updateOrAddMonsterToCollection(userId, monster)
+
+            if (result.isDuplicate) {
+              const duplicateMessage = `You obtained another copy of **${result.name}**. It has increased from level **${result.previousLevel}** to level **${result.newLevel}**!`
+
+              await interaction.followUp({
+                content: duplicateMessage,
+                embeds: [monsterEmbed], // You can include the updated monster embed here if needed
+              })
+            } else {
+              await interaction.followUp({
+                content: `You pulled a new **${result.name}** from the **${packType} pack!**`,
+                embeds: [monsterEmbed],
+              })
+            }
+            await updateTop5AndUserScore(userId)
+
+            
             if (isStarterPackAvailable) {
               await interaction.followUp({
                 content:
-                  `You have received your first monster and increased one of your fighting style scores!\nWhen ready, use ` +
+                  `You have received your first monster and increased one of your fighting style scores! You now have enough power to fight your first hunt.\n\nWhen ready, use ` +
                   '``' +
                   `/account` +
                   '``' +
@@ -280,11 +299,6 @@ module.exports = {
                   `/hunt` +
                   '``' +
                   `to begin your first hunt.`,
-                embeds: [monsterEmbed],
-              })
-            } else {
-              await interaction.followUp({
-                content: `You pulled a monster from the **${packType} pack!**`,
                 embeds: [monsterEmbed],
               })
             }

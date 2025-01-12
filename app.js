@@ -135,4 +135,5 @@ cron.schedule('*/10 * * * *', async () => {
 // Log in to Discord with client's token
 client.login(process.env.TOKEN)
 
+
 module.exports = { sequelize }

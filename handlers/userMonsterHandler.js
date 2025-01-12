@@ -137,7 +137,7 @@ async function updateUserScores(userId, category, monster) {
     )}`
   )
 
-  // For updatedTopCategory, include only IDs for monsters of the specified category (brute, spellsword, etc.)
+  // For updatedTopCategory, include only IDs (brute, spellsword, etc.)
   const updatedTopCategory = Array.from(
     new Set([...currentTopCategory, monster.id])
   )
@@ -198,26 +198,36 @@ async function updateUserScores(userId, category, monster) {
 async function updateOrAddMonsterToCollection(userId, monster) {
   let collectionEntry = await Collection.findOne({
     where: { userId, name: monster.name },
-  })
-  const category = determineCategory(monster.type)
+  });
+  const category = determineCategory(monster.type);
 
   if (collectionEntry) {
-    collectionEntry.copies += 1
+    collectionEntry.copies += 1;
+    let levelIncreased = false;
+
     if (collectionEntry.copies >= 1 && collectionEntry.level < 10) {
-      collectionEntry.level += 1
-      collectionEntry.copies = 0
+      collectionEntry.level += 1;
+      collectionEntry.copies = 0;
       collectionEntry.m_score = calculateMScore(
         monster.cr,
         monster.rarity,
         collectionEntry.level
-      )
+      );
+      levelIncreased = true;
     }
 
-    await collectionEntry.save()
+    await collectionEntry.save();
 
-    if (category) await updateUserScores(userId, category, collectionEntry)
+    if (category) await updateUserScores(userId, category, collectionEntry);
+
+    return {
+      isDuplicate: true,
+      name: monster.name,
+      previousLevel: collectionEntry.level - (levelIncreased ? 1 : 0),
+      newLevel: collectionEntry.level,
+    };
   } else {
-    const initialMScore = calculateMScore(monster.cr, monster.rarity, 1)
+    const initialMScore = calculateMScore(monster.cr, monster.rarity, 1);
     collectionEntry = await Collection.create({
       userId,
       name: monster.name,
@@ -226,10 +236,13 @@ async function updateOrAddMonsterToCollection(userId, monster) {
       m_score: initialMScore,
       level: 1,
       copies: 0,
-    })
+    });
 
-    if (category) await updateUserScores(userId, category, collectionEntry)
+    if (category) await updateUserScores(userId, category, collectionEntry);
+
+    return { isDuplicate: false, name: monster.name };
   }
 }
+
 
 module.exports = { determineCategory, updateOrAddMonsterToCollection }

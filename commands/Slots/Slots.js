@@ -82,6 +82,7 @@ function formatRow(slotArray, addArrow = false) {
  return addArrow ? `${paddedRow}` : paddedRow
 }
 
+
 function checkWinCondition(row) {
  const uniqueSymbols = new Set(row)
  return uniqueSymbols.size < row.length 
