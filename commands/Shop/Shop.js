@@ -55,19 +55,19 @@ module.exports = {
     .setDescription('Purchase a monster pack'),
 
   async execute(interaction) {
-    const allowedChannels = [
-      process.env.WINTERCHANNELID,
-      process.env.BOTTESTCHANNELID,
-      process.env.DEVBOTTESTCHANNELID,
-    ]
+    // const allowedChannels = [
+    //   process.env.WINTERCHANNELID,
+    //   process.env.BOTTESTCHANNELID,
+    //   process.env.DEVBOTTESTCHANNELID,
+    // ]
 
-    if (!allowedChannels.includes(interaction.channel.id)) {
-      await interaction.reply({
-        content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-        ephemeral: true,
-      })
-      return
-    }
+    // if (!allowedChannels.includes(interaction.channel.id)) {
+    //   await interaction.reply({
+    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+    //     ephemeral: true,
+    //   })
+    //   return
+    // }
     await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
     console.log('Shop command started.')

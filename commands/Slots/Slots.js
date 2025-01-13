@@ -6,7 +6,7 @@ const {
 } = require('discord.js')
 const { User } = require('../../Models/model.js')
 
-let jackpot = 1000
+let jackpot = 10000
 const activePlayers = new Set() // Track active players to prevent multiple instances
 
 module.exports = {
@@ -14,15 +14,15 @@ module.exports = {
     .setName('slots')
     .setDescription('Play the Blood Hunters slot machine!'),
   async execute(interaction) {
-    const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
+    // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
 
-    if (!allowedChannels.includes(interaction.channel.id)) {
-      await interaction.reply({
-        content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-        ephemeral: true,
-      })
-      return
-    }
+    // if (!allowedChannels.includes(interaction.channel.id)) {
+    //   await interaction.reply({
+    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+    //     ephemeral: true,
+    //   })
+    //   return
+    // }
 
     const userId = interaction.user.id
 

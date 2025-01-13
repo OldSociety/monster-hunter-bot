@@ -31,19 +31,19 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const allowedChannels = [
-      process.env.WINTERCHANNELID,
-      process.env.BOTTESTCHANNELID,
-      process.env.DEVBOTTESTCHANNELID,
-    ]
+    // const allowedChannels = [
+    //   process.env.WINTERCHANNELID,
+    //   process.env.BOTTESTCHANNELID,
+    //   process.env.DEVBOTTESTCHANNELID,
+    // ]
 
-    if (!allowedChannels.includes(interaction.channel.id)) {
-      await interaction.reply({
-        content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-        ephemeral: true,
-      })
-      return
-    }
+    // if (!allowedChannels.includes(interaction.channel.id)) {
+    //   await interaction.reply({
+    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+    //     ephemeral: true,
+    //   })
+    //   return
+    // }
     await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
 
@@ -404,12 +404,18 @@ async function startNewEncounter(interaction, user, huntData) {
     ephemeral: true,
   })
 
+  // Stop any previous collector
+  if (huntData.styleCollector) huntData.styleCollector.stop()
+
+  // Create a new collector
   const filter = (i) => i.user.id === interaction.user.id
   const styleCollector = interaction.channel.createMessageComponentCollector({
     filter,
     max: 1,
     time: 15000,
   })
+
+  huntData.styleCollector = styleCollector // Track current collector
 
   styleCollector.on('collect', async (styleInteraction) => {
     await styleInteraction.deferUpdate()
@@ -425,13 +431,12 @@ async function startNewEncounter(interaction, user, huntData) {
       monster,
       isAdvantaged,
       huntData,
-      currentBattle.type // pass battleType
+      currentBattle.type
     )
 
     if (playerWins) {
       let rewardAmount = currentBattle.goldReward || 0
 
-      // Check if the current battle is a boss or mini-boss and if it is the first defeat
       if (
         (currentBattle.type === 'boss' || currentBattle.type === 'mini-boss') &&
         huntData.level
@@ -446,9 +451,9 @@ async function startNewEncounter(interaction, user, huntData) {
           rewardAmount = currentBattle.firstGoldReward
         }
       }
+
       await addGoldToUser(user, rewardAmount)
       huntData.totalGoldEarned += rewardAmount
-
       huntData.totalMonstersDefeated += 1
       huntData.currentBattleIndex += 1
 
@@ -659,26 +664,23 @@ async function runBattlePhases(
     const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore
 
     // Calculate the minimum roll if Ichor is used
-    const minimumRoll = huntData.ichorUsed ? playerScore * 0.2 : 0
+    const minimumRoll = huntData.ichorUsed
+      ? playerScore * 0.3
+      : playerScore * 0.15
 
     // Generate the player's roll, ensuring it respects the minimum threshold
-    let playerRoll =
-      Math.random() * (effectivePlayerScore - minimumRoll) + minimumRoll
-    let monsterRoll = Math.random() * monsterScore
+    playerRoll = Math.round(
+      Math.max(
+        Math.random() * (effectivePlayerScore - minimumRoll) + minimumRoll,
+        minimumRoll
+      )
+    )
 
-    // Debugging: Log raw rolls
-    // console.log(
-    //   `Phase ${phase}: Raw Player Roll = ${playerRoll}, Raw Monster Roll = ${monsterRoll}`
-    // )
+    let monsterRoll = Math.random() * monsterScore
 
     // Ensure consistent rounding
     playerRoll = Math.round(playerRoll)
     monsterRoll = Math.round(monsterRoll)
-
-    // // Debugging: Log rounded rolls
-    // console.log(
-    //   `Phase ${phase}: Rounded Player Roll = ${playerRoll}, Rounded Monster Roll = ${monsterRoll}`
-    // )
 
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
     console.log(`Phase ${phase}: Result = ${phaseResult}`)
@@ -694,7 +696,9 @@ async function runBattlePhases(
       momentum -= Math.min(segmentLoss, momentum)
 
       if (playerWins >= 4) {
-        // console.log('Player Wins the Battle!')
+        user.currency.gems = (user.currency.gems || 0) + 1
+        user.changed('currency', true)
+        await user.save()
         return true
       }
     } else {
