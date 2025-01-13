@@ -14,11 +14,11 @@ module.exports = {
     .setName('slots')
     .setDescription('Play the Blood Hunters slot machine!'),
   async execute(interaction) {
-    const allowedChannels = [process.env.BOTTESTCHANNELID]
+    const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
 
     if (!allowedChannels.includes(interaction.channel.id)) {
       await interaction.reply({
-        content: `🎰 This game can only be played in designated Blood Hunters Slots channels.`,
+        content: `🎰 This game can only be played in designated Blood Hunters channels.`,
         ephemeral: true,
       })
       return
@@ -141,6 +141,13 @@ async function startGame(interaction, userData) {
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
+          emoji: '⚡',
+          type: 'energy',
+          chance: 8,
+          message: '**⚡Energy Found!**',
+          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f381.svg',
+        },
+        {
           emoji: '❄️',
           type: 'lose',
           chance: 12,
@@ -250,7 +257,7 @@ async function startGame(interaction, userData) {
         },
         {
           emoji: '🧪',
-          type: 'item',
+          type: 'ichor',
           chance: 8,
           message: '**🧪Ichor Found!**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f381.svg',
@@ -422,7 +429,15 @@ async function startGame(interaction, userData) {
       activePlayers.delete(interactionObject.user.id)
       message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`
       gameState.totalGold = 0
-    } else if (roll.type === 'item') {
+    } else if (roll.type === 'energy') {
+      userData.currency = {
+        ...userData.currency,
+        ichor: userData.currency.energy + 1,
+      }
+      await userData.save()
+
+      message += ` You gained ⚡energy!`
+    } else if (roll.type === 'ichor') {
       userData.currency = {
         ...userData.currency,
         ichor: userData.currency.ichor + 3,

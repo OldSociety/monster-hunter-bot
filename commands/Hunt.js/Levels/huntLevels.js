@@ -222,7 +222,7 @@ function generateHuntFiveBattles() {
   // Add the mini-boss at the end
   battles.push({
     type: 'mini-boss',
-    cr: 2,
+    cr: 4,
     monsterIndex: 'red-dragon-wyrmling',
     difficulty: 'boss-full',
     firstGoldReward: 2200,

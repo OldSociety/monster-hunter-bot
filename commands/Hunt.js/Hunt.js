@@ -31,6 +31,19 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    const allowedChannels = [
+      process.env.WINTERCHANNELID,
+      process.env.BOTTESTCHANNELID,
+      process.env.DEVBOTTESTCHANNELID,
+    ]
+
+    if (!allowedChannels.includes(interaction.channel.id)) {
+      await interaction.reply({
+        content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+        ephemeral: true,
+      })
+      return
+    }
     await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
 
@@ -570,6 +583,11 @@ async function offerRetry(interaction, user, huntData) {
 }
 
 async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
+  const avatarURL = interaction.user.displayAvatarURL({
+    format: 'png',
+    size: 128,
+  })
+
   const summaryEmbed = new EmbedBuilder()
     .setTitle('Hunt Summary')
     .setDescription(
@@ -577,9 +595,9 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
         `**Tokens Earned:** 🧿${huntData.totalMonstersDefeated}`
     )
     .setFooter({
-      text:
-        `Tokens can be spent by using /slots and future minigames.`,
+      text: `Tokens can be spent by using /slots and future minigames.`,
     })
+    .setThumbnail(avatarURL)
 
     .setColor('#FFD700')
 
@@ -640,30 +658,31 @@ async function runBattlePhases(
   for (let phase = 1; phase <= 7; phase++) {
     const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore
 
-    let playerRoll
-    if (huntData.ichorUsed) {
-      const minRoll = 0.4 * effectivePlayerScore
-      playerRoll = Math.random() * (effectivePlayerScore - minRoll) + minRoll
-    } else {
-      playerRoll = Math.random() * effectivePlayerScore
-    }
+    // Calculate the minimum roll if Ichor is used
+    const minimumRoll = huntData.ichorUsed ? playerScore * 0.2 : 0
 
-    let monsterRoll
-    if (battleType === 'boss') {
-      const minMonsterRoll = 0.5 * monsterScore
-      monsterRoll =
-        Math.random() * (monsterScore - minMonsterRoll) + minMonsterRoll
-    } else if (battleType === 'mini-boss') {
-      const minMonsterRoll = 0.25 * monsterScore
-      monsterRoll =
-        Math.random() * (monsterScore - minMonsterRoll) + minMonsterRoll
-    } else {
-      monsterRoll = Math.random() * monsterScore
-    }
+    // Generate the player's roll, ensuring it respects the minimum threshold
+    let playerRoll =
+      Math.random() * (effectivePlayerScore - minimumRoll) + minimumRoll
+    let monsterRoll = Math.random() * monsterScore
+
+    // Debugging: Log raw rolls
+    // console.log(
+    //   `Phase ${phase}: Raw Player Roll = ${playerRoll}, Raw Monster Roll = ${monsterRoll}`
+    // )
+
+    // Ensure consistent rounding
+    playerRoll = Math.round(playerRoll)
+    monsterRoll = Math.round(monsterRoll)
+
+    // // Debugging: Log rounded rolls
+    // console.log(
+    //   `Phase ${phase}: Rounded Player Roll = ${playerRoll}, Rounded Monster Roll = ${monsterRoll}`
+    // )
 
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
+    console.log(`Phase ${phase}: Result = ${phaseResult}`)
 
-    let segmentLoss = 0
     if (phaseResult === 'Hit!') {
       playerWins++
       const margin = playerRoll - monsterRoll
@@ -672,23 +691,11 @@ async function runBattlePhases(
       else if (margin > 5) segmentLoss = 2
       else segmentLoss = 1
 
-      if (playerWins === 1) {
-        segmentLoss += 1
-      } else if (playerWins === 2) {
-        segmentLoss += 2
-      } else if (playerWins === 3) {
-        segmentLoss += 3
-      }
-
-      momentum -= segmentLoss
-      if (momentum < 0) momentum = 0
+      momentum -= Math.min(segmentLoss, momentum)
 
       if (playerWins >= 4) {
-        user.currency.gems = (user.currency.gems || 0) + 1
-        user.changed('currency', true)
-        await user.save()
-        momentum = 0
-        break
+        // console.log('Player Wins the Battle!')
+        return true
       }
     } else {
       monsterWins++
@@ -724,9 +731,14 @@ async function runBattlePhases(
 
     await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
     await new Promise((resolve) => setTimeout(resolve, 2000))
-
+    // console.log(
+    //   `Phase ${phase}: Player Wins = ${playerWins}, Monster Wins = ${monsterWins}, Momentum = ${momentum}`
+    // )
     if (playerWins === 4 || momentum <= 0) break
-    if (monsterWins === 4) return false
+    if (monsterWins === 4) {
+      // console.log('Monster Wins the Battle!')
+      return false
+    }
   }
   return playerWins >= 4
 }

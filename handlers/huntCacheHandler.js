@@ -11,7 +11,7 @@ const validCreatures = new Set(
 
 // EXCLUDED TYPES
 const excludedTypes = new Set([
-  'dragon',
+  // 'dragon',
   // Add other types you want to exclude
 ])
 
@@ -83,9 +83,11 @@ function pullMonsterByCR(cr) {
   return availableMonsters[Math.floor(Math.random() * availableMonsters.length)]
 }
 function pullSpecificMonster(index) {
+  console.log(index)
   for (const cr in monsterCacheByCR) {
     const foundMonster = monsterCacheByCR[cr].find((monster) => monster.index === index)
     if (foundMonster) {
+      console.log(foundMonster)
       return foundMonster
     }
   }

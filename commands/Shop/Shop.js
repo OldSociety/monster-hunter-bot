@@ -55,7 +55,20 @@ module.exports = {
     .setDescription('Purchase a monster pack'),
 
   async execute(interaction) {
-    await interaction.deferReply()
+    const allowedChannels = [
+      process.env.WINTERCHANNELID,
+      process.env.BOTTESTCHANNELID,
+      process.env.DEVBOTTESTCHANNELID,
+    ]
+
+    if (!allowedChannels.includes(interaction.channel.id)) {
+      await interaction.reply({
+        content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+        ephemeral: true,
+      })
+      return
+    }
+    await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
     console.log('Shop command started.')
 
@@ -239,10 +252,10 @@ module.exports = {
         })
 
         if (packType === 'ichor') {
-          const ichorAmount = 12
-
-          user.currency = user.currency || {}
-          user.currency.ichor = (user.currency.ichor || 0) + ichorAmount
+          user.currency = {
+            ...user.currency,
+            ichor: user.currency.ichor + 12,
+          }
 
           await user.save()
 
@@ -250,7 +263,7 @@ module.exports = {
             .setColor(0x00ff00)
             .setTitle('Ichor Pack Purchased')
             .setDescription(
-              `You have received 🧪${ichorAmount} ichor! You can spend ichor to increase your chances of winning by 20%.`
+              `You have received 🧪12 ichor! You can spend ichor to increase your chances of winning by 20%.`
             )
 
           await interaction.followUp({
@@ -260,13 +273,13 @@ module.exports = {
         } else {
           const monster = await pullValidMonster(tierOption, packType)
           const stars = getStarsBasedOnColor(monster.color)
-            const category = determineCategory(monster.type)
-            console.log(category)
-            const monsterEmbed = generateMonsterRewardEmbed(
-              monster,
-              category,
-              stars
-            )
+          const category = determineCategory(monster.type)
+          console.log(category)
+          const monsterEmbed = generateMonsterRewardEmbed(
+            monster,
+            category,
+            stars
+          )
 
           if (monster) {
             const result = await updateOrAddMonsterToCollection(userId, monster)
@@ -286,7 +299,6 @@ module.exports = {
             }
             await updateTop5AndUserScore(userId)
 
-            
             if (isStarterPackAvailable) {
               await interaction.followUp({
                 content:
