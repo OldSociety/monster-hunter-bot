@@ -86,8 +86,8 @@ async function grantDailyReward(user, interaction) {
         rewardText = '🪙200 gold'
         break
       case 2:
-        user.currency = { ...user.currency, gems: user.currency.gems + 3 }
-        rewardText = '💎3 gems'
+        user.currency = { ...user.currency, eggs: user.currency.eggs + 1 }
+        rewardText = '🥚1 dragon egg'
         break
       case 3:
         user.currency = { ...user.currency, ichor: user.currency.ichor + 2 }
