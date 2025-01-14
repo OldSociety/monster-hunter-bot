@@ -1,23 +1,8 @@
 // huntUtils.js
 function checkAdvantage(playerStyle, monsterType) {
-  const monsterCategory = determineCategory(monsterType)
+  const monsterCategory = classifyMonsterType(monsterType)
   const advantageMap = { brute: 'stealth', stealth: 'spellsword', spellsword: 'brute' }
   return advantageMap[playerStyle] === monsterCategory
-}
-
-function determineCategory(type) {
-  const normalizedType = type.toLowerCase()
-  if (['beast', 'construct', 'dragon', 'giant', 'monstrosity'].includes(normalizedType))
-    return 'brute'
-  if (
-    ['aberration', 'celestial', 'elemental', 'fey', 'fiend'].includes(
-      normalizedType
-    )
-  )
-    return 'spellsword'
-  if (['plant', 'ooze', 'humanoid','undead'].includes(normalizedType))
-    return 'stealth'
-  return 'brute'
 }
 
 function energyCostToEmoji(cost) {
@@ -26,9 +11,9 @@ function energyCostToEmoji(cost) {
 }
 
 function classifyMonsterType(type) {
-  const bruteTypes = ['giant', 'monstrosity', 'dragon', 'construct'];
+  const bruteTypes = ['beast', 'construct', 'dragon', 'giant', 'monstrosity'];
   const spellswordTypes = ['aberration', 'celestial', 'elemental', 'fey', 'fiend'];
-  const stealthTypes = ['humanoid', 'beast', 'undead', 'plant', 'ooze'];
+  const stealthTypes = ['humanoid', 'plant', 'ooze', 'undead'];
 
   if (bruteTypes.includes(type.toLowerCase())) return 'brute';
   if (spellswordTypes.includes(type.toLowerCase())) return 'spellsword';

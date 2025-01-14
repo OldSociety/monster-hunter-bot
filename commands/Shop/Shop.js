@@ -13,7 +13,6 @@ const {
   pullValidMonster,
 } = require('../../handlers/pullHandler')
 const {
-  determineCategory,
   updateOrAddMonsterToCollection,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
@@ -21,6 +20,7 @@ const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
+const {classifyMonsterType} = require('../../utils/huntUtility/huntUtils')
 const { checkUserAccount } = require('../Account/checkAccount.js')
 
 // Cache tracking variable
@@ -273,7 +273,7 @@ module.exports = {
         } else {
           const monster = await pullValidMonster(tierOption, packType)
           const stars = getStarsBasedOnColor(monster.color)
-          const category = determineCategory(monster.type)
+          const category = classifyMonsterType(monster.type)
           console.log(category)
           const monsterEmbed = generateMonsterRewardEmbed(
             monster,

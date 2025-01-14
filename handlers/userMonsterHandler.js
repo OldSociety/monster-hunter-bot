@@ -1,6 +1,7 @@
 // monsterhandler.js
 
 const { Collection, User } = require('../Models/model')
+const {classifyMonsterType} = require('../utils/huntUtility/huntUtils')
 
 const mScoreMultipliers = {
   Common: {
@@ -69,29 +70,6 @@ function calculateMScore(cr, rarity, level) {
   const adjustedCR = cr < 1 ? 1 : cr
   const multiplier = mScoreMultipliers[rarity][level] || 1
   return Math.round(adjustedCR * multiplier * 10)
-}
-
-function determineCategory(type) {
-  const bruteTypes = new Set([
-    'construct',
-    'dragon',
-    'giant',
-    'humanoid',
-    'monstrosity',
-  ])
-  const spellswordTypes = new Set([
-    'aberration',
-    'celestial',
-    'elemental',
-    'fey',
-    'fiend',
-  ])
-  const stealthTypes = new Set(['plant', 'ooze', 'beast', 'undead'])
-
-  if (bruteTypes.has(type.toLowerCase())) return 'brute'
-  if (spellswordTypes.has(type.toLowerCase())) return 'spellsword'
-  if (stealthTypes.has(type.toLowerCase())) return 'stealth'
-  return null
 }
 
 async function updateUserScores(userId, category, monster) {
@@ -199,7 +177,7 @@ async function updateOrAddMonsterToCollection(userId, monster) {
   let collectionEntry = await Collection.findOne({
     where: { userId, name: monster.name },
   })
-  const category = determineCategory(monster.type)
+  const category = classifyMonsterType(monster.type)
 
   if (collectionEntry) {
     collectionEntry.copies += 1
@@ -244,4 +222,4 @@ async function updateOrAddMonsterToCollection(userId, monster) {
   }
 }
 
-module.exports = { determineCategory, updateOrAddMonsterToCollection }
+module.exports = { updateOrAddMonsterToCollection }

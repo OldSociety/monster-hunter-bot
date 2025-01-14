@@ -14,13 +14,13 @@ const { EmbedBuilder } = require('discord.js')
 
 const rotatingMonsters = [
   'lemure',
-  'dretch',
-  'hell hound',
   'nightmare',
   'barbed devil',
-  'night hag',
-  'vrock',
   'bone devil',
+  'horned devil',
+  'erinyes',
+  'rakshasa',
+  'marilith'
 ]
 
 let cachePopulated = false
@@ -98,8 +98,8 @@ async function grantDailyReward(user, interaction) {
         rewardText = '🪙600 gold'
         break
       case 5:
-        user.currency = { ...user.currency, gems: user.currency.gems + 3 }
-        rewardText = '💎3 gems'
+        user.currency = { ...user.currency, eggs: user.currency.eggs + 1 }
+        rewardText = '🥚1 dragon egg'
         break
       case 6:
         user.currency = { ...user.currency, ichor: user.currency.ichor + 3 }
@@ -110,8 +110,8 @@ async function grantDailyReward(user, interaction) {
         rewardText = '🪙1000 gold'
         break
       case 8:
-        user.currency = { ...user.currency, gems: user.currency.gems + 3 }
-        rewardText = '💎3 gems'
+        user.currency = { ...user.currency, eggs: user.currency.eggs + 1 }
+        rewardText = '🥚1 dragon egg'
         break
       case 9:
         user.currency = { ...user.currency, ichor: user.currency.ichor + 3 }
