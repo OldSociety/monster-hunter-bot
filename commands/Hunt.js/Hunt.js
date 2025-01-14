@@ -341,6 +341,9 @@ async function startNewEncounter(interaction, user, huntData) {
     case 'boss-full':
       monsterScore = monster.hp
       break
+    case 'boss-strong':
+      monsterScore = monster.hp * 1.25
+      break
     default:
       monsterScore = monster.hp
   }

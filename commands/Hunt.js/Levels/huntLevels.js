@@ -3,7 +3,7 @@
 const levelData = {
   hunt1: {
     key: 'hunt1',
-    name: 'Orc',
+    name: 'Darkmantle',
     description: 'You hunt begins here...',
     energyCost: 1,
     totalBattles: 3,
@@ -21,7 +21,7 @@ const levelData = {
     key: 'hunt3',
     name: 'Rust',
     description:
-      'Rust',
+      'An army will be left unarmed if the rust monster is not hunted.',
     energyCost: 1,
     totalBattles: 8,
     battles: generateHuntThreeBattles(),
@@ -224,7 +224,7 @@ function generateHuntFiveBattles() {
     type: 'mini-boss',
     cr: 4,
     monsterIndex: 'red-dragon-wyrmling',
-    difficulty: 'boss-full',
+    difficulty: 'boss-strong',
     firstGoldReward: 2200,
     goldReward: 75,
   })
