@@ -65,7 +65,7 @@ module.exports = {
     const gems = currency.gems || 0
     const eggs = currency.eggs || 0
     const ichor = currency.ichor || 0
-    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${gems} 🧪${ichor}`
+    const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
 
     const explanationEmbed = new EmbedBuilder()
       .setTitle('Welcome to Blood Hunters Slots! 🎰')
@@ -519,7 +519,7 @@ async function startGame(interaction, userData) {
         const gems = currency.gems || 0
         const eggs = currency.eggs || 0
         const ichor = currency.ichor || 0
-        const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${gems} 🧪${ichor}`
+        const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
 
         const finalEmbed = new EmbedBuilder()
           .setTitle('Blood Hunters Slots Results 🎰')

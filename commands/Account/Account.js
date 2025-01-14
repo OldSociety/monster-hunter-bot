@@ -162,7 +162,7 @@ module.exports = {
           const gems = currency.gems || 0
           const ichor = currency.ichor || 0
 
-          const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${gems} 🧪${ichor}`
+          const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
 
           const statsEmbed = new EmbedBuilder()
             .setColor(embedColor)
