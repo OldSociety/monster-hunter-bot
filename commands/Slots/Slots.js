@@ -12,7 +12,7 @@ const activePlayers = new Set() // Track active players to prevent multiple inst
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('slots')
-    .setDescription('Play the Blood Hunters slot machine!'),
+    .setDescription(`Risk your soul at Zalathor's Table.`),
   async execute(interaction) {
     // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
 
@@ -62,18 +62,19 @@ module.exports = {
     const gold = userData.gold || 0
     const currency = userData.currency || {}
     const energy = currency.energy || 0
-    const gems = currency.gems || 0
+    const tokens = currency.gems || 0
     const eggs = currency.eggs || 0
     const ichor = currency.ichor || 0
-    const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
+    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+    const thumbnailUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/pit-fiend.jpg`
 
     const explanationEmbed = new EmbedBuilder()
-      .setTitle('Welcome to Blood Hunters Slots! 🎰')
+      .setTitle(`Zalathor's Slots! 🎰`)
       .setDescription(
-        `Blood Hunters Slots is a game of chance! Advance through five stages—Red, Blue, Green, Gold, and Silver. Each stage increases the stakes and potential rewards.\n\n` +
-          `- **Risk/Reward:** Each roll risks your earned pot! You can stop at any time to collect your winnings or chance losing everything.\n` +
-          `- **Goal:** Advance through stages and collect 🪙gold and other prizes.\n` +
-          `- **Jackpot:** Chance to win the grand prize on the Silver Stage! 🏆\n\n`
+        `Welcome to my game of chance. Shit's not fair, but give it a spin anyway. Advance through five stages of Hell—**Red, Blue, Green, Gold, and Silver**. Each stage increases the stakes and potential rewards.\n\n` +
+          `- **Risk/Reward:** Grow your pot of gold with each roll, but be careful every new roll risks losing it all. You can stop at any time to collect your winnings *(items won are never lost)*.\n` +
+          `- **Jackpot:** Chance to win the 🪙grand prize on the Silver Stage! 🏆\n` +
+          `- **Balor Card**: With a bit of bad luck, you might even earn me-the rarest card in Blood Hunter! *(Pit Fiend, CR: 20)*\n`
       )
       .setColor('Red')
       .setFooter({ text: `${footerText}` })
@@ -82,6 +83,7 @@ module.exports = {
         value: `🪙${jackpot} gold`,
         inline: true,
       })
+      .setThumbnail(thumbnailUrl)
 
     await interaction.reply({
       embeds: [explanationEmbed],
@@ -306,10 +308,10 @@ async function startGame(interaction, userData) {
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
         },
         {
-          emoji: '🔔',
-          type: 'mystery',
+          emoji: '🥚',
+          type: 'eggs',
           chance: 9,
-          message: '**🔔 Mystery Event! 🔔**',
+          message: '**🥚 Dragon Eggs! 🥚**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f514.svg',
         },
         {
@@ -328,7 +330,7 @@ async function startGame(interaction, userData) {
         {
           emoji: '🎅',
           type: 'gain',
-          chance: 35,
+          chance: 39,
           range: [1, 25],
           message: '**Massive Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
@@ -343,16 +345,16 @@ async function startGame(interaction, userData) {
         {
           emoji: '❄️',
           type: 'lose',
-          chance: 30,
+          chance: 34,
           range: [1, 25],
           message: '**Major Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
         {
-          emoji: '🔔',
-          type: 'mystery',
-          chance: 10,
-          message: '**🔔 Mystery Event! 🔔**',
+          emoji: '👿',
+          type: 'pit-fiend',
+          chance: 2,
+          message: `**👿 Zalathor's Card! 👿**`,
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f514.svg',
         },
         {
@@ -423,6 +425,8 @@ async function startGame(interaction, userData) {
           columnData[gameState.currentColumn].title
         }!`
       }
+    } else if (roll.type === 'zalathor') {
+      //CODE ZALATHOR CARD REWARD
     } else if (roll.type === 'game_over') {
       jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0)
       gameState.running = false
@@ -437,6 +441,14 @@ async function startGame(interaction, userData) {
       await userData.save()
 
       message += ` You gained ⚡energy!`
+    } else if (roll.type === 'eggs') {
+      userData.currency = {
+        ...userData.currency,
+        eggs: userData.currency.eggs + 5,
+      }
+      await userData.save()
+
+      message += ` You gained 🥚5 dragon eggs!`
     } else if (roll.type === 'ichor') {
       userData.currency = {
         ...userData.currency,
@@ -458,7 +470,7 @@ async function startGame(interaction, userData) {
     const gold = userData.gold || 0
     const currency = userData.currency || {}
     const energy = currency.energy || 0
-    const gems = currency.gems || 0
+    const tokens = currency.gems || 0
     const eggs = currency.eggs || 0
     const ichor = currency.ichor || 0
     const footerText = `Current Jackpot 🪙${jackpot}`
@@ -472,7 +484,7 @@ async function startGame(interaction, userData) {
           name: 'Current Pot',
           value: `🪙${gameState.totalGold}`,
           inline: true,
-        },
+        }
         // { name: 'Jackpot', value: `🪙${jackpot}`, inline: true }
       )
       .setFooter({ text: `${footerText}` })
@@ -516,14 +528,16 @@ async function startGame(interaction, userData) {
         const gold = userData.gold || 0
         const currency = userData.currency || {}
         const energy = currency.energy || 0
-        const gems = currency.gems || 0
+        const tokens = currency.gems || 0
         const eggs = currency.eggs || 0
         const ichor = currency.ichor || 0
-        const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
+        const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
 
         const finalEmbed = new EmbedBuilder()
-          .setTitle('Blood Hunters Slots Results 🎰')
-          .setDescription(`Congrats! You walked away with **🪙${gameState.totalGold} gold**.`)
+          .setTitle(`Zalathor's Table Results 🎰`)
+          .setDescription(
+            `Congrats! You walked away with **🪙${gameState.totalGold} gold**.`
+          )
           .setFooter({ text: `${footerText}` })
           .setColor('Green')
 

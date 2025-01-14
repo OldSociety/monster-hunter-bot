@@ -79,8 +79,8 @@ async function setupFreeRewardCollector(rewardMessage) {
         `${user.username}, you've selected ${reaction.emoji.name} and won ${
           typeof selectedReward === 'number'
             ? `🪙 ${selectedReward} gold`
-            : selectedReward === 'gems'
-            ? '🧿 10 gems'
+            : selectedReward === 'tokens'
+            ? '🧿 10 tokens'
             : `the ${transformRarityIdentifier(
                 selectedReward.rarity
               )} monster: **${selectedReward.name}**`

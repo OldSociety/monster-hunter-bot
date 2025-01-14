@@ -20,7 +20,7 @@ const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
-const {classifyMonsterType} = require('../../utils/huntUtility/huntUtils')
+const { classifyMonsterType } = require('../../utils/huntUtility/huntUtils')
 const { checkUserAccount } = require('../Account/checkAccount.js')
 
 // Cache tracking variable
@@ -111,11 +111,11 @@ module.exports = {
     const gold = user.gold || 0
     const currency = user.currency || {}
     const energy = currency.energy || 0
-    const gems = currency.gems || 0
+    const tokens = currency.gems || 0
     const eggs = currency.eggs || 0
     const ichor = currency.ichor || 0
 
-    const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
+    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
 
     // Shop embed setup after cache is loaded
     const shopEmbed = new EmbedBuilder()

@@ -48,16 +48,16 @@ module.exports = {
       'View your Blood Hunter game stats and collection progress'
     ),
 
-    async execute(interaction) {
-      // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
-  
-      // if (!allowedChannels.includes(interaction.channel.id)) {
-      //   await interaction.reply({
-      //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-      //     ephemeral: true,
-      //   })
-      //   return
-      // }
+  async execute(interaction) {
+    // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
+
+    // if (!allowedChannels.includes(interaction.channel.id)) {
+    //   await interaction.reply({
+    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+    //     ephemeral: true,
+    //   })
+    //   return
+    // }
     const userId = interaction.user.id
     let category = interaction.options.getString('style') || 'overview'
 
@@ -159,10 +159,11 @@ module.exports = {
           const gold = user.gold || 0
           const currency = user.currency || {}
           const energy = currency.energy || 0
-          const gems = currency.gems || 0
+          const tokens = currency.gems || 0
+          const eggs = currency.eggs || 0
           const ichor = currency.ichor || 0
 
-          const footerText = `Available: 🪙${gold} ⚡${energy} 💎${gems} 🥚${eggs} 🧪${ichor}`
+          const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
 
           const statsEmbed = new EmbedBuilder()
             .setColor(embedColor)
