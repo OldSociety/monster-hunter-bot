@@ -1,100 +1,83 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { grantDailyReward } = require('./helpers/dailyRewardsHandler')
-const { User } = require('../../Models/model')
-const { checkUserAccount } = require('../Account/checkAccount.js')
-const cron = require('node-cron')
-
-// Reset daily streak at 6 AM PST daily
-cron.schedule('0 6 * * *', async () => {
-  await User.update({ daily_streak: 1 }, { where: {} })
-  console.log('Daily streak reset for all users.')
-})
+const { User, sequelize } = require('../../Models/model')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('daily')
     .setDescription('Claim your daily reward!'),
-    async execute(interaction) {
-      // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
-  
-      // if (!allowedChannels.includes(interaction.channel.id)) {
-      //   await interaction.reply({
-      //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-      //     ephemeral: true,
-      //   })
-      //   return
-      // }
+
+  async execute(interaction) {
     await interaction.deferReply()
+
     const userId = interaction.user.id
-    const user = await checkUserAccount(interaction)
-    if (!user) return
+    const user = await User.findOne({ where: { id: userId } })
 
-    // Check if the user has already claimed their daily reward today
-    const lastClaim = new Date(user.last_daily_claim || 0)
-    const now = new Date()
-    const hoursSinceLastClaim = Math.abs(now - lastClaim) / 36e5
-
-    const displayDay =
-      user.daily_streak % 10 === 0 && user.daily_streak > 0
-        ? 10
-        : user.daily_streak % 10 || 1
-
-    const rewards = [
-      '🪙200 coins',
-      '🥚1 dragon egg',
-      '🧪2 demon ichor',
-      '🪙600 coins',
-      '🥚1 dragon egg',
-      '🧪3 demon ichor',
-      '🪙1000 coins',
-      '🥚1 dragon egg',
-      '🧪3 demon ichor',
-      'demon card',
-    ]
-
-    const rewardDescription = rewards
-      .map((reward, index) => {
-        const dayNumber = index + 1
-        const hasBeenClaimed = dayNumber < displayDay
-        const isBeingClaimedNow = dayNumber === displayDay
-        const claimedStatus = hasBeenClaimed ? ' ✅' : ''
-
-        return isBeingClaimedNow
-          ? `**Day ${dayNumber}: ${reward} ✅**`
-          : `Day ${dayNumber}: ${reward}${claimedStatus}`
-      })
-      .join('\n')
-
-    // If the user has already claimed the reward today
-    if (hoursSinceLastClaim < 24) {
-      const nextClaimTime = new Date(lastClaim.getTime() + 24 * 3600 * 1000)
-      const hoursRemaining = Math.floor((nextClaimTime - now) / 36e5)
-      const minutesRemaining = Math.floor(
-        ((nextClaimTime - now) % 36e5) / 60000
-      )
-
-      const rewardClaimedEmbed = new EmbedBuilder()
-        .setColor('#00FF00')
-        .setTitle('Daily Rewards Progress')
-        .setDescription(rewardDescription)
-        .setFooter({
-          text: `You've already claimed your daily reward today. Please come back in ${hoursRemaining} hours and ${minutesRemaining} minutes!`,
-        })
-
-      await interaction.editReply({ embeds: [rewardClaimedEmbed] })
+    if (!user) {
+      await interaction.editReply('You need to create an account first!')
       return
     }
 
-    // Grant the daily reward if not claimed today
-    try {
-      const rewardMessage = await grantDailyReward(user, interaction)
+    const now = new Date()
+    const lastClaim = new Date(user.last_daily_claim || 0)
+    const hoursSinceLastClaim = Math.abs(now - lastClaim) / 36e5
 
+    let rewardMessage
+    try {
+      await sequelize.transaction(async (t) => {
+        // Determine streak logic
+        if (hoursSinceLastClaim >= 48) {
+          user.daily_streak = 1 // Reset streak if over 48 hours since last claim
+        } else if (hoursSinceLastClaim >= 24) {
+          user.daily_streak += 1 // Increment streak if claim is within the 24-48 hour window
+        } else {
+          const nextClaimTime = new Date(lastClaim.getTime() + 24 * 3600 * 1000)
+          const hoursRemaining = Math.floor((nextClaimTime - now) / 36e5)
+          const minutesRemaining = Math.floor(
+            ((nextClaimTime - now) % 36e5) / 60000
+          )
+
+          const rewardClaimedEmbed = new EmbedBuilder()
+            .setColor('#00FF00')
+            .setTitle('Daily Rewards Progress')
+            .setDescription(`You've already claimed your reward today.`)
+            .setFooter({
+              text: `Please come back in ${hoursRemaining} hours and ${minutesRemaining} minutes!`,
+            })
+
+          await interaction.editReply({ embeds: [rewardClaimedEmbed] })
+          return
+        }
+
+        // Update claim timestamp
+        user.last_daily_claim = now
+
+        // Grant the reward
+        rewardMessage = await grantDailyReward(user, interaction, {
+          transaction: t,
+        })
+
+        await user.save({ transaction: t })
+      })
+
+      // Respond with the reward message
       if (rewardMessage) {
-        // If rewardMessage exists (likely on day 10 with the monster embed), use it
         await interaction.editReply(rewardMessage)
       } else {
-        // Default daily reward message for days 1-9
-        const rewardReceived = rewards[displayDay]
+        const rewards = [
+          '🪙200 coins',
+          '🥚1 dragon egg',
+          '🧪2 demon ichor',
+          '🪙600 coins',
+          '🥚1 dragon egg',
+          '🧪3 demon ichor',
+          '🪙1000 coins',
+          '🥚1 dragon egg',
+          '🧪3 demon ichor',
+          'demon card',
+        ]
+
+        const rewardReceived = rewards[user.daily_streak % 10 || 1]
         const rewardReceivedEmbed = new EmbedBuilder()
           .setColor('#00FF00')
           .setTitle('Daily Reward Received')
