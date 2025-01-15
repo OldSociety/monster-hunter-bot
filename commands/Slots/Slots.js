@@ -181,7 +181,7 @@ async function startGame(interaction, userData) {
           emoji: '🎅',
           type: 'gain',
           chance: 42,
-          range: [20, 80],
+          range: [20, 40],
           message: '**Small Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -196,7 +196,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 25,
-          range: [6, 66],
+          range: [6, 36],
           message: '**Medium Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -231,7 +231,7 @@ async function startGame(interaction, userData) {
           emoji: '🎅',
           type: 'gain',
           chance: 40,
-          range: [100, 130],
+          range: [60, 80],
           message: '**Medium Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -281,7 +281,7 @@ async function startGame(interaction, userData) {
           emoji: '🎅',
           type: 'gain',
           chance: 35,
-          range: [777],
+          range: [77],
           message: '**Big Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -296,7 +296,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 27,
-          range: [666],
+          range: [66],
           message: '**Huge Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -444,11 +444,11 @@ async function startGame(interaction, userData) {
     } else if (roll.type === 'eggs') {
       userData.currency = {
         ...userData.currency,
-        eggs: userData.currency.eggs + 5,
+        eggs: userData.currency.eggs + 1,
       }
       await userData.save()
 
-      message += ` You gained 🥚5 dragon eggs!`
+      message += ` You gained 🥚1 dragon egg!`
     } else if (roll.type === 'ichor') {
       userData.currency = {
         ...userData.currency,
