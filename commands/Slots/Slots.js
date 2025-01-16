@@ -474,14 +474,20 @@ async function startGame(interaction, userData) {
       `I bet you didn’t know that I devour the souls of quitters.`,
       `Another round?`,
     ]
-    const randomPhrase =
-      zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
 
-    // Create embed
+    const shouldShowPhrase =
+      Math.random() < 1 / (5 + Math.floor(Math.random() * 6))
+
+    const randomPhrase = shouldShowPhrase
+      ? zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
+      : null
+
     const embed = new EmbedBuilder()
       .setTitle(columnData[gameState.currentColumn].title)
       .setColor(columnData[gameState.currentColumn].color)
-      .setDescription(`${message}\n\n*${randomPhrase}*\n`)
+      .setDescription(
+        randomPhrase ? `${message}\n\n*${randomPhrase}*\n` : message
+      )
       .setThumbnail(thumbnailUrl)
       .setFooter({ text: footerText })
 
@@ -493,21 +499,19 @@ async function startGame(interaction, userData) {
     if (!gameState.running) {
       activePlayers.delete(userId)
 
-      // Create row with disabled buttons (initial state)
       const gameOverRowDisabled = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`play_again_${userId}`)
           .setLabel('Play Again')
           .setStyle('Success')
-          .setDisabled(true), // Initially disabled
+          .setDisabled(true),
         new ButtonBuilder()
           .setCustomId(`finish_${userId}`)
           .setLabel('Finish')
           .setStyle('Danger')
-          .setDisabled(true) // Initially disabled
+          .setDisabled(true)
       )
 
-      // Show the embed first, without clickable buttons
       await interactionObject.editReply({
         embeds: [embed],
         components: [gameOverRowDisabled],
@@ -530,21 +534,18 @@ async function startGame(interaction, userData) {
           components: [gameOverRowEnabled],
         })
 
-        // Now handle play again
         await handlePlayAgain(interactionObject)
       }, 1500) // 1.5s delay before enabling buttons
 
       return
     }
 
-    // Update message with buttons for continuing play
     await interactionObject.editReply({
       embeds: [embed],
       components: [createRow(gameState.totalGold)],
     })
   }
 
-  // Defer reply to avoid interaction failure issues
   await playRound(interaction, true)
 
   const collector = interaction.channel.createMessageComponentCollector({
