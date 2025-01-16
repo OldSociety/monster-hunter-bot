@@ -1,15 +1,20 @@
 const { REST, Routes } = require('discord.js')
-const fs = require('node:fs')
-const path = require('node:path')
+const fs = require('fs')
+const path = require('path')
 
 // Set default NODE_ENV if undefined
-const env = process.env.NODE_ENV || 'production'
+const env = process.env.NODE_ENV || 'development'
 console.log(`Environment: ${env}`)
 
 // Load environment variables
 require('dotenv').config({
   path: env === 'development' ? '.env.development' : '.env.production',
-})
+});
+
+console.log(`🔍 Loaded ENV Variables:`);
+console.log(`- CLIENTID: ${process.env.CLIENTID}`);
+console.log(`- GUILDID: ${process.env.GUILDID || 'Not required for production'}`);
+
 
 const commands = []
 
@@ -37,7 +42,7 @@ for (const folder of commandFolders) {
   }
 }
 
-const rest = new REST().setToken(process.env.TOKEN)
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN)
 
 ;(async () => {
   try {
@@ -45,13 +50,27 @@ const rest = new REST().setToken(process.env.TOKEN)
       `Started refreshing ${commands.length} application (/) commands.`
     )
 
-    const data = await rest.put(
-      Routes.applicationGuildCommands(
-        process.env.CLIENTID,
-        process.env.GUILDID
-      ),
-      { body: commands }
-    )
+    let data
+
+    if (env === 'development') {
+      // Fast updates for development in a specific test server
+      console.log(
+        `Deploying GUILD commands to test server: ${process.env.GUILD_ID}`
+      )
+      data = await rest.put(
+        Routes.applicationGuildCommands(
+          process.env.CLIENTID,
+          process.env.GUILDID
+        ),
+        { body: commands }
+      )
+    } else {
+      // Global deployment for production (takes up to 1 hour)
+      console.log('Deploying GLOBAL commands (may take up to 1 hour to update)')
+      data = await rest.put(Routes.applicationCommands(process.env.CLIENTID), {
+        body: commands,
+      })
+    }
 
     console.log(
       `Successfully reloaded ${data.length} application (/) commands.`
