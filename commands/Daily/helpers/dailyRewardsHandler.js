@@ -1,17 +1,17 @@
 const {
   fetchMonsterByName,
   cacheMonstersByTier,
-} = require('../../../handlers/pullHandler');
+} = require('../../../handlers/pullHandler')
 const {
   updateOrAddMonsterToCollection,
-} = require('../../../handlers/userMonsterHandler');
-const { updateTop5AndUserScore } = require('../../../handlers/topCardsManager');
+} = require('../../../handlers/userMonsterHandler')
+const { updateTop5AndUserScore } = require('../../../handlers/topCardsManager')
 const {
   generateMonsterRewardEmbed,
-} = require('../../../utils/embeds/monsterRewardEmbed');
-const { getStarsBasedOnColor } = require('../../../utils/starRating');
-const { classifyMonsterType } = require('../../../utils/huntUtility/huntUtils');
-const { EmbedBuilder } = require('discord.js');
+} = require('../../../utils/embeds/monsterRewardEmbed')
+const { getStarsBasedOnColor } = require('../../../utils/starRating')
+const { classifyMonsterType } = require('../../../utils/huntUtility/huntUtils')
+const { EmbedBuilder } = require('discord.js')
 
 const rotatingMonsters = [
   'lemure',
@@ -22,13 +22,12 @@ const rotatingMonsters = [
   'erinyes',
   'rakshasa',
   'marilith',
-];
+]
 
-let cachePopulated = false;
+let cachePopulated = false
 
-async function grantDailyReward(user, interaction) { 
-  const currentDay = (user.daily_streak + 1) % 10 || 10;
-  let rewardEmbed;
+async function grantDailyReward(user, interaction) {
+  const currentDay = (user.daily_streak + 1) % 10 || 10
 
   if (currentDay === 10) {
     if (!cachePopulated) {
@@ -38,26 +37,37 @@ async function grantDailyReward(user, interaction) {
             .setColor(0xffcc00)
             .setDescription('Loading daily reward, please wait...'),
         ],
-        components: [],
-      });
+      })
 
-      await cacheMonstersByTier();
-      cachePopulated = true;
+      await cacheMonstersByTier()
+      cachePopulated = true
     }
 
-    const monsterIndex = Math.floor(user.daily_streak / 10) % rotatingMonsters.length;
-    const monsterName = rotatingMonsters[monsterIndex];
+    const monsterIndex =
+      Math.floor(user.daily_streak / 10) % rotatingMonsters.length
+    const monsterName = rotatingMonsters[monsterIndex]
 
-    const monster = await fetchMonsterByName(monsterName);
+    const monster = await fetchMonsterByName(monsterName)
     if (monster) {
-      await updateOrAddMonsterToCollection(user.user_id, monster);
-      await updateTop5AndUserScore(user.user_id);
+      await updateOrAddMonsterToCollection(user.user_id, monster)
+      await updateTop5AndUserScore(user.user_id)
 
-      const stars = getStarsBasedOnColor(monster.color);
-      const category = classifyMonsterType(monster.type);
-      const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars);
+      const stars = getStarsBasedOnColor(monster.color)
+      const category = classifyMonsterType(monster.type)
+      const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
 
-      rewardEmbed = { embeds: [monsterEmbed] };
+      return { embeds: [monsterEmbed] }
+    } else {
+      return {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('Daily Reward Failed')
+            .setDescription(
+              'An error occurred while retrieving your monster. Please try again later.'
+            ),
+        ],
+      }
     }
   } else {
     const rewards = [
@@ -70,19 +80,23 @@ async function grantDailyReward(user, interaction) {
       '🪙1000 coins',
       '🥚1 dragon egg',
       '🧪3 demon ichor',
-    ];
+    ]
 
-    const rewardText = rewards[currentDay - 1] || '🪙200 coins';
+    const rewardText = rewards[currentDay - 1] || '🪙200 coins'
 
-    await user.save();
+    await user.save()
 
-    rewardEmbed = new EmbedBuilder()
-      .setColor('#00FF00')
-      .setTitle('Daily Reward Received')
-      .setDescription(`You received ${rewardText}! Return tomorrow for your next reward.`);
+    return {
+      embeds: [
+        new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('Daily Reward Received')
+          .setDescription(
+            `You received ${rewardText}! Return tomorrow for your next reward.`
+          ),
+      ],
+    }
   }
-
-  return rewardEmbed;
 }
 
-module.exports = { grantDailyReward };
+module.exports = { grantDailyReward }
