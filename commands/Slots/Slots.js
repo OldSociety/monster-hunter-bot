@@ -7,74 +7,67 @@ const {
 const { User } = require('../../Models/model.js')
 
 let jackpot = 10000
-const activePlayers = new Set() // Track active players to prevent multiple instances
+const activePlayers = new Set()
+const thumbnailUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/pit-fiend.jpg`
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('slots')
     .setDescription(`Risk your soul at Zalathor's Table.`),
-  async execute(interaction) {
 
+  async execute(interaction) {
     const userId = interaction.user.id
 
+    // Prevent multiple instances for the same user
     if (activePlayers.has(userId)) {
-      await interaction.reply({
+      return await interaction.reply({
         content: `🎰 You already have a game in progress! Finish your current game first.`,
         ephemeral: true,
       })
-      return
     }
 
     let userData = await User.findOne({ where: { user_id: userId } })
     if (!userData) {
-      await interaction.reply({
+      return await interaction.reply({
         content: `🎰 You need to set up your account first. Use \`/account\` to get started!`,
         ephemeral: true,
       })
-      return
     }
 
     if (userData.currency.gems < 1) {
-      await interaction.reply({
+      return await interaction.reply({
         content: `🎰 You don't have enough 🧿tokens to play! It costs 1 token per game.`,
         ephemeral: true,
       })
-      return
     }
 
+    // Mark player as active
     activePlayers.add(userId)
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('start_game')
+        .setCustomId(`start_game_${userId}`)
         .setLabel("Let's Play (🧿1 token)")
         .setStyle('Primary')
     )
-    const gold = userData.gold || 0
-    const currency = userData.currency || {}
-    const energy = currency.energy || 0
-    const tokens = currency.gems || 0
-    const eggs = currency.eggs || 0
-    const ichor = currency.ichor || 0
-    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
-    const thumbnailUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/pit-fiend.jpg`
+
+    const footerText = `Available: 🪙${userData.gold || 0} ⚡${
+      userData.currency.energy || 0
+    } 🧿${userData.currency.gems || 0} 🥚${userData.currency.eggs || 0} 🧪${
+      userData.currency.ichor || 0
+    }`
 
     const explanationEmbed = new EmbedBuilder()
       .setTitle(`Zalathor's Slots! 🎰`)
       .setDescription(
-        `Welcome to my game of chance. Shit's not fair, but give it a spin anyway. Advance through five stages of Hell—**Red, Blue, Green, Gold, and Silver**. Each stage increases the stakes and potential rewards.\n\n` +
-          `- **Risk/Reward:** Grow your pot of gold with each roll, but be careful every new roll risks losing it all. You can stop at any time to collect your winnings *(items won are never lost)*.\n` +
-          `- **Jackpot:** Chance to win the 🪙grand prize on the Silver Stage! 🏆\n` +
-          `- **Balor Card**: With a bit of bad luck, you might even earn me-the rarest card in Blood Hunter! *(Pit Fiend, CR: 20)*\n`
+        `Welcome to my game of chance. Shit's not fair, but give it a spin anyway. Advance through five stages of Hell—**Red, Blue, Green, Silver, and Gold**. Each stage increases the stakes and potential rewards.\n` +
+          `- **Risk/Reward:** Grow your pot of gold with each roll, but be careful—every new roll risks losing it all. You can stop at any time to collect your winnings *(items won are never lost)*.\n` +
+          `- **Jackpot:** Chance to win the 🪙grand prize on the Gold Stage! 🏆\n` +
+          `- **Balor Card:** With a bit of bad luck, you might even earn me—the rarest card in Blood Hunter! *(Pit Fiend, CR: 20)*\n\n`
       )
       .setColor('Red')
-      .setFooter({ text: `${footerText}` })
-      .addFields({
-        name: 'Current Jackpot',
-        value: `🪙${jackpot} gold`,
-        inline: true,
-      })
       .setThumbnail(thumbnailUrl)
+      .setFooter({ text: footerText })
 
     await interaction.reply({
       embeds: [explanationEmbed],
@@ -83,24 +76,15 @@ module.exports = {
     })
 
     const collector = interaction.channel.createMessageComponentCollector({
-      filter: (btnInteraction) => btnInteraction.user.id === userId,
-      time: 30000, // Timeout after 30 seconds
+      filter: (btnInteraction) =>
+        btnInteraction.customId === `start_game_${userId}` &&
+        btnInteraction.user.id === userId,
+      time: 30000,
     })
 
     collector.on('collect', async (btnInteraction) => {
-      try {
-        if (btnInteraction.customId === 'start_game') {
-          // Defer the interaction to prevent "Interaction Failed"
-          await btnInteraction.deferUpdate()
-
-          // Start the game
-          collector.stop('game_started')
-          await startGame(interaction, userData)
-        }
-      } catch (error) {
-        console.error('Error during game start:', error)
-        collector.stop('error')
-      }
+      collector.stop()
+      await startGame(btnInteraction, userData)
     })
   },
 }
@@ -108,10 +92,16 @@ module.exports = {
 async function startGame(interaction, userData) {
   const userId = interaction.user.id
 
-  // Deduct cost to play
+  // Deduct token cost
   userData.currency = { ...userData.currency, gems: userData.currency.gems - 1 }
   await userData.save()
   jackpot += Math.floor(Math.random() * 6) + 5
+
+  const gameState = {
+    currentColumn: 0,
+    totalGold: 0,
+    running: true,
+  }
 
   const columnData = [
     {
@@ -122,7 +112,7 @@ async function startGame(interaction, userData) {
           emoji: '🎅',
           type: 'gain',
           chance: 50,
-          range: [10, 30],
+          range: [1, 3],
           message: '**Tiny Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -144,7 +134,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 12,
-          range: [5, 15],
+          range: [1, 3],
           message: '**Small Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -172,7 +162,7 @@ async function startGame(interaction, userData) {
           emoji: '🎅',
           type: 'gain',
           chance: 42,
-          range: [20, 40],
+          range: [1, 8],
           message: '**Small Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -187,7 +177,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 25,
-          range: [6, 36],
+          range: [1, 18],
           message: '**Medium Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -222,7 +212,7 @@ async function startGame(interaction, userData) {
           emoji: '🎅',
           type: 'gain',
           chance: 40,
-          range: [60, 80],
+          range: [1, 13],
           message: '**Medium Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -237,7 +227,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 24,
-          range: [66, 66],
+          range: [1, 13],
           message: '**Large Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -265,14 +255,14 @@ async function startGame(interaction, userData) {
       ],
     },
     {
-      title: 'Gold Stage',
-      color: 'Gold',
+      title: 'Silver Stage',
+      color: '#BCC0C0',
       effects: [
         {
           emoji: '🎅',
           type: 'gain',
           chance: 35,
-          range: [77],
+          range: [1, 19],
           message: '**Big Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -287,7 +277,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 27,
-          range: [66],
+          range: [1, 19],
           message: '**Huge Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -315,14 +305,14 @@ async function startGame(interaction, userData) {
       ],
     },
     {
-      title: 'Silver Stage',
-      color: 'Silver',
+      title: 'Gold Stage',
+      color: 'Gold',
       effects: [
         {
           emoji: '🎅',
           type: 'gain',
           chance: 39,
-          range: [777],
+          range: [1, 19],
           message: '**Massive Win 🎅**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
@@ -337,7 +327,7 @@ async function startGame(interaction, userData) {
           emoji: '❄️',
           type: 'lose',
           chance: 34,
-          range: [666],
+          range: [1, 19],
           message: '**Major Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
         },
@@ -359,28 +349,25 @@ async function startGame(interaction, userData) {
     },
   ]
 
-  const gameState = {
-    currentColumn: 0,
-    totalGold: 0,
-    running: true,
-  }
-
+  // Create row buttons for user interaction
   const createRow = (totalGold) =>
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('spin_again')
+        .setCustomId(`spin_again_${userId}`)
         .setLabel('Spin Again')
         .setStyle('Primary'),
       new ButtonBuilder()
-        .setCustomId('stop_playing')
+        .setCustomId(`stop_playing_${userId}`)
         .setLabel(`Stop and collect 🪙${totalGold} gold`)
         .setStyle('Secondary')
     )
 
+  // Function to handle each round of the game
   const playRound = async (interactionObject, isInitial = false) => {
+    const userId = interactionObject.user.id // Ensure correct user ID reference
+
     let effects = columnData[gameState.currentColumn].effects
 
-    // Initial roll excludes "advance" and "game_over"
     if (isInitial) {
       effects = effects.filter(
         (effect) => effect.type !== 'advance' && effect.type !== 'game_over'
@@ -405,7 +392,7 @@ async function startGame(interaction, userData) {
       if (gameState.totalGold <= 0) {
         message += ` You have nothing more to lose!`
       } else {
-        const deductedAmount = Math.min(amount, gameState.totalGold) // Ensure not more than totalGold is deducted
+        const deductedAmount = Math.min(amount, gameState.totalGold)
         gameState.totalGold -= deductedAmount
         message += ` You lost 🪙${deductedAmount} gold!`
       }
@@ -417,28 +404,30 @@ async function startGame(interaction, userData) {
         }!`
       }
     } else if (roll.type === 'zalathor') {
-      //CODE ZALATHOR CARD REWARD
+      // TODO: Implement Zalathor card reward logic
     } else if (roll.type === 'game_over') {
       jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0)
       gameState.running = false
-      activePlayers.delete(interactionObject.user.id)
+      activePlayers.delete(userId)
       message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`
       gameState.totalGold = 0
     } else if (roll.type === 'energy') {
-      userData.currency = {
-        ...userData.currency,
-        energy: userData.currency.energy + 1,
+      if (userData.currency.energy < 15) {
+        userData.currency = {
+          ...userData.currency,
+          energy: userData.currency.energy + 1,
+        }
+        await userData.save()
+        message += ` You gained ⚡energy!`
+      } else {
+        message += ` Sorry, your energy is already full.`
       }
-      await userData.save()
-
-      message += ` You gained ⚡energy!`
     } else if (roll.type === 'eggs') {
       userData.currency = {
         ...userData.currency,
         eggs: userData.currency.eggs + 1,
       }
       await userData.save()
-
       message += ` You gained 🥚1 dragon egg!`
     } else if (roll.type === 'ichor') {
       userData.currency = {
@@ -446,59 +435,116 @@ async function startGame(interaction, userData) {
         ichor: userData.currency.ichor + 3,
       }
       await userData.save()
-
       message += ` You found 🧪3 ichor!`
     } else if (roll.type === 'jackpot') {
       userData.gold += jackpot
       await userData.save()
       gameState.running = false
       gameState.totalGold = 0
-      activePlayers.delete(interactionObject.user.id)
+      activePlayers.delete(userId)
       message += ` You won the JACKPOT of 🪙${jackpot} gold!`
       jackpot = 1000 // Reset the jackpot
     }
 
-    const gold = userData.gold || 0
-    const currency = userData.currency || {}
-    const energy = currency.energy || 0
-    const tokens = currency.gems || 0
-    const eggs = currency.eggs || 0
-    const ichor = currency.ichor || 0
     const footerText = `Current Jackpot 🪙${jackpot}`
 
+    const zalathorPhrases = [
+      `Did you know I can grant wishes.`,
+      `The whispers say you’ll win… but I wouldn’t trust them.`,
+      `How pitiful. Spin again, maybe you’ll amuse me.`,
+      `Double down. I promise, it's safe...`,
+      `Somewhere, someone is winning BIG! But not you.`,
+      `Ah, the Gold Stage… so many possibilities... if you ever get there.`,
+      `I saw a player win the jackpot once. They disappeared right after.`,
+      `You should stop now!`,
+      `Gold, eggs, ichor… Does any of it matter? You'll suffer either way.`,
+      `There’s a hidden button in this game… but you’re not ready for it.`,
+      `Yawn.`,
+      `If you leave now, you might just escape my curse… maybe.`,
+      `TRA LA LA! …What? Can't a demon have fun?`,
+      `I heard you can win legendary cards here. Just keep playing...`,
+      `The more you play, the greater the jackpot.`,
+      `This game is fair. Trust me.`,
+      `My son won once, so I killed him. He's still around here... somewhere.`,
+      `You've come so far. Just a little more…`,
+      `Your odds are fantastic! Would I lie to you?`,
+      `You're so close to winning my card! Oh… never mind.`,
+      `Spin again! You're definitely hitting the jackpot this time.`,
+      `The Gold Stage? Ah, that’s just a myth. No one gets there.`,
+      `I bet you didn’t know that I devour the souls of quitters.`,
+      `Another round?`,
+    ]
+    const randomPhrase =
+      zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
+
+    // Create embed
     const embed = new EmbedBuilder()
       .setTitle(columnData[gameState.currentColumn].title)
       .setColor(columnData[gameState.currentColumn].color)
-      .setDescription(message)
-      .addFields(
-        {
-          name: 'Current Pot',
-          value: `🪙${gameState.totalGold}`,
-          inline: true,
-        }
-        // { name: 'Jackpot', value: `🪙${jackpot}`, inline: true }
-      )
-      .setFooter({ text: `${footerText}` })
+      .setDescription(`${message}\n\n*${randomPhrase}*\n`)
+      .setThumbnail(thumbnailUrl)
+      .setFooter({ text: footerText })
 
-    // Check if game is over
+    // Ensure interaction is replied or deferred before updating
+    if (!interactionObject.deferred && !interactionObject.replied) {
+      await interactionObject.deferUpdate()
+    }
+
     if (!gameState.running) {
-      activePlayers.delete(interactionObject.user.id)
-      await interactionObject[
-        interactionObject.replied ? 'editReply' : 'update'
-      ]({
+      activePlayers.delete(userId)
+
+      // Create row with disabled buttons (initial state)
+      const gameOverRowDisabled = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`play_again_${userId}`)
+          .setLabel('Play Again')
+          .setStyle('Success')
+          .setDisabled(true), // Initially disabled
+        new ButtonBuilder()
+          .setCustomId(`finish_${userId}`)
+          .setLabel('Finish')
+          .setStyle('Danger')
+          .setDisabled(true) // Initially disabled
+      )
+
+      // Show the embed first, without clickable buttons
+      await interactionObject.editReply({
         embeds: [embed],
-        components: [],
+        components: [gameOverRowDisabled],
       })
+
+      // Wait 1.5 seconds before enabling the buttons
+      setTimeout(async () => {
+        const gameOverRowEnabled = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`play_again_${userId}`)
+            .setLabel('Play Again')
+            .setStyle('Success'),
+          new ButtonBuilder()
+            .setCustomId(`finish_${userId}`)
+            .setLabel('Finish')
+            .setStyle('Danger')
+        )
+
+        await interactionObject.editReply({
+          components: [gameOverRowEnabled],
+        })
+
+        // Now handle play again
+        await handlePlayAgain(interactionObject)
+      }, 1500) // 1.5s delay before enabling buttons
+
       return
     }
 
-    // Update the interaction for ongoing games
-    await interactionObject[isInitial ? 'editReply' : 'update']({
+    // Update message with buttons for continuing play
+    await interactionObject.editReply({
       embeds: [embed],
       components: [createRow(gameState.totalGold)],
     })
   }
 
+  // Defer reply to avoid interaction failure issues
   await playRound(interaction, true)
 
   const collector = interaction.channel.createMessageComponentCollector({
@@ -508,50 +554,109 @@ async function startGame(interaction, userData) {
 
   collector.on('collect', async (btnInteraction) => {
     try {
-      if (btnInteraction.customId === 'spin_again') {
+      if (btnInteraction.customId === `spin_again_${userId}`) {
         await playRound(btnInteraction)
-        if (!gameState.running) collector.stop('game_over')
-      } else if (btnInteraction.customId === 'stop_playing') {
+        if (!gameState.running) collector.stop()
+      } else if (btnInteraction.customId === `stop_playing_${userId}`) {
         userData.gold += gameState.totalGold
         await userData.save()
-        gameState.running = false
         activePlayers.delete(userId)
-        const gold = userData.gold || 0
-        const currency = userData.currency || {}
-        const energy = currency.energy || 0
-        const tokens = currency.gems || 0
-        const eggs = currency.eggs || 0
-        const ichor = currency.ichor || 0
-        const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+        collector.stop()
+
+        const footerText = `Available: 🪙${userData.gold || 0} ⚡${
+          userData.currency.energy || 0
+        } 🧿${userData.currency.gems || 0} 🥚${userData.currency.eggs || 0} 🧪${
+          userData.currency.ichor || 0
+        }`
 
         const finalEmbed = new EmbedBuilder()
           .setTitle(`Zalathor's Table Results 🎰`)
           .setDescription(
             `Congrats! You walked away with **🪙${gameState.totalGold} gold**.`
           )
-          .setFooter({ text: `${footerText}` })
+          .setFooter({ text: footerText })
           .setColor('Green')
+
+        const playAgainRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`play_again_${userId}`)
+            .setLabel('Play Again')
+            .setStyle('Success'),
+          new ButtonBuilder()
+            .setCustomId(`finish_${userId}`)
+            .setLabel('Finish')
+            .setStyle('Danger')
+        )
 
         await btnInteraction.update({
           embeds: [finalEmbed],
-          components: [],
+          components: [playAgainRow],
         })
 
-        collector.stop('user_stopped')
+        await handlePlayAgain(btnInteraction)
       }
     } catch (error) {
-      console.error('Error during interaction collection:', error)
-      collector.stop('error')
+      console.error(`Error in collector: ${error}`)
+      collector.stop()
     }
   })
 
-  collector.on('end', async (collected, reason) => {
-    if (reason === 'time') {
-      activePlayers.delete(userId)
+  collector.on('end', async () => {
+    activePlayers.delete(userId)
+    if (!interaction.replied) {
       await interaction.editReply({
-        content: `⏳ Time's up! Your game has ended.`,
+        content: `⏳ Time's up! Your game has ended. You can play again in **1 minute.**`,
         components: [],
       })
+    }
+  })
+}
+
+async function handlePlayAgain(interaction) {
+  const userId = interaction.user.id
+
+  const restartCollector = interaction.channel.createMessageComponentCollector({
+    filter: (i) =>
+      (i.customId === `play_again_${userId}` ||
+        i.customId === `finish_${userId}`) &&
+      i.user.id === userId,
+    time: 30000, // ⏳ Timeout: 30 seconds
+  })
+
+  restartCollector.on('collect', async (buttonInteraction) => {
+    if (buttonInteraction.customId === `play_again_${userId}`) {
+      activePlayers.delete(userId)
+      restartCollector.stop('restart')
+
+      // **Check if Player Has Enough Tokens**
+      const freshUserData = await User.findOne({ where: { user_id: userId } })
+      if (!freshUserData || freshUserData.currency.gems < 1) {
+        await buttonInteraction.reply({
+          content: `❌ You need at least 1 🧿token to play again!`,
+          ephemeral: true,
+        })
+        return
+      }
+
+      await module.exports.execute(buttonInteraction)
+    } else if (buttonInteraction.customId === `finish_${userId}`) {
+      restartCollector.stop('finished')
+      const finishEmbed = new EmbedBuilder()
+        .setTitle('Thanks for Playing! 🎰')
+        .setDescription('*Giving up so soon? Come back anytime.*')
+        .setColor('DarkRed')
+        .setThumbnail(thumbnailUrl)
+
+      await buttonInteraction.update({
+        embeds: [finishEmbed],
+        components: [], // Remove buttons
+      })
+    }
+  })
+
+  restartCollector.on('end', async (_, reason) => {
+    if (reason === 'time') {
+      await interaction.editReply({ components: [] })
     }
   })
 }
