@@ -14,15 +14,6 @@ module.exports = {
     .setName('slots')
     .setDescription(`Risk your soul at Zalathor's Table.`),
   async execute(interaction) {
-    // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
-
-    // if (!allowedChannels.includes(interaction.channel.id)) {
-    //   await interaction.reply({
-    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-    //     ephemeral: true,
-    //   })
-    //   return
-    // }
 
     const userId = interaction.user.id
 
@@ -436,7 +427,7 @@ async function startGame(interaction, userData) {
     } else if (roll.type === 'energy') {
       userData.currency = {
         ...userData.currency,
-        ichor: userData.currency.energy + 1,
+        energy: userData.currency.energy + 1,
       }
       await userData.save()
 
