@@ -1,4 +1,4 @@
-const { huntPages } = require('../commands/huntPages.js')
+const { huntPages } = require('../huntPages.js')
 
 function createPageButtons(currentPage, unlockedPages) {
   return unlockedPages.map((page) => ({

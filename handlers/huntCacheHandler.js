@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
-const { classifyMonsterType } = require('../utils/huntUtility/huntUtils.js')
+const {
+  classifyMonsterType,
+} = require('../commands/Hunt.js/huntUtils/huntHelpers.js')
 
 // Path to the assets folder and setup for valid creatures
 const assetsPath = path.join(__dirname, '..', 'assets')
@@ -15,11 +17,11 @@ const excludedTypes = new Set([
   // Add other types you want to exclude
 ])
 
-const monsterCacheByCR = {} 
+const monsterCacheByCR = {}
 let cachePopulated = false
 
 async function cacheHuntMonsters() {
-  if (cachePopulated) return // 
+  if (cachePopulated) return //
 
   const fetch = (await import('node-fetch')).default
   const response = await fetch('https://www.dnd5eapi.co/api/monsters')
@@ -63,7 +65,7 @@ async function cacheHuntMonsters() {
         hp: monster.hit_points,
         type: monster.type,
         combatType,
-        index: monster.index, 
+        index: monster.index,
       })
     } catch (error) {
       console.log(`Error processing monster ${monsterSummary.name}:`, error)
@@ -72,7 +74,6 @@ async function cacheHuntMonsters() {
   cachePopulated = true
   console.log('Hunt monster cache populated with combat types.')
 }
-
 
 function pullMonsterByCR(cr) {
   const availableMonsters = monsterCacheByCR[cr]
@@ -85,7 +86,9 @@ function pullMonsterByCR(cr) {
 function pullSpecificMonster(index) {
   console.log(index)
   for (const cr in monsterCacheByCR) {
-    const foundMonster = monsterCacheByCR[cr].find((monster) => monster.index === index)
+    const foundMonster = monsterCacheByCR[cr].find(
+      (monster) => monster.index === index
+    )
     if (foundMonster) {
       console.log(foundMonster)
       return foundMonster

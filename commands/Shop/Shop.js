@@ -20,7 +20,7 @@ const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
-const { classifyMonsterType } = require('../../utils/huntUtility/huntUtils')
+const { classifyMonsterType } = require('../Hunt.js/huntUtils/huntHelpers.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
 
 // Cache tracking variable

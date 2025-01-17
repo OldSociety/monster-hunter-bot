@@ -1,7 +1,9 @@
 // monsterhandler.js
 
 const { Collection, User } = require('../Models/model')
-const {classifyMonsterType} = require('../utils/huntUtility/huntUtils')
+const {
+  classifyMonsterType,
+} = require('../commands/Hunt.js/huntUtils/huntHelpers')
 
 const mScoreMultipliers = {
   Common: {
