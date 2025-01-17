@@ -19,9 +19,10 @@ const {
 const { addGoldToUser } = require('../../handlers/rewardHandler')
 const {
   checkAdvantage,
-  energyCostToEmoji,
 } = require('../../utils/huntUtility/huntUtils.js')
-const { levelData } = require('./huntPages.js')
+
+const { createPageButtons } = require('./utils/createPageButtons.js')
+const { huntPages } = require('./huntPages.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,6 +50,9 @@ module.exports = {
 
     const user = await checkUserAccount(interaction)
     if (!user) return
+
+    user.unlockedPages = user.unlockedPages || ['page1']
+    user.completedHunts = user.completedHunts || [] 
 
     // Check if the user has an empty collection
     let userCollection
@@ -109,185 +113,58 @@ module.exports = {
   },
 }
 
+
 async function showLevelSelection(interaction, user, huntData) {
-  const levels = Object.keys(levelData)
+  const currentPage = user.unlockedPage || 'page1'
+  const pageData = huntPages[currentPage]
 
-  if ((user.currency.energy || 0) < 1) {
-    const noEnergyEmbed = new EmbedBuilder()
-      .setColor('#FF0000')
-      .setTitle('Insufficient Energy')
-      .setDescription(
-        'You do not have enough energy to start a hunt. Energy regenerates every 10 minutes.'
-      )
-      .setFooter({
-        text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
-      })
-
-    await interaction.editReply({
-      embeds: [noEnergyEmbed],
-      components: [],
-      ephemeral: true,
-    })
-    return
+  if (!pageData) {
+    return interaction.reply({ content: 'Invalid hunt page!', ephemeral: true })
   }
 
-  user.completedLevels = user.completedLevels || 0
-  const availableLevels = levels.filter((levelKey) => {
-    const levelNumber = parseInt(levelKey.replace('hunt', ''))
-    return levelNumber <= user.completedLevels + 1
+  user.completedHunts = user.completedHunts || []
+
+  // Filter unlocked hunts
+  const unlockedHunts = pageData.hunts.filter(hunt => {
+    return user.completedHunts.includes(hunt.key) || hunt.key === 'hunt1'
   })
 
-  if (availableLevels.length === 0) {
-    await interaction.editReply({
-      content: 'No levels are available. Please complete previous hunts first.',
-      ephemeral: true,
-    })
-    return
-  }
-
-  const levelOptions = availableLevels.map((levelKey) => {
-    const level = levelData[levelKey]
-    const energyEmoji = energyCostToEmoji(level.energyCost)
-    return {
-      label: level.name,
-      description: `Energy Cost: ${energyEmoji}`,
-      value: `level_${levelKey}`,
-    }
-  })
+  // Create dropdown for available hunts
+  const huntOptions = unlockedHunts.map(hunt => ({
+    label: hunt.name,
+    description: hunt.description,
+    value: `hunt_${hunt.key}`,
+  }))
 
   const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId('level_select')
-    .setPlaceholder('Choose a level to begin your hunt')
-    .addOptions(levelOptions)
+    .setCustomId('hunt_select')
+    .setPlaceholder('Choose a hunt')
+    .addOptions(huntOptions)
 
   const dropdownRow = new ActionRowBuilder().addComponents(selectMenu)
 
-  const buttonComponents = []
+  // ✅ Ensure page buttons are valid before adding them
+  const pageButtonsRow = createPageButtons(currentPage, user.unlockedPages || ['page1'])
 
-  if ((user.currency.ichor || 0) >= 1 && !huntData.ichorUsed) {
-    const ichorButton = new ButtonBuilder()
-      .setCustomId('use_ichor')
-      .setLabel('Drink 🧪ichor')
-      .setStyle(ButtonStyle.Success)
-    buttonComponents.push(ichorButton)
-  }
+  const embed = new EmbedBuilder()
+    .setTitle(pageData.name)
+    .setDescription(pageData.description)
+    .setColor('Green')
 
-  const cancelButton = new ButtonBuilder()
-    .setCustomId('cancel_hunt')
-    .setLabel('Cancel')
-    .setStyle(ButtonStyle.Danger)
-
-  buttonComponents.push(cancelButton)
-
-  const buttonRow = new ActionRowBuilder().addComponents(...buttonComponents)
-
-  let embedToShow
-  if (user.completedLevels === 0) {
-    embedToShow = new EmbedBuilder()
-      .setColor('#00FF00')
-      .setTitle('Welcome to the Hunt!')
-      .setDescription(
-        'Before you begin your journey, here are some important things to know:\n\n' +
-          '**Fighting Styles**: Brute / Spellsword / Stealth.\n\n' +
-          '**⏫Advantage**: Monsters are vulnerable to specific fighting styles, granting a bonus.\n\n' +
-          '**🧪Ichor**: Temporarily boosts your strength for all battles in a hunt.\n\n' +
-          '**🧿Tokens**: You earn a token for every kill which can be spent in minigames.\n\n' +
-          '**Defeat/Revival**: You have 3 chances to complete a hunt.'
-      )
-      .setFooter({
-        text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
-      })
-  } else {
-    embedToShow = new EmbedBuilder()
-      .setTitle('Select a Hunt Level')
-      .setDescription('Choose a level to begin your hunt. ⚡Cost is displayed.')
-      .setColor('#FF0000')
-      .setFooter({
-        text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
-      })
-
-    if (huntData.ichorUsed) {
-      embedToShow.addFields({
-        name: 'Ichor Invigoration',
-        value: 'You are invigorated with 🧪ichor! Your strength increases.',
-      })
-    }
+  const components = [dropdownRow]
+  
+  if (pageButtonsRow.length > 0) {
+    components.push(pageButtonsRow)
   }
 
   await interaction.editReply({
-    embeds: [embedToShow],
-    components: [dropdownRow, buttonRow],
+    embeds: [embed],
+    components: components, // ✅ Only add valid components
     ephemeral: true,
   })
-
-  const filter = (i) => i.user.id === interaction.user.id
-  const collector = interaction.channel.createMessageComponentCollector({
-    filter,
-    max: 1,
-    time: 15000,
-  })
-
-  collector.on('collect', async (i) => {
-    if (i.customId === 'cancel_hunt') {
-      await i.update({
-        content: 'Hunt cancelled.',
-        embeds: [],
-        components: [],
-        ephemeral: true,
-      })
-      collector.stop()
-      return
-    }
-
-    if (i.customId === 'use_ichor') {
-      await i.deferUpdate()
-      if ((user.currency.ichor || 0) < 1) {
-        await interaction.followUp({
-          content: "You don't have enough 🧪ichor to use this option.",
-          ephemeral: true,
-        })
-        return
-      }
-
-      user.currency.ichor -= 1
-      user.changed('currency', true)
-      await user.save()
-      huntData.ichorUsed = true
-
-      await showLevelSelection(interaction, user, huntData)
-    } else if (i.customId === 'level_select') {
-      await i.deferUpdate()
-      const selectedLevelKey = i.values[0].replace('level_', '')
-      const selectedLevel = levelData[selectedLevelKey]
-
-      if (user.currency.energy < selectedLevel.energyCost) {
-        await interaction.followUp({
-          content: `You don't have enough energy to start ${selectedLevel.name}. It costs ⚡${selectedLevel.energyCost} energy.`,
-          ephemeral: true,
-        })
-        return
-      }
-
-      user.currency.energy -= selectedLevel.energyCost
-      user.changed('currency', true)
-      await user.save()
-
-      huntData.level = selectedLevel
-      huntData.inProgress = true
-      await startNewEncounter(interaction, user, huntData)
-    }
-  })
-
-  collector.on('end', async (collected, reason) => {
-    if (reason === 'time') {
-      await interaction.editReply({
-        content: 'Session expired. Please start again.',
-        components: [],
-        ephemeral: true,
-      })
-    }
-  })
 }
+
+
 
 async function startNewEncounter(interaction, user, huntData) {
   const currentBattle = huntData.level.battles[huntData.currentBattleIndex]
@@ -591,26 +468,12 @@ async function offerRetry(interaction, user, huntData) {
 }
 
 async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
-  const avatarURL = interaction.user.displayAvatarURL({
-    format: 'png',
-    size: 128,
-  })
-
   const summaryEmbed = new EmbedBuilder()
     .setTitle('Hunt Summary')
-    .setDescription(
-      `**Gold Earned:** 🪙${huntData.totalGoldEarned}\n` +
-        `**Tokens Earned:** 🧿${huntData.totalMonstersDefeated}`
-    )
-    .setFooter({
-      text: `Tokens can be spent by using /slots and future minigames.`,
-    })
-    .setThumbnail(avatarURL)
-
+    .setDescription(`**Gold Earned:** 🪙${huntData.totalGoldEarned}\n**Tokens Earned:** 🧿${huntData.totalMonstersDefeated}`)
     .setColor('#FFD700')
 
   if (levelCompleted) {
-    user.completedLevels = user.completedLevels || 0
     const levelNumber = parseInt(huntData.level.key.replace('hunt', ''))
     const isFirstCompletion = user.completedLevels < levelNumber
 
@@ -620,22 +483,23 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
         value: `You have defeated the ${huntData.level.name} and unlocked the next hunt.`,
       })
       user.completedLevels = levelNumber
+
+      // Check if the next page should be unlocked
+      if (huntData.level.unlocksPage && !user.unlockedPages.includes(huntData.level.unlocksPage)) {
+        user.unlockedPages.push(huntData.level.unlocksPage)
+        summaryEmbed.addFields({
+          name: 'New Page Unlocked!',
+          value: `You have unlocked **${huntPages[huntData.level.unlocksPage].name}**. Use the navigation buttons to switch pages.`,
+        })
+      }
+
       await user.save()
-    } else {
-      summaryEmbed.addFields({
-        name: 'Hunt Completed',
-        value: `Another ${huntData.level.name} falls to your blade.`,
-      })
     }
-  } else {
-    summaryEmbed.addFields({
-      name: 'Hunt Ended',
-      value: 'Better luck next time!',
-    })
   }
 
   await interaction.followUp({ embeds: [summaryEmbed], ephemeral: false })
 }
+
 
 function createHealthBar(currentHealth, maxHealth) {
   const totalSegments = 15
@@ -754,4 +618,18 @@ async function runBattlePhases(
     }
   }
   return playerWins >= 4
+}
+
+async function handlePagination(interaction, user) {
+  const customId = interaction.customId
+  if (customId.startsWith('prev_page_') || customId.startsWith('next_page_')) {
+    const newPage = customId.split('_')[2]
+
+    if (!huntPages[newPage]) {
+      return interaction.reply({ content: 'Invalid page selection.', ephemeral: true })
+    }
+
+    user.unlockedPage = newPage
+    await showLevelSelection(interaction, user, {})
+  }
 }
