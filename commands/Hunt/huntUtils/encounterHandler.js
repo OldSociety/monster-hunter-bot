@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
-const { pullSpecificMonster, pullMonsterByCR } = require('../../handlers/huntCacheHandler')
+const { pullSpecificMonster, pullMonsterByCR } = require('../../../handlers/huntCacheHandler')
 const { checkAdvantage } = require('./huntHelpers.js')
 const { runBattlePhases } = require('./battleHandler.js')
 const { addGoldToUser, displayHuntSummary } = require('./rewardHandler.js')

@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const {
   classifyMonsterType,
-} = require('../commands/Hunt.js/huntUtils/huntHelpers.js')
+} = require('../commands/Hunt/huntUtils/huntHelpers.js')
 
 // Path to the assets folder and setup for valid creatures
 const assetsPath = path.join(__dirname, '..', 'assets')

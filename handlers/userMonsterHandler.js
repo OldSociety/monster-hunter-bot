@@ -3,7 +3,7 @@
 const { Collection, User } = require('../Models/model')
 const {
   classifyMonsterType,
-} = require('../commands/Hunt.js/huntUtils/huntHelpers')
+} = require('../commands/Hunt/huntUtils/huntHelpers')
 
 const mScoreMultipliers = {
   Common: {

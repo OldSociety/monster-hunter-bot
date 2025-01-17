@@ -10,7 +10,7 @@ const {
   generateMonsterRewardEmbed,
 } = require('../../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../../utils/starRating')
-const { classifyMonsterType } = require('../../Hunt.js/huntUtils/huntHelpers')
+const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 const { EmbedBuilder } = require('discord.js')
 
 const rotatingMonsters = [
