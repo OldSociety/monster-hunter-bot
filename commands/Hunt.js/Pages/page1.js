@@ -1,7 +1,7 @@
 module.exports = {
   key: 'page1',
   name: 'Hunt Page 1 - Wyrmling’s Trial',
-  description: 'Defeat a series of monsters to reach the Red Dragon Wyrmling.',
+  description: 'Oryzinax, a red dragon wyrmling, has made a lair in the mountains above Harvest Hill. You must strike it down while its still young.',
   finalBoss: 'red-dragon-wyrmling',
   hunts: [
     {
@@ -10,7 +10,18 @@ module.exports = {
       description: 'Your hunt begins here...',
       energyCost: 1,
       totalBattles: 3,
-      battles: generateDarkmantleBattles(),
+      battles: [
+        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
+        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
+        {
+          type: 'mini-boss',
+          cr: 0.25,
+          monsterIndex: 'darkmantle',
+          difficulty: 'boss-half',
+          firstGoldReward: 700,
+          goldReward: 28,
+        },
+      ],
       unlocks: 'hunt2',
     },
     {
@@ -19,7 +30,20 @@ module.exports = {
       description: 'Take down the harpy by avoiding her song.',
       energyCost: 1,
       totalBattles: 5,
-      battles: generateHarpyBattles(),
+      battles: [
+        { type: 'normal', cr: 0.25, difficulty: 'easy', goldReward: 26 },
+        { type: 'normal', cr: 0.25, difficulty: 'easy', goldReward: 26 },
+        { type: 'normal', cr: 0.5, difficulty: 'easy', goldReward: 28 },
+        { type: 'normal', cr: 0.5, difficulty: 'easy', goldReward: 28 },
+        {
+          type: 'mini-boss',
+          cr: 2,
+          monsterIndex: 'harpy',
+          difficulty: 'boss-half',
+          firstGoldReward: 650,
+          goldReward: 32,
+        },
+      ],
       unlocks: 'hunt3',
     },
     {
@@ -29,7 +53,22 @@ module.exports = {
         'An army will be left unarmed if the rust monster is not hunted.',
       energyCost: 1,
       totalBattles: 8,
-      battles: generateRustMonsterBattles(),
+      battles: [
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
+        {
+          type: 'mini-boss',
+          cr: 2,
+          monsterIndex: 'rust-monster',
+          difficulty: 'boss-full',
+          firstGoldReward: 980,
+          goldReward: 52,
+        },
+      ],
       unlocks: 'hunt4',
     },
     {
@@ -39,7 +78,22 @@ module.exports = {
         'Kill the sea hag before more fall under her drowned man curse!',
       energyCost: 1,
       totalBattles: 10,
-      battles: generateSeaHagBattles(),
+      battles: [
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
+        {
+          type: 'mini-boss',
+          cr: 2,
+          monsterIndex: 'sea-hag',
+          difficulty: 'boss-full',
+          firstGoldReward: 1080,
+          goldReward: 52,
+        },
+      ],
       unlocks: 'hunt5',
     },
     {
@@ -48,68 +102,23 @@ module.exports = {
       description: 'Face the Red Dragon Wyrmling to prove your worth!',
       energyCost: 1,
       totalBattles: 10,
-      battles: generateRedDragonBattles(),
-      unlocksPage: 'page2', // Unlocks the next page upon completion
+      battles: [
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
+        {
+          type: 'mini-boss',
+          cr: 2,
+          monsterIndex: 'red-dragon-wyrmling',
+          difficulty: 'boss-strong',
+          firstGoldReward: 1540,
+          goldReward: 75,
+        },
+      ],
+      unlocksPage: 'page2',
     },
   ],
-}
-
-function generateDarkmantleBattles() {
-  return [
-    {
-      type: 'normal',
-      cr: 0,
-      difficulty: 'easy',
-      firstGoldReward: 700,
-      goldReward: 24,
-    },
-  ]
-}
-function generateHarpyBattles() {
-  return [
-    {
-      type: 'mini-boss',
-      cr: 2,
-      monsterIndex: 'harpy',
-      difficulty: 'boss-half',
-      firstGoldReward: 650,
-      goldReward: 32,
-    },
-  ]
-}
-function generateRustMonsterBattles() {
-  return [
-    {
-      type: 'mini-boss',
-      cr: 2,
-      monsterIndex: 'rust-monster',
-      difficulty: 'boss-full',
-      firstGoldReward: 980,
-      goldReward: 52,
-    },
-  ]
-}
-function generateSeaHagBattles() {
-  return [
-    {
-      type: 'mini-boss',
-      cr: 2,
-      monsterIndex: 'sea-hag',
-      difficulty: 'boss-full',
-      firstGoldReward: 1080,
-      goldReward: 52,
-    },
-  ]
-}
-function generateRedDragonBattles() {
-  return [
-    {
-      type: 'boss',
-      cr: 4,
-      monsterIndex: 'red-dragon-wyrmling',
-      difficulty: 'boss-strong',
-      firstGoldReward: 1540,
-      goldReward: 75,
-    },
-  ]
 }
