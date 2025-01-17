@@ -424,7 +424,7 @@ async function startNewEncounter(interaction, user, huntData) {
     await styleInteraction.deferUpdate()
     const selectedStyle = styleInteraction.customId.split('_')[1]
     const playerScore = user[`${selectedStyle}_score`]
-    const isAdvantaged = checkAdvantage(selectedStyle, monster.type)
+    const advMultiplier = checkAdvantage(selectedStyle, monster.type)
 
     const playerWins = await runBattlePhases(
       interaction,
@@ -432,7 +432,7 @@ async function startNewEncounter(interaction, user, huntData) {
       playerScore,
       monsterScore,
       monster,
-      isAdvantaged,
+      advMultiplier,
       huntData,
       currentBattle.type
     )
@@ -653,7 +653,7 @@ async function runBattlePhases(
   playerScore,
   monsterScore,
   monster,
-  isAdvantaged,
+  advMultiplier,
   huntData,
   battleType // accept battleType
 ) {
@@ -664,13 +664,15 @@ async function runBattlePhases(
   const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
 
   for (let phase = 1; phase <= 7; phase++) {
-    const effectivePlayerScore = isAdvantaged ? playerScore * 1.25 : playerScore
-
+    const isDisadvantaged = advMultiplier < 1
+    const isAdvantaged = advMultiplier > 1
+    const effectivePlayerScore = playerScore * advMultiplier
+    
     // Calculate the minimum roll if Ichor is used
     const minimumRoll = huntData.ichorUsed
       ? playerScore * 0.3
       : playerScore * 0.15
-
+    
     // Generate the player's roll, ensuring it respects the minimum threshold
     playerRoll = Math.round(
       Math.max(
@@ -678,26 +680,26 @@ async function runBattlePhases(
         minimumRoll
       )
     )
-
+    
     let monsterRoll = Math.random() * monsterScore
-
+    
     // Ensure consistent rounding
     playerRoll = Math.round(playerRoll)
     monsterRoll = Math.round(monsterRoll)
-
+    
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
     console.log(`Phase ${phase}: Result = ${phaseResult}`)
-
+    
     if (phaseResult === 'Hit!') {
       playerWins++
       const margin = playerRoll - monsterRoll
-
+    
       if (margin > 15) segmentLoss = 3
       else if (margin > 5) segmentLoss = 2
       else segmentLoss = 1
-
+    
       momentum -= Math.min(segmentLoss, momentum)
-
+    
       if (playerWins >= 4) {
         user.currency.gems = (user.currency.gems || 0) + 1
         user.changed('currency', true)
@@ -707,19 +709,23 @@ async function runBattlePhases(
     } else {
       monsterWins++
     }
-
+    
     const healthBar = createHealthBar(momentum, maxMomentum)
-
+    
     // Determine the effects to display
     let effects = 'Effects: None'
     if (isAdvantaged && huntData.ichorUsed) {
       effects = 'Effects: ⏫Advantage, 🧪Boost'
     } else if (isAdvantaged) {
       effects = 'Effects: ⏫Advantage'
+    } else if (isDisadvantaged && huntData.ichorUsed) {
+      effects = 'Effects: ⏬Disadvantage, 🧪Boost'
+    } else if (isDisadvantaged) {
+      effects = 'Effects: ⏬Disadvantage'
     } else if (huntData.ichorUsed) {
       effects = 'Effects: 🧪Boost'
     }
-
+    
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(

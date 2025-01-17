@@ -1,9 +1,17 @@
 // huntUtils.js
 function checkAdvantage(playerStyle, monsterType) {
   const monsterCategory = classifyMonsterType(monsterType)
+  
+  // Advantage and Disadvantage Mappings
   const advantageMap = { brute: 'stealth', stealth: 'spellsword', spellsword: 'brute' }
-  return advantageMap[playerStyle] === monsterCategory
+  const disadvantageMap = { stealth: 'brute', spellsword: 'stealth', brute: 'spellsword' }
+
+  if (advantageMap[playerStyle] === monsterCategory) return 1.25 // Advantage multiplier
+  if (disadvantageMap[playerStyle] === monsterCategory) return 0.75 // Disadvantage multiplier
+  
+  return 1 // No advantage/disadvantage
 }
+
 
 function energyCostToEmoji(cost) {
   const boltEmoji = '⚡'
