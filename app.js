@@ -85,30 +85,39 @@ if (process.env.NODE_ENV === 'production') {
 
       for (const user of users) {
         let currency = user.currency || {
-          energy: 15,
+          energy: 10,
           gems: 0,
           eggs: 0,
           ichor: 0,
           dice: 0,
         }
+
+        // Ensure currency is an object (fix for potential string storage issue)
         if (typeof currency !== 'object') {
-          currency = { energy: 15, gems: 0, eggs: 0, ichor: 0, dice: 0 }
+          currency = { energy: 10, gems: 0, eggs: 0, ichor: 0, dice: 0 }
         }
 
         const currentEnergy = currency.energy || 0
+
         if (currentEnergy < 15) {
+          // ✅ Safely update the energy value
           currency.energy = Math.min(currentEnergy + 1, 15)
-          user.currency = currency
-          user.changed('currency', true)
+
+          // ✅ Ensure Sequelize detects the change
+          user.set('currency', currency)
+          user.changed('currency', true) // Mark it as changed manually
+
+          // ✅ Save the updated user data
           await user.save()
+
           console.log(
-            `User ID: ${user.user_id}, Updated Currency:`,
-            user.currency
+            `User ID: ${user.user_id} - Energy increased to ${currency.energy}`
           )
         } else {
           console.log(`User ID: ${user.user_id} already has maximum energy.`)
         }
       }
+
       console.log('Energy refilled for all users.')
     } catch (error) {
       console.error('Error refilling energy:', error)

@@ -136,13 +136,17 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
     }
 
     if (filteredMonsters.length === 0) {
-      console.log(`No allowed monsters in tier ${tierName} for pack ${packType}`)
+      console.log(
+        `No allowed monsters in tier ${tierName} for pack ${packType}`
+      )
       return null
     }
 
     // Log the filtered monsters
     console.log(
-      `Pack Type: ${packType}, Tier: ${tierName}, Monsters: ${filteredMonsters.map(m => m.name).join(', ')}`
+      `Pack Type: ${packType}, Tier: ${tierName}, Monsters: ${filteredMonsters
+        .map((m) => m.name)
+        .join(', ')}`
     )
 
     monster =

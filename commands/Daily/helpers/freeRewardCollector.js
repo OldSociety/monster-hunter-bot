@@ -9,17 +9,17 @@ function transformRarityIdentifier(rarity) {
 
 async function setupFreeRewardCollector(rewardMessage) {
   const rewards = [
-    800, 
+    800,
     800,
     1000,
-    1200, 
-    2000, 
+    1200,
+    2000,
     'gems',
     Math.random() < 0.8
       ? await pullValidMonster({ name: 'Common' })
-      : await pullValidMonster({ name: 'Uncommon' }), 
+      : await pullValidMonster({ name: 'Uncommon' }),
   ]
-  
+
   const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣']
 
   // Shuffle the rewards

@@ -9,12 +9,13 @@ console.log(`Environment: ${env}`)
 // Load environment variables
 require('dotenv').config({
   path: env === 'development' ? '.env.development' : '.env.production',
-});
+})
 
-console.log(`🔍 Loaded ENV Variables:`);
-console.log(`- CLIENTID: ${process.env.CLIENTID}`);
-console.log(`- GUILDID: ${process.env.GUILDID || 'Not required for production'}`);
-
+console.log(`🔍 Loaded ENV Variables:`)
+console.log(`- CLIENTID: ${process.env.CLIENTID}`)
+console.log(
+  `- GUILDID: ${process.env.GUILDID || 'Not required for production'}`
+)
 
 const commands = []
 
