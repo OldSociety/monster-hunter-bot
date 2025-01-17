@@ -21,7 +21,7 @@ const {
   checkAdvantage,
   energyCostToEmoji,
 } = require('../../utils/huntUtility/huntUtils.js')
-const { levelData } = require('./Levels/huntLevels.js')
+const { levelData } = require('./huntPages.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
