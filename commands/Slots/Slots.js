@@ -9,6 +9,8 @@ const { User } = require('../../Models/model.js')
 let jackpot = 10000
 const activePlayers = new Set()
 const thumbnailUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/pit-fiend.jpg`
+const gameStates = new Map(); // Track each player's game state individually
+
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -242,7 +244,7 @@ async function startGame(interaction, userData) {
           emoji: '🧪',
           type: 'ichor',
           chance: 8,
-          message: '**🧪Ichor Found!**',
+          message: '**Ichor Found!**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f381.svg',
         },
         {
@@ -292,7 +294,7 @@ async function startGame(interaction, userData) {
           emoji: '🥚',
           type: 'eggs',
           chance: 9,
-          message: '**🥚 Dragon Eggs! 🥚**',
+          message: '**Dragon Eggs!**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f514.svg',
         },
         {
@@ -365,6 +367,7 @@ async function startGame(interaction, userData) {
   // Function to handle each round of the game
   const playRound = async (interactionObject, isInitial = false) => {
     const userId = interactionObject.user.id // Ensure correct user ID reference
+    console.log(`[playRound] Started for user: ${userId}`);
 
     let effects = columnData[gameState.currentColumn].effects
 
@@ -373,10 +376,16 @@ async function startGame(interaction, userData) {
         (effect) => effect.type !== 'advance' && effect.type !== 'game_over'
       )
     }
-
+    // Ensure interaction is valid before proceeding
+    if (interactionObject.replied || interactionObject.deferred) {
+      console.log(`[playRound] Skipping editReply because interaction was already handled.`);
+      return;
+  }
     // Perform the weighted random selection
     const roll = weightedRandom(effects)
     let message = roll.message
+
+    console.log(`[playRound] Roll result: ${roll.type}, message: ${message}`);
 
     if (roll.type === 'gain') {
       const amount =
@@ -406,11 +415,14 @@ async function startGame(interaction, userData) {
     } else if (roll.type === 'zalathor') {
       // TODO: Implement Zalathor card reward logic
     } else if (roll.type === 'game_over') {
+      console.log(`[playRound] Game Over triggered for user: ${userId}`);
       jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0)
       gameState.running = false
       activePlayers.delete(userId)
       message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`
       gameState.totalGold = 0
+       // Ensure the collector stops processing more inputs
+    collector.stop();
     } else if (roll.type === 'energy') {
       if (userData.currency.energy < 15) {
         userData.currency = {
@@ -482,6 +494,8 @@ async function startGame(interaction, userData) {
       ? zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
       : null
 
+      console.log(`[playRound] Updated gameState: totalGold=${gameState.totalGold}, currentColumn=${gameState.currentColumn}`);
+
     const embed = new EmbedBuilder()
       .setTitle(columnData[gameState.currentColumn].title)
       .setColor(columnData[gameState.currentColumn].color)
@@ -493,6 +507,7 @@ async function startGame(interaction, userData) {
 
     // Ensure interaction is replied or deferred before updating
     if (!interactionObject.deferred && !interactionObject.replied) {
+      console.log(`[playRound] Deferring update for user: ${userId}`);
       await interactionObject.deferUpdate()
     }
 
@@ -511,7 +526,7 @@ async function startGame(interaction, userData) {
           .setStyle('Danger')
           .setDisabled(true)
       )
-
+      console.log(`[playRound] Editing reply for user: ${userId}`);
       await interactionObject.editReply({
         embeds: [embed],
         components: [gameOverRowDisabled],
@@ -554,63 +569,93 @@ async function startGame(interaction, userData) {
   })
 
   collector.on('collect', async (btnInteraction) => {
+    console.log(`[Collector] Button pressed by ${btnInteraction.user.id}: ${btnInteraction.customId}`);
+
     try {
       if (btnInteraction.customId === `spin_again_${userId}`) {
-        await playRound(btnInteraction)
-        if (!gameState.running) collector.stop()
-      } else if (btnInteraction.customId === `stop_playing_${userId}`) {
-        userData.gold += gameState.totalGold
-        await userData.save()
-        activePlayers.delete(userId)
-        collector.stop()
+        console.log(`[Collector] Processing 'spin_again' for user: ${userId}`);
+    
+        // Get or initialize user-specific game state
+        if (!gameStates.has(userId)) {
+            gameStates.set(userId, { running: false });
+        }
+    
+        const userGameState = gameStates.get(userId);
+    
+        // Prevent multiple executions
+        if (userGameState.running) {
+            console.log(`[Collector] Skipping 'spin_again' because gameState.running is already true.`);
+            
+            if (!btnInteraction.deferred && !btnInteraction.replied) {
+                await btnInteraction.deferUpdate();
+            }
+            return;
+        }
+    
+        userGameState.running = true; // ✅ Set flag before calling playRound()
+    
+        try {
+            await playRound(btnInteraction);
+        } catch (error) {
+            console.error(`[Collector] Error running playRound for user ${userId}: ${error}`);
+        }
+    
+        // ✅ Ensure flag resets even if playRound() fails
+        console.log(`[Collector] Resetting gameState.running for user: ${userId}`);
+        userGameState.running = false;
+    }
+    
+    
+     else if (btnInteraction.customId === `stop_playing_${userId}`) {
+            console.log(`[Collector] Processing 'stop_playing' for user: ${userId}`);
 
-        const footerText = `Available: 🪙${userData.gold || 0} ⚡${
-          userData.currency.energy || 0
-        } 🧿${userData.currency.gems || 0} 🥚${userData.currency.eggs || 0} 🧪${
-          userData.currency.ichor || 0
-        }`
+            userData.gold += gameState.totalGold;
+            await userData.save();
+            activePlayers.delete(userId);
+            collector.stop();
 
-        const finalEmbed = new EmbedBuilder()
-          .setTitle(`Zalathor's Table Results 🎰`)
-          .setDescription(
-            `Congrats! You walked away with **🪙${gameState.totalGold} gold**.`
-          )
-          .setFooter({ text: footerText })
-          .setColor('Green')
+            console.log(`[Collector] User ${userId} stopped playing with totalGold: ${gameState.totalGold}`);
 
-        const playAgainRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`play_again_${userId}`)
-            .setLabel('Play Again')
-            .setStyle('Success'),
-          new ButtonBuilder()
-            .setCustomId(`finish_${userId}`)
-            .setLabel('Finish')
-            .setStyle('Danger')
-        )
+            const footerText = `Available: 🪙${userData.gold || 0} ⚡${
+                userData.currency.energy || 0
+            } 🧿${userData.currency.gems || 0} 🥚${userData.currency.eggs || 0} 🧪${
+                userData.currency.ichor || 0
+            }`;
 
-        await btnInteraction.update({
-          embeds: [finalEmbed],
-          components: [playAgainRow],
-        })
+            const finalEmbed = new EmbedBuilder()
+                .setTitle(`Zalathor's Table Results 🎰`)
+                .setDescription(`Congrats! You walked away with **🪙${gameState.totalGold} gold**.`)
+                .setFooter({ text: footerText })
+                .setColor('Green');
 
-        await handlePlayAgain(btnInteraction)
-      }
+            console.log(`[Collector] Updating interaction with final results for user: ${userId}`);
+            await btnInteraction.update({
+                embeds: [finalEmbed],
+                components: [],
+            });
+        }
     } catch (error) {
-      console.error(`Error in collector: ${error}`)
-      collector.stop()
+        console.error(`[Collector] Error in collector for user ${userId}: ${error}`);
+        collector.stop();
     }
-  })
+});
 
-  collector.on('end', async () => {
-    activePlayers.delete(userId)
-    if (!interaction.replied) {
+
+collector.on('end', async () => {
+  console.log(`[Collector] Collector ended for user: ${userId}`);
+  activePlayers.delete(userId);
+
+  if (!interaction.replied && !interaction.deferred) {
+      console.log(`[Collector] Sending timeout message for user: ${userId}`);
       await interaction.editReply({
-        content: `⏳ Time's up! Your game has ended. You can play again in **1 minute.**`,
-        components: [],
-      })
-    }
-  })
+          content: `⏳ Time's up! Your game has ended. You can play again in **1 minute.**`,
+          components: [],
+      });
+  } else {
+      console.log(`[Collector] Skipped timeout message because interaction was already acknowledged.`);
+  }
+});
+
 }
 
 async function handlePlayAgain(interaction) {
