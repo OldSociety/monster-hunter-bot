@@ -1,81 +1,135 @@
-//battleHandler.js
 const { EmbedBuilder } = require('discord.js')
 
 function createHealthBar(currentHealth, maxHealth) {
-    const totalSegments = 15
-    let filledSegments = Math.round((currentHealth / maxHealth) * totalSegments)
-    if (currentHealth > 0 && filledSegments < 1) filledSegments = 1
-    let unfilledSegments = totalSegments - filledSegments
-    return '``' + '『' + '🟥'.repeat(filledSegments) + '⬛'.repeat(unfilledSegments) + '』' + '``'
+  const totalSegments = 15
+  let filledSegments = Math.round((currentHealth / maxHealth) * totalSegments)
+  if (currentHealth > 0 && filledSegments < 1) filledSegments = 1
+  let unfilledSegments = totalSegments - filledSegments
+  return (
+    '``' +
+    '『' +
+    '🟥'.repeat(filledSegments) +
+    '⬛'.repeat(unfilledSegments) +
+    '』' +
+    '``'
+  )
 }
 
-async function runBattlePhases(interaction, user, playerScore, monsterScore, monster, advMultiplier, huntData, battleType) {
-    if (!playerScore || !monsterScore) {
-        console.error('Invalid player or monster score provided.')
-        return false
+async function runBattlePhases(
+  interaction,
+  user,
+  playerScore,
+  monsterScore,
+  monster,
+  advMultiplier,
+  huntData,
+  battleType
+) {
+  console.log(`runBattlePhases() called for user: ${interaction.user.tag}`)
+  console.log(`Battle Type: ${battleType}`)
+  console.log(`Player Score: ${playerScore}, Monster Score: ${monsterScore}`)
+  console.log(`Advantage Multiplier: ${advMultiplier}`)
+  console.log(`Ichor Used: ${huntData.ichorUsed}`)
+
+  if (!playerScore || !monsterScore) {
+    console.error('Invalid player or monster score provided.')
+    return false
+  }
+
+  let playerWins = 0
+  let monsterWins = 0
+  let momentum = 15
+  const maxMomentum = 15
+  const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+
+  console.log(`Starting battle against: ${monster.name} (CR: ${monster.cr})`)
+
+  for (let phase = 1; phase <= 7; phase++) {
+    console.log(`--- Phase ${phase} ---`)
+    const isDisadvantaged = advMultiplier < 1
+    const isAdvantaged = advMultiplier > 1
+    const effectivePlayerScore = playerScore * advMultiplier
+
+    const minimumRoll = huntData.ichorUsed
+      ? playerScore * 0.3
+      : playerScore * 0.15
+
+    let playerRoll = Math.round(
+      Math.max(
+        Math.random() * (effectivePlayerScore - minimumRoll) + minimumRoll,
+        minimumRoll
+      )
+    )
+    let monsterRoll = Math.round(Math.random() * monsterScore)
+
+    console.log(`Player Roll: ${playerRoll}, Monster Roll: ${monsterRoll}`)
+
+    const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
+    console.log(`Phase Result: ${phaseResult}`)
+
+    if (phaseResult === 'Hit!') {
+      playerWins++
+      momentum = Math.max(momentum - 1, 0)
+      console.log(`Player Wins: ${playerWins}, Momentum: ${momentum}`)
+
+      if (playerWins >= 4) {
+        console.log(`Player won the battle in Phase ${phase}`)
+        return true
+      }
+    } else {
+      monsterWins++
+      console.log(`Monster Wins: ${monsterWins}`)
     }
 
-    let playerWins = 0
-    let monsterWins = 0
-    let momentum = 15
-    const maxMomentum = 15
-    const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+    const healthBar = createHealthBar(momentum, maxMomentum)
+    const effects =
+      [
+        isAdvantaged ? 'Advantage' : '',
+        isDisadvantaged ? 'Disadvantage' : '',
+        huntData.ichorUsed ? 'Boost' : '',
+      ]
+        .filter(Boolean)
+        .join(', ') || 'None'
 
-    for (let phase = 1; phase <= 7; phase++) {
-        const isDisadvantaged = advMultiplier < 1
-        const isAdvantaged = advMultiplier > 1
-        const effectivePlayerScore = playerScore * advMultiplier
+    console.log(`Effects: ${effects}`)
 
-        const minimumRoll = huntData.ichorUsed ? playerScore * 0.3 : playerScore * 0.15
+    const phaseEmbed = new EmbedBuilder()
+      .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
+      .setDescription(
+        `**CR:** ${monster.cr}\n` +
+          `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
+          `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
+          `**Effects:** ${effects}\n\n` +
+          `**Phase ${phase}**\n${phaseResult} Player rolled ${playerRoll}, Monster rolled ${monsterRoll}\n\n` +
+          `${healthBar}`
+      )
+      .setColor('#FF4500')
+      .setThumbnail(imageUrl)
 
-        let playerRoll = Math.round(Math.max(Math.random() * (effectivePlayerScore - minimumRoll) + minimumRoll, minimumRoll))
-        let monsterRoll = Math.round(Math.random() * monsterScore)
-
-        const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
-
-        if (phaseResult === 'Hit!') {
-            playerWins++
-            momentum = Math.max(momentum - (playerRoll - monsterRoll > 15 ? 3 : playerRoll - monsterRoll > 5 ? 2 : 1), 0)
-
-            if (playerWins >= 4) {
-                user.currency.gems = (user.currency.gems || 0) + 1
-                user.changed('currency', true)
-                await user.save()
-                return true
-            }
-        } else {
-            monsterWins++
-        }
-
-        const healthBar = createHealthBar(momentum, maxMomentum)
-        const effects = [
-            isAdvantaged ? 'Advantage' : '',
-            isDisadvantaged ? 'Disadvantage' : '',
-            huntData.ichorUsed ? 'Boost' : ''
-        ].filter(Boolean).join(', ') || 'None'
-
-        const phaseEmbed = new EmbedBuilder()
-            .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
-            .setDescription(
-                `**CR:** ${monster.cr}\n` +
-                `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
-                `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
-                `**Effects:** ${effects}\n\n` +
-                `**Phase ${phase}**\n${phaseResult} Player rolled ${playerRoll}, Monster rolled ${monsterRoll}\n\n` +
-                `${healthBar}`
-            )
-            .setColor('#FF4500')
-            .setThumbnail(imageUrl)
-
-        await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
-        await new Promise(resolve => setTimeout(resolve, 2000))
-
-        if (playerWins === 4 || momentum <= 0) break
-        if (monsterWins === 4) return false
+    // Ensure the interaction is properly acknowledged before editing
+    try {
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply({ ephemeral: true })
+      }
+      await interaction.editReply({ embeds: [phaseEmbed] })
+    } catch (error) {
+      console.warn(`⚠️ Failed to update interaction: ${error.message}`)
     }
-    return playerWins >= 4
+
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    if (playerWins === 4 || momentum <= 0) break
+    if (monsterWins === 4) return false
+  }
+
+  console.log(
+    `Final battle result: ${
+      playerWins >= 4 ? 'Player Victory' : 'Monster Victory'
+    }`
+  )
+  return playerWins >= 4
 }
 
 module.exports = {
-    runBattlePhases,
+  runBattlePhases,
 }
