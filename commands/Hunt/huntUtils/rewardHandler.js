@@ -7,38 +7,57 @@ async function addGoldToUser(user, amount) {
 }
 
 async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
-  if (!user.completedHunts) user.completedHunts = []
+  console.log("🏆 Displaying Hunt Summary...");
+  
+  if (!user.completedHunts) user.completedHunts = [];
 
   const summaryEmbed = new EmbedBuilder()
     .setTitle('Hunt Summary')
     .setDescription(
       `**Gold Earned:** 🪙${huntData.totalGoldEarned}\n**Monsters Defeated:** 🧿${huntData.totalMonstersDefeated}`
     )
-    .setColor('#FFD700')
+    .setColor('#FFD700');
 
   if (huntData.ichorUsed) {
     summaryEmbed.addFields({
       name: 'Ichor Invigoration',
       value: 'You used 🧪ichor during this hunt, boosting your power!',
-    })
+    });
   }
 
   if (levelCompleted) {
-    const nextLevelKey = huntData.level.unlocks
-    if (nextLevelKey && !user.completedHunts.includes(nextLevelKey)) {
-      user.completedHunts.push(nextLevelKey)
-      summaryEmbed.addFields({
-        name: 'Next Hunt Unlocked!',
-        value: `You have unlocked **${huntPages[nextLevelKey].name}**!`,
-      })
+    console.log("✔ Hunt completed. Checking for next unlock...");
+
+    const nextLevelKey = huntData.level?.unlocks; // ✅ Prevents crash if `huntData.level` is undefined
+    console.log(`➡ Next Level Key: ${nextLevelKey}`);
+
+    if (nextLevelKey && huntPages[nextLevelKey]) {
+      console.log(`🔓 Unlocking next hunt: ${huntPages[nextLevelKey].name}`);
+
+      if (!user.completedHunts.includes(nextLevelKey)) {
+        user.completedHunts.push(nextLevelKey);
+        summaryEmbed.addFields({
+          name: 'Next Hunt Unlocked!',
+          value: `You have unlocked **${huntPages[nextLevelKey].name}**!`,
+        });
+      }
+    } else {
+      console.warn("⚠️ No valid next level found or huntPages[nextLevelKey] is undefined.");
     }
-    await user.save()
+
+    await user.save();
   }
 
-  const avatarURL = interaction.user.displayAvatarURL({ format: 'png', size: 128 })
-  summaryEmbed.setThumbnail(avatarURL)
+  const avatarURL = interaction.user.displayAvatarURL({ format: 'png', size: 128 });
+  summaryEmbed.setThumbnail(avatarURL);
 
-  await interaction.followUp({ embeds: [summaryEmbed], ephemeral: false })
+  try {
+    await interaction.followUp({ embeds: [summaryEmbed], ephemeral: false });
+    console.log("✅ Hunt summary successfully sent.");
+  } catch (error) {
+    console.error("❌ Error sending hunt summary:", error);
+  }
 }
+
 
 module.exports = { addGoldToUser, displayHuntSummary }
