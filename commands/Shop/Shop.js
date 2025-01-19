@@ -6,6 +6,7 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { Collection } = require('../../Models/model.js')
+
 const {
   cacheMonstersByTier,
   pullValidMonster,
@@ -22,8 +23,10 @@ const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
+// Cache tracking variable
 let cachePopulated = false
 
+// Pack costs
 const PACK_COSTS = {
   starter: 0,
   common: 800,
@@ -33,6 +36,7 @@ const PACK_COSTS = {
   ichor: 650,
 }
 
+// Define tier options for each pack
 const TIER_OPTIONS = {
   common: { name: 'Common' },
   uncommon: { name: 'Uncommon' },
@@ -105,15 +109,24 @@ module.exports = {
       .setColor(0x00ff00)
       .setTitle(`-- Hunter Store --`)
 
-    if (isStarterPackAvailable) {
-      shopEmbed.setDescription(
-        `Here you can purchase packs containing monsters, tokens and other resources.`
-      )
-    } else {
-      shopEmbed.setDescription(
-        `Purchase packs containing monsters or resources. Use \`/help store\` for details.`
-      )
-    }
+      if (isStarterPackAvailable) {
+        shopEmbed.setDescription(
+         ` Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!`
+        )
+      } else {
+        shopEmbed.setDescription(
+          `Purchase packs containing monsters or resources.  Use ` +
+            '`' +
+            `/help store` +
+            '`' +
+             `for a detailed description of each pack.` +
+            `Use ` +
+            '`' +
+            `/account` +
+            '`' +
+            `at any time to see your style scores and collection.`
+        )
+      }
 
     const row = new ActionRowBuilder()
 
@@ -185,33 +198,68 @@ module.exports = {
       await buttonInteraction.deferUpdate()
 
       const packType = buttonInteraction.customId.split('_')[1]
-      console.log(`[SHOP] Processing purchase: ${packType}`)
 
       try {
-        if (user.gold < PACK_COSTS[packType]) {
-          return buttonInteraction.followUp({
-            content: `You don't have enough gold for a ${packType} pack.`,
-            ephemeral: true,
-          })
-        }
-
-        await user.decrement('gold', { by: PACK_COSTS[packType] })
         const monster = await pullValidMonster(TIER_OPTIONS[packType], packType)
 
         if (!monster) {
-          return buttonInteraction.followUp({
-            content: `Could not find a valid monster.`,
+          console.error(`[SHOP] No valid monster found for ${packType}`)
+          return interaction.followUp({
+            content: `Could not retrieve a valid monster for the **${packType}** pack. Please try again later or contact support.`,
             ephemeral: true,
           })
         }
+        
+        const category = classifyMonsterType(monster.type)
+        const stars = getStarsBasedOnColor(monster.color)
+        const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
 
-        await buttonInteraction.followUp({
-          content: `You pulled a new **${monster.name}**!`,
-          embeds: [generateMonsterRewardEmbed(monster)],
-        })
+        const result = await updateOrAddMonsterToCollection(userId, monster)
+
+        if (result.isDuplicate) {
+          await interaction.followUp({
+            content: `You obtained another **${result.name}**. It increased from level **${result.previousLevel}** to **${result.newLevel}**!`,
+            embeds: [monsterEmbed],
+          })
+        } else {
+          await interaction.followUp({
+            content: `You pulled a new **${result.name}** from the **${packType} pack!**`,
+            embeds: [monsterEmbed],
+          })
+        }
+
+        await updateTop5AndUserScore(userId)
+
+        if (isStarterPackAvailable) {
+          await interaction.followUp({
+            content:
+              `You have received your first monster and increased one of your fighting style scores! Keep in mind, only your top 3 cards of a style add to its score.\n\nWhen ready, use ` +
+              '`' +
+              `/account` +
+              '`' +
+              `to see your current collection or use`  +
+              '`' +
+              `/hunt` +
+              '`' +
+              `to begin your first hunt.`,
+            embeds: [monsterEmbed],
+          })
+        } else {
+        await interaction.followUp(
+          `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
+        )
+      }
+    
+
+    collector.stop('completed')
       } catch (error) {
         console.error('[SHOP] Error handling button interaction:', error)
       }
+    })
+
+    collector.on('end', async () => {
+      await interaction.editReply({ components: [] })
+      console.log('[SHOP] Session expired.')
     })
   },
 }
