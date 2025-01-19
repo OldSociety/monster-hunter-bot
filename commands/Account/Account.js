@@ -6,6 +6,8 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { User, Collection } = require('../../Models/model.js')
+const { collectors, stopUserCollector } = require('../../utils/collectors')
+
 const { Op } = require('sequelize')
 
 function getRaritySymbol(cr) {
@@ -17,6 +19,7 @@ function getRaritySymbol(cr) {
 }
 
 function createButtons(activePage) {
+  console.log(`Creating buttons, active page: ${activePage}`)
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('overview')
@@ -49,33 +52,23 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    // const allowedChannels = [process.env.WINTERCHANNELID, process.env.BOTTESTCHANNELID, process.env.DEVBOTTESTCHANNELID]
-
-    // if (!allowedChannels.includes(interaction.channel.id)) {
-    //   await interaction.reply({
-    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-    //     ephemeral: true,
-    //   })
-    //   return
-    // }
+    console.log(`Received /account command from user: ${interaction.user.id}`)
     const userId = interaction.user.id
     let category = interaction.options.getString('style') || 'overview'
+
+    stopUserCollector(userId)
+    await interaction.deferReply({ ephemeral: true })
+    console.log(`Interaction deferred for user: ${userId}`)
 
     try {
       let user = await User.findOne({ where: { user_id: userId } })
       if (!user) {
-        // Create a new user account
+        console.log(`Creating new user record for: ${userId}`)
         user = await User.create({
           user_id: userId,
           user_name: interaction.user.username,
           gold: 500,
-          currency: {
-            energy: 15,
-            gems: 0,
-            eggs: 0,
-            ichor: 3,
-            dice: 0,
-          },
+          currency: { energy: 15, gems: 0, eggs: 0, ichor: 3, dice: 0 },
           score: 0,
           brute_score: 0,
           spellsword_score: 0,
@@ -87,42 +80,37 @@ module.exports = {
           completedLevels: 0,
         })
 
-        // Send a welcome message
         const welcomeEmbed = new EmbedBuilder()
           .setColor('#00FF00')
           .setTitle('Welcome to Blood Hunter!')
           .setDescription(
-            `You have joined the hunt!\n Use ` +
-              '``' +
-              `/shop` +
-              '``' +
-              `to get your first card.`
+            `You have joined the hunt!\n Use \`/shop\` to get your first card.`
           )
           .setFooter({
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
           })
           .setThumbnail(interaction.user.displayAvatarURL())
 
-        return interaction.reply({ embeds: [welcomeEmbed], ephemeral: true })
+        return interaction.editReply({
+          embeds: [welcomeEmbed],
+          ephemeral: true,
+        })
       }
 
+      console.log(`User found: ${userId}, fetching collection data...`)
+
       const displayEmbed = async (category) => {
-        let embedColor
-        switch (category) {
-          case 'brute':
-            embedColor = '#FF0000' // Red for Brutes
-            break
-          case 'spellsword':
-            embedColor = '#0000FF' // Blue for spellswords
-            break
-          case 'stealth':
-            embedColor = '#800080' // Purple for stealths
-            break
-          default:
-            embedColor = '#00FF00' // Green for Overview
-        }
+        console.log(`Generating embed for category: ${category}`)
+        let embedColor =
+          {
+            brute: '#FF0000',
+            spellsword: '#0000FF',
+            stealth: '#800080',
+            overview: '#00FF00',
+          }[category] || '#00FF00'
 
         if (category === 'overview') {
+          console.log('Generating overview stats...')
           const crCategories = {
             Common: [0, 4],
             Uncommon: [5, 10],
@@ -145,41 +133,24 @@ module.exports = {
                 rarity === 'Legendary'
                   ? { cr: { [Op.gte]: crRange[0] } }
                   : { cr: { [Op.between]: crRange } }
-
               const count = await Collection.count({
-                where: {
-                  userId: userId,
-                  ...condition,
-                },
+                where: { userId: userId, ...condition },
               })
+              console.log(`Rarity ${rarity}: ${count} collected`)
               return { rarity, count }
             })
           )
 
-          const gold = user.gold || 0
-          const currency = user.currency || {}
-          const energy = currency.energy || 0
-          const tokens = currency.gems || 0
-          const eggs = currency.eggs || 0
-          const ichor = currency.ichor || 0
-
-          const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+          const footerText = `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`
 
           const statsEmbed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle(`Blood Hunter | Total Score: ${user.score}`)
-            .addFields(
-              {
-                name: '-- Style Scores --',
-                value: `\n**Brute**: ${user.brute_score}\n**Spellsword**: ${user.spellsword_score}\n**Stealth**: ${user.stealth_score}`,
-                inline: true,
-              },
-              {
-                name: '**-- Collection Stats by Rarity --**',
-                value: 'Track your collection progress below:',
-                inline: false,
-              }
-            )
+            .addFields({
+              name: '-- Style Scores --',
+              value: `\n**Brute**: ${user.brute_score}\n**Spellsword**: ${user.spellsword_score}\n**Stealth**: ${user.stealth_score}`,
+              inline: true,
+            })
             .setThumbnail(interaction.user.displayAvatarURL())
             .setFooter({ text: footerText })
 
@@ -188,113 +159,88 @@ module.exports = {
             const percentage = ((count / total) * 100).toFixed(1)
             statsEmbed.addFields({
               name: `${rarity}`,
-              value: '`' + `${count} / ${total} ➜ (${percentage}%)` + '`',
+              value: `\`${count} / ${total} ➜ (${percentage}%)\``,
               inline: false,
             })
           })
-
-          return statsEmbed
-        } else {
-          // Category-specific logic
-          const categoryField =
-            category === 'monster' ? 'top_monsters' : `top_${category}s`
-          const topCardsIds = user[categoryField] || []
-
-          const topCards = await Collection.findAll({
-            where: { id: topCardsIds },
-            attributes: ['name', 'm_score', 'level', 'copies', 'cr', 'type'],
-            order: [['m_score', 'DESC']],
-            limit: 3,
-          })
-
-          const statsEmbed = new EmbedBuilder()
-            .setColor(embedColor)
-            .setTitle(
-              `Top ${
-                category === 'monster'
-                  ? 'Overall'
-                  : category.charAt(0).toUpperCase() + category.slice(1)
-              } Cards`
-            )
-            .setFooter({
-              text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
-            })
-            .setThumbnail(interaction.user.displayAvatarURL())
-
-          if (topCards.length > 0) {
-            topCards.forEach((card) => {
-              const raritySymbol = getRaritySymbol(card.cr)
-              statsEmbed.addFields(
-                {
-                  name: `${card.name}`,
-                  value: `${raritySymbol}`,
-                  inline: false,
-                },
-                {
-                  name: 'Score',
-                  value: '`' + `${card.m_score}` + '`',
-                  inline: true,
-                },
-                {
-                  name: 'Level',
-                  value: '`' + `${card.level} / 8` + '`',
-                  inline: true,
-                },
-                {
-                  name: 'Type',
-                  value: '`' + `${card.type}` + '`',
-                  inline: true,
-                }
-              )
-            })
-          } else {
-            statsEmbed.addFields({
-              name: 'No Cards Available',
-              value: `You currently have no cards in the ${category} category.`,
-              inline: false,
-            })
-          }
 
           return statsEmbed
         }
+
+        console.log(`Fetching top cards for category: ${category}`)
+        const categoryField = `top_${category}s`
+        const topCardsIds = user[categoryField] || []
+
+        if (topCardsIds.length === 0) {
+          console.log(`No cards found for category: ${category}`)
+          return new EmbedBuilder()
+            .setColor(embedColor)
+            .setTitle(`No ${category} Cards Found`)
+            .setDescription(
+              `You currently have no cards in the ${category} category.`
+            )
+        }
+
+        const topCards = await Collection.findAll({
+          where: { id: topCardsIds },
+          attributes: ['name', 'm_score', 'level', 'copies', 'cr', 'type'],
+          order: [['m_score', 'DESC']],
+          limit: 3,
+        })
+
+        const statsEmbed = new EmbedBuilder()
+          .setColor(embedColor)
+          .setTitle(
+            `Top ${category.charAt(0).toUpperCase() + category.slice(1)} Cards`
+          )
+          .setFooter({
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+          })
+          .setThumbnail(interaction.user.displayAvatarURL())
+
+        topCards.forEach((card) => {
+          statsEmbed.addFields(
+            {
+              name: `${card.name}`,
+              value: `${getRaritySymbol(card.cr)}`,
+              inline: false,
+            },
+            { name: 'Score', value: `\`${card.m_score}\``, inline: true },
+            { name: 'Level', value: `\`${card.level} / 8\``, inline: true },
+            { name: 'Type', value: `\`${card.type}\``, inline: true }
+          )
+        })
+
+        return statsEmbed
       }
 
-      // Initial reply
-      await interaction.reply({
+      console.log(`Sending initial reply for user: ${userId}`)
+      await interaction.editReply({
         embeds: [await displayEmbed(category)],
         components: [createButtons(category)],
         ephemeral: true,
       })
 
-      // Collector for button interactions
+      console.log(`Setting up button collector for user: ${userId}`)
       const collector = interaction.channel.createMessageComponentCollector({
-        time: 60000,
+        filter: (i) => i.user.id === userId,
+        time: 30000,
       })
+
+      collectors.set(userId, collector)
 
       collector.on('collect', async (btnInteraction) => {
-        if (btnInteraction.user.id !== interaction.user.id) {
-          return btnInteraction.reply({
-            content: 'This interaction is not for you!',
-            ephemeral: true,
-          })
-        }
-
+        console.log(`Button clicked: ${btnInteraction.customId}`)
         await btnInteraction.deferUpdate()
-        category = btnInteraction.customId
         await btnInteraction.editReply({
-          embeds: [await displayEmbed(category)],
-          components: [createButtons(category)],
+          embeds: [await displayEmbed(btnInteraction.customId)],
+          components: [createButtons(btnInteraction.customId)],
         })
-      })
-
-      collector.on('end', async () => {
-        await interaction.editReply({ components: [] })
       })
     } catch (error) {
       console.error('Error fetching user stats:', error)
-      await interaction.reply({
-        content:
-          'An error occurred while fetching your stats. Please try again later.',
+      await interaction.editReply({
+        content: 'An error occurred. Please try again later.',
         ephemeral: true,
       })
     }

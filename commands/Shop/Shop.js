@@ -1,4 +1,3 @@
-// shop.js
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -7,7 +6,6 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { Collection } = require('../../Models/model.js')
-
 const {
   cacheMonstersByTier,
   pullValidMonster,
@@ -22,11 +20,10 @@ const {
 const { getStarsBasedOnColor } = require('../../utils/starRating')
 const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
+const { collectors, stopUserCollector } = require('../../utils/collectors')
 
-// Cache tracking variable
 let cachePopulated = false
 
-// Pack costs
 const PACK_COSTS = {
   starter: 0,
   common: 800,
@@ -36,7 +33,6 @@ const PACK_COSTS = {
   ichor: 650,
 }
 
-// Define tier options for each pack
 const TIER_OPTIONS = {
   common: { name: 'Common' },
   uncommon: { name: 'Uncommon' },
@@ -55,43 +51,33 @@ module.exports = {
     .setDescription('Purchase a monster pack'),
 
   async execute(interaction) {
-    // const allowedChannels = [
-    //   process.env.WINTERCHANNELID,
-    //   process.env.BOTTESTCHANNELID,
-    //   process.env.DEVBOTTESTCHANNELID,
-    // ]
-
-    // if (!allowedChannels.includes(interaction.channel.id)) {
-    //   await interaction.reply({
-    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-    //     ephemeral: true,
-    //   })
-    //   return
-    // }
-    await interaction.deferReply({ ephemeral: true })
     const userId = interaction.user.id
-    console.log('Shop command started.')
+    console.log(`[SHOP] Command executed by User: ${userId}`)
+
+    await interaction.deferReply({ ephemeral: true })
+
+    stopUserCollector(userId) // Stop any previous collectors
+    console.log(`[SHOP] Stopped previous collector for User: ${userId}`)
 
     const user = await checkUserAccount(interaction)
     if (!user) return
 
-    // Check if the user has an empty collection
     let userCollection
     try {
       userCollection = await Collection.findOne({ where: { userId: userId } })
     } catch (error) {
-      console.error('Error querying Collection model:', error)
-      return interaction.reply({
+      console.error('[SHOP] Error querying Collection model:', error)
+      return interaction.editReply({
         content: 'An error occurred while accessing the collection data.',
         ephemeral: true,
       })
     }
-    const isStarterPackAvailable = !userCollection
-    console.log('Starter:', isStarterPackAvailable)
 
-    // Show loading embed if cache is not populated
+    const isStarterPackAvailable = !userCollection
+    console.log(`[SHOP] Starter Pack Available: ${isStarterPackAvailable}`)
+
     if (!cachePopulated) {
-      console.log('Cache not populated. Showing loading embed.')
+      console.log('[SHOP] Cache not populated. Showing loading message...')
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -99,13 +85,11 @@ module.exports = {
             .setDescription('Loading shop data, please wait...'),
         ],
         components: [],
-        ephemeral: true,
       })
 
-      // Populate cache and set flag
       await cacheMonstersByTier()
       cachePopulated = true
-      console.log('Cache populated successfully.')
+      console.log('[SHOP] Cache populated successfully')
     }
 
     const gold = user.gold || 0
@@ -117,34 +101,23 @@ module.exports = {
 
     const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
 
-    // Shop embed setup after cache is loaded
     const shopEmbed = new EmbedBuilder()
       .setColor(0x00ff00)
       .setTitle(`-- Hunter Store --`)
 
     if (isStarterPackAvailable) {
       shopEmbed.setDescription(
-        `Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!`
+        `Here you can purchase packs containing monsters, tokens and other resources.`
       )
     } else {
       shopEmbed.setDescription(
-        `Purchase packs containing monsters or resources.  Use ` +
-          '``' +
-          `/help store` +
-          '``' +
-          ` for a detailed description of each pack.` +
-          `Use ` +
-          '``' +
-          `/account` +
-          '``' +
-          `at any time to see your style scores and collection.`
+        `Purchase packs containing monsters or resources. Use \`/help store\` for details.`
       )
     }
 
     const row = new ActionRowBuilder()
 
     if (isStarterPackAvailable) {
-      // Only show Starter Pack
       shopEmbed.addFields({
         name: 'Starter Pack',
         value: `🆓 Free for new hunters!`,
@@ -159,33 +132,13 @@ module.exports = {
     } else {
       shopEmbed
         .addFields(
-          {
-            name: 'Common Pack',
-            value: `🪙${PACK_COSTS.common}`,
-            inline: true,
-          },
-          {
-            name: 'Uncommon Pack',
-            value: `🪙${PACK_COSTS.uncommon}`,
-            inline: true,
-          },
-          {
-            name: 'Rare Pack',
-            value: `🪙${PACK_COSTS.rare}`,
-            inline: true,
-          },
-          {
-            name: 'Elemental Pack',
-            value: `🪙${PACK_COSTS.elemental}`,
-            inline: true,
-          },
-          {
-            name: '🧪Ichor Pack (12)',
-            value: `🪙${PACK_COSTS.ichor}\n`,
-            inline: true,
-          }
+          { name: 'Common Pack', value: `🪙${PACK_COSTS.common}`, inline: true },
+          { name: 'Uncommon Pack', value: `🪙${PACK_COSTS.uncommon}`, inline: true },
+          { name: 'Rare Pack', value: `🪙${PACK_COSTS.rare}`, inline: true },
+          { name: 'Elemental Pack', value: `🪙${PACK_COSTS.elemental}`, inline: true },
+          { name: '🧪Ichor Pack (12)', value: `🪙${PACK_COSTS.ichor}`, inline: true }
         )
-        .setFooter({ text: `${footerText}` })
+        .setFooter({ text: footerText })
 
       row.addComponents(
         new ButtonBuilder()
@@ -210,130 +163,54 @@ module.exports = {
           .setStyle(ButtonStyle.Success)
       )
     }
-    const components = row.components.length > 0 ? [row] : []
+
     await interaction.editReply({
       embeds: [shopEmbed],
-      components,
-      ephemeral: true,
+      components: [row],
     })
 
-    // Set up button interaction collector
+    console.log(`[SHOP] Buttons sent. Setting up collector...`)
+
     const filter = (i) => i.user.id === userId
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
-      time: 15000,
+      time: 60000,
     })
 
+    collectors.set(userId, collector)
+
     collector.on('collect', async (buttonInteraction) => {
+      console.log(`[SHOP] Button clicked: ${buttonInteraction.customId} by User: ${userId}`)
+
+      await buttonInteraction.deferUpdate()
+
       const packType = buttonInteraction.customId.split('_')[1]
-      const packCost = PACK_COSTS[packType]
-      const tierOption = TIER_OPTIONS[packType]
+      console.log(`[SHOP] Processing purchase: ${packType}`)
 
       try {
-        await buttonInteraction.deferUpdate()
-
-        if (user.gold < packCost) {
+        if (user.gold < PACK_COSTS[packType]) {
           return buttonInteraction.followUp({
-            content: `You don't have enough gold to buy a ${packType} pack. Available: 🪙${user.gold} gold`,
+            content: `You don't have enough gold for a ${packType} pack.`,
             ephemeral: true,
           })
         }
 
-        await user.decrement('gold', { by: packCost })
+        await user.decrement('gold', { by: PACK_COSTS[packType] })
+        const monster = await pullValidMonster(TIER_OPTIONS[packType], packType)
 
-        await interaction.editReply({
-          embeds: [
-            new EmbedBuilder()
-              .setDescription('Processing your purchase... Please wait.')
-              .setColor(0xffcc00),
-          ],
-          components: [],
-        })
-
-        if (packType === 'ichor') {
-          user.currency = {
-            ...user.currency,
-            ichor: user.currency.ichor + 12,
-          }
-
-          await user.save()
-
-          const ichorEmbed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle('Ichor Pack Purchased')
-            .setDescription(
-              `You have received 🧪12 ichor! You can spend ichor to increase your chances of winning by 20%.`
-            )
-
-          await interaction.followUp({
-            content: `You purchased an **Ichor Pack**!`,
-            embeds: [ichorEmbed],
+        if (!monster) {
+          return buttonInteraction.followUp({
+            content: `Could not find a valid monster.`,
+            ephemeral: true,
           })
-        } else {
-          const monster = await pullValidMonster(tierOption, packType)
-          const stars = getStarsBasedOnColor(monster.color)
-          const category = classifyMonsterType(monster.type)
-          console.log(category)
-          const monsterEmbed = generateMonsterRewardEmbed(
-            monster,
-            category,
-            stars
-          )
-
-          if (monster) {
-            const result = await updateOrAddMonsterToCollection(userId, monster)
-
-            if (result.isDuplicate) {
-              const duplicateMessage = `You obtained another copy of **${result.name}**. It has increased from level **${result.previousLevel}** to level **${result.newLevel}**!`
-
-              await interaction.followUp({
-                content: duplicateMessage,
-                embeds: [monsterEmbed], // You can include the updated monster embed here if needed
-              })
-            } else {
-              await interaction.followUp({
-                content: `You pulled a new **${result.name}** from the **${packType} pack!**`,
-                embeds: [monsterEmbed],
-              })
-            }
-            await updateTop5AndUserScore(userId)
-
-            if (isStarterPackAvailable) {
-              await interaction.followUp({
-                content:
-                  `You have received your first monster and increased one of your fighting style scores! Keep in mind, only your top 3 cards of a style add to its score.\n\nWhen ready, use ` +
-                  '``' +
-                  `/account` +
-                  '``' +
-                  `to see your current collection or use ` +
-                  '``' +
-                  `/hunt` +
-                  '``' +
-                  `to begin your first hunt.`,
-                embeds: [monsterEmbed],
-              })
-            }
-          } else {
-            await interaction.followUp(
-              `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
-            )
-          }
         }
 
-        collector.stop('completed')
-      } catch (error) {
-        console.error('Error handling the button interaction:', error)
-        await interaction.followUp('An error occurred. Please try again later.')
-      }
-    })
-
-    collector.on('end', async (collected, reason) => {
-      if (reason === 'time' && cachePopulated) {
-        const expiredEmbed = EmbedBuilder.from(shopEmbed).setFooter({
-          text: 'Session expired. Please use /shop to try again.',
+        await buttonInteraction.followUp({
+          content: `You pulled a new **${monster.name}**!`,
+          embeds: [generateMonsterRewardEmbed(monster)],
         })
-        await interaction.editReply({ embeds: [expiredEmbed], components: [] })
-        console.log('Session expired due to inactivity.')
+      } catch (error) {
+        console.error('[SHOP] Error handling button interaction:', error)
       }
     })
   },
