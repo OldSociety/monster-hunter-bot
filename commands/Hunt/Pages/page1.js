@@ -13,6 +13,7 @@ module.exports = {
       battles: [
         { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
         { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
+        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
         {
           type: 'mini-boss',
           cr: 0.25,
