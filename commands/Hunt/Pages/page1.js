@@ -59,7 +59,7 @@ module.exports = {
         { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
         { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
         { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 50 },
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
         {
           type: 'mini-boss',
@@ -82,6 +82,8 @@ module.exports = {
       battles: [
         { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
         { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
         { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
         { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
@@ -106,13 +108,17 @@ module.exports = {
       battles: [
         { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
         { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
         { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 },
         { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
         {
           type: 'mini-boss',
-          cr: 2,
+          cr: 4,
           monsterIndex: 'red-dragon-wyrmling',
           difficulty: 'boss-strong',
           firstGoldReward: 1540,
