@@ -71,18 +71,37 @@ async function grantDailyReward(user, interaction) {
     }
   } else {
     const rewards = [
-      '🪙200 coins',
-      '🥚1 dragon egg',
-      '🧪2 demon ichor',
-      '🪙600 coins',
-      '🥚1 dragon egg',
-      '🧪3 demon ichor',
-      '🪙1000 coins',
-      '🥚1 dragon egg',
-      '🧪3 demon ichor',
+      { type: 'gold', amount: 200, text: '🪙200 coins' },
+      { type: 'eggs', amount: 1, text: '🥚1 dragon egg' },
+      { type: 'ichor', amount: 2, text: '🧪2 demon ichor' },
+      { type: 'gold', amount: 600, text: '🪙600 coins' },
+      { type: 'eggs', amount: 1, text: '🥚1 dragon egg' },
+      { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
+      { type: 'gold', amount: 1000, text: '🪙1000 coins' },
+      { type: 'eggs', amount: 1, text: '🥚1 dragon egg' },
+      { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
     ]
 
-    const rewardText = rewards[currentDay - 1] || '🪙200 coins'
+    const reward = rewards[currentDay - 1] || {
+      type: 'gold',
+      amount: 200,
+      text: '🪙200 coins',
+    }
+
+    // Apply the reward correctly
+    if (reward.type === 'gold') {
+      user.gold += reward.amount
+    } else if (reward.type === 'eggs') {
+      user.currency = {
+        ...user.currency,
+        eggs: user.currency.eggs + reward.amount,
+      }
+    } else if (reward.type === 'ichor') {
+      user.currency = {
+        ...user.currency,
+        ichor: user.currency.ichor + reward.amount,
+      }
+    }
 
     await user.save()
 
@@ -92,7 +111,7 @@ async function grantDailyReward(user, interaction) {
           .setColor('#00FF00')
           .setTitle('Daily Reward Received')
           .setDescription(
-            `You received ${rewardText}! Return tomorrow for your next reward.`
+            `You received ${reward.text}! Return tomorrow for your next reward.`
           ),
       ],
     }
