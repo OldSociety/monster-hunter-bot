@@ -200,15 +200,36 @@ module.exports = {
       const packType = buttonInteraction.customId.split('_')[1]
 
       try {
+        if (packType === 'ichor') {
+          user.currency = {
+            ...user.currency,
+            ichor: user.currency.ichor + 12,
+          }
+          await user.save()
+      
+          const ichorEmbed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle('Ichor Pack Purchased')
+            .setDescription(
+              `You have received 🧪12 ichor! You can spend ichor to increase your chances of winning by 20%.`
+            )
+      
+          return buttonInteraction.followUp({
+            content: `You purchased an **Ichor Pack**!`,
+            embeds: [ichorEmbed],
+          })
+        }
+      
         const monster = await pullValidMonster(TIER_OPTIONS[packType], packType)
-
+      
         if (!monster) {
           console.error(`[SHOP] No valid monster found for ${packType}`)
-          return interaction.followUp({
+          return buttonInteraction.followUp({
             content: `Could not retrieve a valid monster for the **${packType}** pack. Please try again later or contact support.`,
             ephemeral: true,
           })
         }
+      
         
         const category = classifyMonsterType(monster.type)
         const stars = getStarsBasedOnColor(monster.color)
@@ -244,12 +265,8 @@ module.exports = {
               `to begin your first hunt.`,
             embeds: [monsterEmbed],
           })
-        } else {
-        await interaction.followUp(
-          `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`
-        )
-      }
-    
+        }
+  
 
     collector.stop('completed')
       } catch (error) {
