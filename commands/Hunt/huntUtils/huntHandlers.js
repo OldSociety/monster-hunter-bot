@@ -1,3 +1,5 @@
+// huntHandlers.js 
+
 const {
   EmbedBuilder,
   ActionRowBuilder,
@@ -8,33 +10,31 @@ const {
 const { huntPages } = require('../huntPages.js')
 const { energyCostToEmoji } = require('./huntHelpers.js')
 
-async function showLevelSelection(interaction, user, huntData) {
+async function showLevelSelection(interaction, user, huntData, newPage = null) {
   console.log(
     `showLevelSelection() called for user: ${interaction.user.tag} (ID: ${interaction.user.id})`
   )
 
-  // ✅ Ensure completedLevels is initialized
   let completedLevels = user.completedLevels || 0
-
-  // ✅ Dynamically determine unlocked pages based on completed levels
-  let unlockedPages = []
   let totalHuntsBefore = 0
+  let unlockedPages = []
 
+  // ✅ Determine unlocked pages based on completed levels
   for (const [pageKey, pageData] of Object.entries(huntPages)) {
     if (completedLevels >= totalHuntsBefore) {
       unlockedPages.push(pageKey)
     }
-    totalHuntsBefore += pageData.hunts.length // ✅ Tracks cumulative hunt counts
+    totalHuntsBefore += pageData.hunts.length // Count total hunts before each page
   }
 
   const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
   console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
 
-  // ✅ Ensure the user is on the highest unlocked page by default
-  const currentPage = user.unlockedPage || highestUnlockedPage
-  const pageData = huntPages[currentPage]
+  // ✅ Set the current page based on button press or highest unlocked page
+  const currentPage = typeof newPage === 'string' ? newPage : highestUnlockedPage
+  console.log(`📖 Current Page after button press: ${currentPage}`)
 
-  console.log(`📖 Current Page: ${currentPage}`)
+  const pageData = huntPages[currentPage]
 
   if (!pageData) {
     console.error(`❌ Invalid hunt page detected: ${currentPage}`)
@@ -44,19 +44,32 @@ async function showLevelSelection(interaction, user, huntData) {
     })
   }
 
-  console.log(`✅ Completed levels: ${completedLevels}`)
+  // ✅ Reset totalHuntsBefore to properly count previous page hunts
+  totalHuntsBefore = 0
+  for (const [pageKey, pageData] of Object.entries(huntPages)) {
+    if (pageKey === currentPage) break // Stop counting when we reach the current page
+    totalHuntsBefore += pageData.hunts.length
+  }
 
-  // ✅ Only show hunts that are unlocked within the current page
-  const unlockedHunts = pageData.hunts.filter((hunt) => {
-    const huntNumber = parseInt(hunt.key.replace('hunt', ''), 10)
-    return huntNumber <= completedLevels + 1
-  })
+  // ✅ Determine how many hunts are unlocked within the current page
+  let completedLevelsOnPage = completedLevels - totalHuntsBefore
+  console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`)
 
-  console.log(`Unlocked hunts: ${unlockedHunts.map((h) => h.key).join(', ')}`)
+  // ✅ Correctly filter hunts available on the current page
+  const unlockedHunts = pageData.hunts.filter((hunt, index) => index < completedLevelsOnPage + 1)
 
-  // ✅ Create dropdown options
+  console.log(`Unlocked hunts: ${unlockedHunts.map((h) => h.key).join(', ') || 'None'}`)
+
+  if (unlockedHunts.length === 0) {
+    return interaction.editReply({
+      content: 'No hunts are available on this page. Complete previous hunts to unlock new ones.',
+      ephemeral: true,
+    })
+  }
+
+  // ✅ Dropdown menu for available hunts
   const huntOptions = unlockedHunts.map((hunt) => ({
-    label: `${hunt.name}${energyCostToEmoji(hunt.energyCost)}`, // ✅ Adds ⚡ next to hunt name
+    label: `${hunt.name}${energyCostToEmoji(hunt.energyCost)}`,
     description: hunt.description,
     value: `hunt_${hunt.key}`,
   }))
@@ -89,7 +102,7 @@ async function showLevelSelection(interaction, user, huntData) {
 
   const buttonRow = new ActionRowBuilder().addComponents(...buttonComponents)
 
-  // ✅ Generate page buttons (up to 3 at a time, with next/prev controls)
+  // ✅ Generate page-switching buttons
   let pageRow = null
   if (unlockedPages.length > 1) {
     console.log(`🔄 Adding page-switching buttons: ${unlockedPages}`)
@@ -98,7 +111,9 @@ async function showLevelSelection(interaction, user, huntData) {
       new ButtonBuilder()
         .setCustomId(`page_${pageKey}`)
         .setLabel(`Page ${pageKey.replace('page', '')}`)
-        .setStyle(pageKey === currentPage ? ButtonStyle.Primary : ButtonStyle.Secondary)
+        .setStyle(
+          pageKey === currentPage ? ButtonStyle.Primary : ButtonStyle.Secondary
+        )
     )
 
     pageRow = new ActionRowBuilder().addComponents(...buttons)
@@ -114,9 +129,9 @@ async function showLevelSelection(interaction, user, huntData) {
       text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
     })
 
-  const components = [dropdownRow]
+  const components = []
   if (pageRow) components.push(pageRow)
-  components.push(buttonRow) // ✅ Page buttons above Ichor/Cancel buttons
+  components.push(dropdownRow, buttonRow)
 
   await interaction.editReply({
     embeds: [embed],

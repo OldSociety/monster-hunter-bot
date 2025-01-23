@@ -35,13 +35,10 @@ async function handlePagination(interaction, user) {
   }
 
   console.log(`📖 Switching hunt selection to ${newPage}`)
-  await interaction.deferUpdate()
-  user.unlockedPage = newPage
-  await user.save() // ✅ Ensure page selection is persisted
 
   const { showLevelSelection } = require('./huntHandlers.js')
-  await showLevelSelection(interaction, user, huntData) // Refresh the hunt dropdown
+  await interaction.deferUpdate() // 🔹 Ensures Discord updates UI
+  await showLevelSelection(interaction, user, huntData, newPage)
 }
-
 
 module.exports = { handlePagination, createPageButtons }
