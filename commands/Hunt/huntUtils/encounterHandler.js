@@ -1,3 +1,5 @@
+// encounterHandler.js
+
 const {
   EmbedBuilder,
   ActionRowBuilder,

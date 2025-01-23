@@ -1,3 +1,5 @@
+// battleHandler.js
+
 const { EmbedBuilder } = require('discord.js')
 
 function createHealthBar(currentHealth, maxHealth) {

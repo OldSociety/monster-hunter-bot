@@ -1,4 +1,4 @@
-// huntUtils.js
+// huntHelpers.js
 function checkAdvantage(playerStyle, monsterType) {
   const monsterCategory = classifyMonsterType(monsterType)
 

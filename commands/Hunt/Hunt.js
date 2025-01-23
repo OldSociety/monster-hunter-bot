@@ -10,106 +10,266 @@ const {
 } = require('discord.js')
 const { Collection } = require('../../Models/model.js')
 
-const { checkUserAccount } = require('../Account/checkAccount.js')
-const {
-  cacheHuntMonsters,
-  pullMonsterByCR,
-  pullSpecificMonster,
-} = require('../../handlers/huntCacheHandler')
-const { addGoldToUser } = require('../../handlers/rewardHandler')
-const {
-  checkAdvantage,
-  energyCostToEmoji,
-} = require('./huntUtils/huntHelpers.js')
-const { levelData } = require('./Levels/huntLevels.js')
+if (process.env.NODE_ENV === 'production') {
+  const { checkUserAccount } = require('../Account/checkAccount.js')
+  const { collectors, stopUserCollector } = require('../../utils/collectors')
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('hunt')
-    .setDescription(
-      'Embark on a hunt and engage in combat with a series of monsters'
-    ),
+  const {
+    cacheHuntMonsters,
+    pullMonsterByCR,
+    pullSpecificMonster,
+  } = require('../../handlers/huntCacheHandler')
+  const { addGoldToUser } = require('../../handlers/rewardHandler')
+  const {
+    checkAdvantage,
+    energyCostToEmoji,
+  } = require('./huntUtils/huntHelpers.js')
+  const { levelData } = require('./Levels/huntLevels.js')
 
-  async execute(interaction) {
-    // const allowedChannels = [
-    //   process.env.WINTERCHANNELID,
-    //   process.env.BOTTESTCHANNELID,
-    //   process.env.DEVBOTTESTCHANNELID,
-    // ]
+  module.exports = {
+    data: new SlashCommandBuilder()
+      .setName('hunt')
+      .setDescription(
+        'Embark on a hunt and engage in combat with a series of monsters'
+      ),
 
-    // if (!allowedChannels.includes(interaction.channel.id)) {
-    //   await interaction.reply({
-    //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
-    //     ephemeral: true,
-    //   })
-    //   return
-    // }
-    await interaction.deferReply({ ephemeral: true })
-    const userId = interaction.user.id
+    async execute(interaction) {
+      // const allowedChannels = [
+      //   process.env.WINTERCHANNELID,
+      //   process.env.BOTTESTCHANNELID,
+      //   process.env.DEVBOTTESTCHANNELID,
+      // ]
 
-    const user = await checkUserAccount(interaction)
-    if (!user) return
+      // if (!allowedChannels.includes(interaction.channel.id)) {
+      //   await interaction.reply({
+      //     content: `🎰 This game can only be played in designated Blood Hunters channels.`,
+      //     ephemeral: true,
+      //   })
+      //   return
+      // }
+      await interaction.deferReply({ ephemeral: true })
+      const userId = interaction.user.id
 
-    // Check if the user has an empty collection
-    let userCollection
-    try {
-      userCollection = await Collection.findOne({ where: { userId: userId } })
-      if (!userCollection) {
-        const noMonstersEmbed = new EmbedBuilder()
-          .setColor('#FF0000')
-          .setTitle('No Monsters Found')
-          .setDescription(
-            `You currently do not have any monsters in your collection. You need at least one card to go on a hunt.\n\nUse ` +
-              '``' +
-              `/shop` +
-              '``' +
-              `to recieve a starter pack.`
-          )
-          .setFooter({
-            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
-          })
+      const user = await checkUserAccount(interaction)
+      if (!user) return
 
-        await interaction.editReply({ embeds: [noMonstersEmbed] })
+      // Check if the user has an empty collection
+      let userCollection
+
+      stopUserCollector(userId) // Stop any previous collectors
+      console.log(`[Hunt] Stopped previous collector for User: ${userId}`)
+      try {
+        userCollection = await Collection.findOne({ where: { userId: userId } })
+        if (!userCollection) {
+          const noMonstersEmbed = new EmbedBuilder()
+            .setColor('#FF0000')
+            .setTitle('No Monsters Found')
+            .setDescription(
+              `You currently do not have any monsters in your collection. You need at least one card to go on a hunt.\n\nUse ` +
+                '``' +
+                `/shop` +
+                '``' +
+                `to recieve a starter pack.`
+            )
+            .setFooter({
+              text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+            })
+
+          await interaction.editReply({ embeds: [noMonstersEmbed] })
+          return
+        }
+      } catch (error) {
+        console.error('Error querying Collection model:', error)
+        return interaction.reply({
+          content: 'An error occurred while accessing the collection data.',
+          ephemeral: true,
+        })
+      }
+
+      user.currency = user.currency || {}
+      user.currency.energy =
+        user.currency.energy !== undefined ? user.currency.energy : 10
+      user.currency.ichor = user.currency.ichor || 0
+      user.completedLevels = user.completedLevels || 0
+
+      const loadingEmbed = new EmbedBuilder()
+        .setColor(0xffcc00)
+        .setDescription('Loading hunt data, please wait...')
+      await interaction.editReply({ embeds: [loadingEmbed] })
+
+      await cacheHuntMonsters()
+
+      // Initialize huntData
+      let huntData = {
+        totalMonstersDefeated: 0,
+        totalGoldEarned: 0,
+        currentBattleIndex: 0,
+        ichorUsed: false,
+        level: null,
+        retries: 0,
+        lastMonster: null,
+        inProgress: false,
+      }
+
+      await showLevelSelection(interaction, user, huntData, userId)
+    },
+  }
+} else {
+  // Developer Version
+  const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
+  const { Collection } = require('../../Models/model.js')
+
+  const { checkUserAccount } = require('../Account/checkAccount.js')
+  const { cacheHuntMonsters } = require('../../handlers/huntCacheHandler.js')
+  const { showLevelSelection } = require('./huntUtils/huntHandlers.js')
+  const { handlePagination } = require('./huntUtils/paginationHandler.js')
+  const { huntPages } = require('./huntPages.js')
+
+  const { collectors, stopUserCollector } = require('../../utils/collectors')
+
+  module.exports = {
+    data: new SlashCommandBuilder()
+      .setName('hunt')
+      .setDescription(
+        'Embark on a hunt and engage in combat with a series of monsters'
+      ),
+
+    async execute(interaction) {
+      console.log(
+        `Developer Hunt command executed by: ${interaction.user.tag} (ID: ${interaction.user.id})`
+      )
+
+      await interaction.deferReply({ ephemeral: true })
+
+      console.log('Checking user account...')
+      const user = await checkUserAccount(interaction)
+      if (!user) {
+        console.warn('User does not have an account.')
         return
       }
-    } catch (error) {
-      console.error('Error querying Collection model:', error)
-      return interaction.reply({
-        content: 'An error occurred while accessing the collection data.',
-        ephemeral: true,
+
+      console.log('Stopping any existing collector for this user...')
+      stopUserCollector(interaction.user.id) //
+
+      console.log('Initializing user hunt state...')
+      const highestUnlockedPage = Object.keys(huntPages).find(
+        (pageKey, index) => {
+          const totalHuntsBefore = Object.keys(huntPages)
+            .slice(0, index)
+            .reduce((sum, key) => sum + huntPages[key].hunts.length, 0)
+          return user.completedLevels >= totalHuntsBefore
+        }
+      )
+
+      user.unlockedPage = highestUnlockedPage || 'page1'
+
+      user.completedHunts = user.completedHunts || []
+
+      try {
+        console.log('Fetching user monster collection...')
+        const userCollection = await Collection.findOne({
+          where: { userId: interaction.user.id },
+        })
+
+        if (!userCollection) {
+          console.warn('No monster collection found for user.')
+          return interaction.editReply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor('#FF0000')
+                .setTitle('No Monsters Found')
+                .setDescription(
+                  'You need at least one card to go on a hunt.\nUse `/shop` to receive a starter pack.'
+                ),
+            ],
+          })
+        }
+      } catch (error) {
+        console.error('Error querying Collection model:', error)
+        return interaction.editReply({
+          content: 'Error accessing collection data.',
+          ephemeral: true,
+        })
+      }
+
+      console.log('Displaying loading message...')
+      const loadingEmbed = new EmbedBuilder()
+        .setColor(0xffcc00)
+        .setDescription('Loading hunt data, please wait...')
+      await interaction.editReply({ embeds: [loadingEmbed] })
+
+      console.log('Caching hunt monsters...')
+      await cacheHuntMonsters()
+
+      console.log('Initializing hunt data...')
+      let huntData = {
+        totalMonstersDefeated: 0,
+        totalGoldEarned: 0,
+        currentBattleIndex: 0,
+        ichorUsed: false,
+        level: null,
+        retries: 0,
+        lastMonster: null,
+        inProgress: false,
+      }
+
+      console.log('Calling showLevelSelection()...')
+      await showLevelSelection(interaction, user, huntData)
+
+      console.log('Setting up message component collector...')
+      const filter = (i) => i.user.id === interaction.user.id
+
+      stopUserCollector(interaction.user.id)
+
+      const collector = interaction.channel.createMessageComponentCollector({
+        filter,
+        time: 60000,
       })
-    }
 
-    user.currency = user.currency || {}
-    user.currency.energy =
-      user.currency.energy !== undefined ? user.currency.energy : 10
-    user.currency.ichor = user.currency.ichor || 0
-    user.completedLevels = user.completedLevels || 0
+      collectors.set(interaction.user.id, collector)
 
-    const loadingEmbed = new EmbedBuilder()
-      .setColor(0xffcc00)
-      .setDescription('Loading hunt data, please wait...')
-    await interaction.editReply({ embeds: [loadingEmbed] })
+      collector.on('collect', async (i) => {
+        console.log(`Collector received interaction: ${i.customId}`)
 
-    await cacheHuntMonsters()
+        // Ignore hunt_select since it is handled inside showLevelSelection()
+        if (
+          i.customId === 'hunt_select' ||
+          i.customId === 'use_ichor' ||
+          i.customId === 'cancel_hunt'
+        ) {
+          console.log(
+            `Ignoring interaction ${i.customId} as it's already handled.`
+          )
+          return
+        }
 
-    // Initialize huntData
-    let huntData = {
-      totalMonstersDefeated: 0,
-      totalGoldEarned: 0,
-      currentBattleIndex: 0,
-      ichorUsed: false,
-      level: null,
-      retries: 0,
-      lastMonster: null,
-      inProgress: false,
-    }
+        try {
+          await i.deferUpdate()
+        } catch (error) {
+          console.error('Error deferring interaction:', error)
+          return
+        }
 
-    await showLevelSelection(interaction, user, huntData)
-  },
+        if (
+          i.customId.startsWith('prev_page_') ||
+          i.customId.startsWith('next_page_')
+        ) {
+          console.log(`Handling pagination for: ${i.customId}`)
+          await handlePagination(i, user)
+        }
+      })
+
+      collector.on('end', (collected, reason) => {
+        console.log(
+          `Collector ended. Reason: ${reason}. Interactions collected: ${collected.size}`
+        )
+        collectors.delete(interaction.user.id)
+      })
+    },
+  }
 }
 
-async function showLevelSelection(interaction, user, huntData) {
+async function showLevelSelection(interaction, user, huntData, userId) {
   const levels = Object.keys(levelData)
 
   if ((user.currency.energy || 0) < 1) {
@@ -221,11 +381,18 @@ async function showLevelSelection(interaction, user, huntData) {
   })
 
   const filter = (i) => i.user.id === interaction.user.id
+  // Stop previous collector if it exists
+  if (collectors.has(userId)) {
+    collectors.get(userId).stop()
+  }
+
   const collector = interaction.channel.createMessageComponentCollector({
     filter,
     max: 1,
     time: 15000,
   })
+
+  collectors.set(userId, collector)
 
   collector.on('collect', async (i) => {
     if (i.customId === 'cancel_hunt') {
@@ -241,6 +408,12 @@ async function showLevelSelection(interaction, user, huntData) {
 
     if (i.customId === 'use_ichor') {
       await i.deferUpdate()
+
+      if (i.customId.startsWith('purchase_')) {
+        console.log(`[HUNT] Ignoring purchase button in hunt: ${i.customId}`)
+        return
+      }
+
       if ((user.currency.ichor || 0) < 1) {
         await interaction.followUp({
           content: "You don't have enough 🧪ichor to use this option.",
@@ -249,12 +422,22 @@ async function showLevelSelection(interaction, user, huntData) {
         return
       }
 
+      if (huntData.ichorUsed) {
+        await interaction.followUp({
+          content: 'You have already used Ichor for this hunt!',
+          ephemeral: true,
+        })
+        return
+      }
+
       user.currency.ichor -= 1
       user.changed('currency', true)
       await user.save()
+
       huntData.ichorUsed = true
 
-      await showLevelSelection(interaction, user, huntData)
+      await showLevelSelection(interaction, user, huntData, userId)
+      return
     } else if (i.customId === 'level_select') {
       await i.deferUpdate()
       const selectedLevelKey = i.values[0].replace('level_', '')
@@ -407,8 +590,11 @@ async function startNewEncounter(interaction, user, huntData) {
     ephemeral: true,
   })
 
-  // Stop any previous collector
-  if (huntData.styleCollector) huntData.styleCollector.stop()
+  // Stop any previous styleCollector
+  if (huntData.styleCollector) {
+    huntData.styleCollector.stop()
+    huntData.styleCollector = null
+  }
 
   // Create a new collector
   const filter = (i) => i.user.id === interaction.user.id
@@ -667,12 +853,12 @@ async function runBattlePhases(
     const isDisadvantaged = advMultiplier < 1
     const isAdvantaged = advMultiplier > 1
     const effectivePlayerScore = playerScore * advMultiplier
-    
+
     // Calculate the minimum roll if Ichor is used
     const minimumRoll = huntData.ichorUsed
       ? playerScore * 0.3
       : playerScore * 0.15
-    
+
     // Generate the player's roll, ensuring it respects the minimum threshold
     playerRoll = Math.round(
       Math.max(
@@ -680,26 +866,26 @@ async function runBattlePhases(
         minimumRoll
       )
     )
-    
+
     let monsterRoll = Math.random() * monsterScore
-    
+
     // Ensure consistent rounding
     playerRoll = Math.round(playerRoll)
     monsterRoll = Math.round(monsterRoll)
-    
+
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
     console.log(`Phase ${phase}: Result = ${phaseResult}`)
-    
+
     if (phaseResult === 'Hit!') {
       playerWins++
       const margin = playerRoll - monsterRoll
-    
+
       if (margin > 15) segmentLoss = 3
       else if (margin > 5) segmentLoss = 2
       else segmentLoss = 1
-    
+
       momentum -= Math.min(segmentLoss, momentum)
-    
+
       if (playerWins >= 4) {
         user.currency.gems = (user.currency.gems || 0) + 1
         user.changed('currency', true)
@@ -709,9 +895,9 @@ async function runBattlePhases(
     } else {
       monsterWins++
     }
-    
+
     const healthBar = createHealthBar(momentum, maxMomentum)
-    
+
     // Determine the effects to display
     let effects = 'Effects: None'
     if (isAdvantaged && huntData.ichorUsed) {
@@ -725,7 +911,7 @@ async function runBattlePhases(
     } else if (huntData.ichorUsed) {
       effects = 'Effects: 🧪Boost'
     }
-    
+
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(

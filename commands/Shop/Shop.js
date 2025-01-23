@@ -203,7 +203,7 @@ module.exports = {
         if (packType === 'ichor') {
           user.currency = {
             ...user.currency,
-            ichor: user.currency.ichor + 12,
+            ichor: user.currency.ichor + 10,
           }
           await user.save()
       
@@ -211,7 +211,7 @@ module.exports = {
             .setColor(0x00ff00)
             .setTitle('Ichor Pack Purchased')
             .setDescription(
-              `You have received 🧪12 ichor! You can spend ichor to increase your chances of winning by 20%.`
+              `You have received 🧪10 ichor! You can spend ichor to increase your chances of winning by 20%.`
             )
       
           return buttonInteraction.followUp({

@@ -6,40 +6,57 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { huntPages } = require('../huntPages.js')
-const { createPageButtons } = require('./paginationHandler.js')
+const { energyCostToEmoji } = require('./huntHelpers.js')
 
 async function showLevelSelection(interaction, user, huntData) {
   console.log(
     `showLevelSelection() called for user: ${interaction.user.tag} (ID: ${interaction.user.id})`
   )
 
-  const currentPage = user.unlockedPage || 'page1'
+  // ✅ Ensure completedLevels is initialized
+  let completedLevels = user.completedLevels || 0
+
+  // ✅ Dynamically determine unlocked pages based on completed levels
+  let unlockedPages = []
+  let totalHuntsBefore = 0
+
+  for (const [pageKey, pageData] of Object.entries(huntPages)) {
+    if (completedLevels >= totalHuntsBefore) {
+      unlockedPages.push(pageKey)
+    }
+    totalHuntsBefore += pageData.hunts.length // ✅ Tracks cumulative hunt counts
+  }
+
+  const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
+  console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
+
+  // ✅ Ensure the user is on the highest unlocked page by default
+  const currentPage = user.unlockedPage || highestUnlockedPage
   const pageData = huntPages[currentPage]
 
+  console.log(`📖 Current Page: ${currentPage}`)
+
   if (!pageData) {
-    console.error('Invalid hunt page detected.')
+    console.error(`❌ Invalid hunt page detected: ${currentPage}`)
     return interaction.editReply({
       content: 'Invalid hunt page.',
       ephemeral: true,
     })
   }
 
-  console.log('Filtering available hunts based on user progress...')
-  const unlockedHunts = pageData.hunts.filter(
-    (hunt) => user.completedHunts.includes(hunt.key) || hunt.key === 'hunt1'
-  )
+  console.log(`✅ Completed levels: ${completedLevels}`)
 
-  if (unlockedHunts.length === 0) {
-    console.warn('No available hunts for user.')
-    return interaction.editReply({
-      content: 'No available hunts. Complete previous hunts first.',
-      ephemeral: true,
-    })
-  }
+  // ✅ Only show hunts that are unlocked within the current page
+  const unlockedHunts = pageData.hunts.filter((hunt) => {
+    const huntNumber = parseInt(hunt.key.replace('hunt', ''), 10)
+    return huntNumber <= completedLevels + 1
+  })
 
-  console.log('Creating hunt selection dropdown...')
+  console.log(`Unlocked hunts: ${unlockedHunts.map((h) => h.key).join(', ')}`)
+
+  // ✅ Create dropdown options
   const huntOptions = unlockedHunts.map((hunt) => ({
-    label: hunt.name,
+    label: `${hunt.name}${energyCostToEmoji(hunt.energyCost)}`, // ✅ Adds ⚡ next to hunt name
     description: hunt.description,
     value: `hunt_${hunt.key}`,
   }))
@@ -55,93 +72,59 @@ async function showLevelSelection(interaction, user, huntData) {
   const buttonComponents = []
 
   if (user.currency.ichor > 0 && !huntData.ichorUsed) {
-    const ichorButton = new ButtonBuilder()
-      .setCustomId('use_ichor')
-      .setLabel('Drink Ichor')
-      .setStyle(ButtonStyle.Success)
-    buttonComponents.push(ichorButton)
+    buttonComponents.push(
+      new ButtonBuilder()
+        .setCustomId('use_ichor')
+        .setLabel('Drink Ichor')
+        .setStyle(ButtonStyle.Success)
+    )
   }
 
-  const cancelButton = new ButtonBuilder()
-    .setCustomId('cancel_hunt')
-    .setLabel('Cancel Hunt')
-    .setStyle(ButtonStyle.Danger)
-  buttonComponents.push(cancelButton)
+  buttonComponents.push(
+    new ButtonBuilder()
+      .setCustomId('cancel_hunt')
+      .setLabel('Cancel Hunt')
+      .setStyle(ButtonStyle.Danger)
+  )
 
   const buttonRow = new ActionRowBuilder().addComponents(...buttonComponents)
 
+  // ✅ Generate page buttons (up to 3 at a time, with next/prev controls)
+  let pageRow = null
+  if (unlockedPages.length > 1) {
+    console.log(`🔄 Adding page-switching buttons: ${unlockedPages}`)
+
+    const buttons = unlockedPages.map((pageKey) =>
+      new ButtonBuilder()
+        .setCustomId(`page_${pageKey}`)
+        .setLabel(`Page ${pageKey.replace('page', '')}`)
+        .setStyle(pageKey === currentPage ? ButtonStyle.Primary : ButtonStyle.Secondary)
+    )
+
+    pageRow = new ActionRowBuilder().addComponents(...buttons)
+  }
+
   const embed = new EmbedBuilder()
     .setTitle(pageData.name)
-    .setDescription(pageData.description)
+    .setDescription(
+      `${pageData.description}\n\n⚡Energy cost is shown next to the monster's name.`
+    )
     .setColor('Green')
     .setFooter({
       text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
     })
 
+  const components = [dropdownRow]
+  if (pageRow) components.push(pageRow)
+  components.push(buttonRow) // ✅ Page buttons above Ichor/Cancel buttons
+
   await interaction.editReply({
     embeds: [embed],
-    components: [dropdownRow, buttonRow],
+    components: components,
     ephemeral: true,
   })
 
   console.log('Setting up interaction collector for hunt selection...')
-  const filter = (i) => i.user.id === interaction.user.id
-  const collector = interaction.channel.createMessageComponentCollector({
-    filter,
-    max: 1,
-    time: 15000,
-  })
-
-  collector.on('collect', async (i) => {
-    console.log(`User selected: ${i.customId}`)
-
-    try {
-      await i.deferUpdate()
-    } catch (error) {
-      console.error('Error deferring interaction:', error)
-      return
-    }
-
-    if (i.customId === 'hunt_select') {
-      console.log('Dropdown selection detected.')
-      const selectedHuntKey = i.values[0].replace('hunt_', '')
-      console.log(`Selected Hunt Key: ${selectedHuntKey}`)
-
-      const selectedHunt = huntPages[user.unlockedPage].hunts.find(
-        (hunt) => hunt.key === selectedHuntKey
-      )
-
-      if (!selectedHunt) {
-        console.error('Invalid hunt selection.')
-        return i.editReply({
-          content: 'Invalid hunt selection.',
-          ephemeral: true,
-        })
-      }
-
-      huntData.level = selectedHunt
-      huntData.currentBattleIndex = 0
-
-      console.log(`Starting new encounter for: ${selectedHunt.name}`)
-      const { startNewEncounter } = require('./encounterHandler.js')
-      await startNewEncounter(interaction, user, huntData)
-    }
-
-    if (i.customId === 'cancel_hunt') {
-      console.log('User canceled hunt.')
-      return i.editReply({
-        content: 'Hunt cancelled.',
-        embeds: [],
-        components: [],
-      })
-    }
-  })
-
-  collector.on('end', (collected, reason) => {
-    console.log(
-      `Hunt selection collector ended. Reason: ${reason}. Collected: ${collected.size}`
-    )
-  })
 }
 
 module.exports = { showLevelSelection }
