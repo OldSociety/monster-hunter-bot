@@ -120,10 +120,10 @@ if (process.env.NODE_ENV === 'production') {
   const { Collection } = require('../../Models/model.js')
 
   const { checkUserAccount } = require('../Account/checkAccount.js')
-  const { cacheHuntMonsters } = require('../../handlers/huntCacheHandler.js')
+  // const { cacheHuntMonsters } = require('../../handlers/huntCacheHandler.js')
   const { showLevelSelection } = require('./huntUtils/huntHandlers.js')
+  const { startNewEncounter } = require('./huntUtils/encounterHandler.js')
   const { handlePagination } = require('./huntUtils/paginationHandler.js')
-  const { addGoldToUser, displayHuntSummary } = require('./huntUtils/rewardHandler')
   const { huntPages } = require('./huntPages.js')
 
   const { collectors, stopUserCollector } = require('../../utils/collectors')

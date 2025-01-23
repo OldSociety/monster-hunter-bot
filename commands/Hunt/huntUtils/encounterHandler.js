@@ -12,7 +12,7 @@ const {
 } = require('../../../handlers/huntCacheHandler')
 const { checkAdvantage } = require('./huntHelpers.js')
 const { runBattlePhases } = require('./battleHandler.js')
-const { addGoldToUser, displayHuntSummary } = require('./rewardHandler.js')
+const { displayHuntSummary } = require('./rewardHandler.js')
 
 function selectMonster(huntData, currentBattle) {
   console.log(
@@ -164,89 +164,102 @@ async function startNewEncounter(interaction, user, huntData) {
   huntData.styleCollector = styleCollector
 
   styleCollector.on('collect', async (styleInteraction) => {
-    console.log(`Collector received interaction: ${styleInteraction.customId}`);
+    console.log(`Collector received interaction: ${styleInteraction.customId}`)
 
     // Prevent duplicate interactions
     if (huntData.styleInteractionHandled) {
-        console.warn('⚠️ Duplicate interaction detected. Ignoring.');
-        return;
+      console.warn('⚠️ Duplicate interaction detected. Ignoring.')
+      return
     }
-    huntData.styleInteractionHandled = true; // Mark as handled
+    huntData.styleInteractionHandled = true // Mark as handled
 
     try {
-        // Acknowledge immediately to prevent expiration
-        if (styleInteraction.replied || styleInteraction.deferred) {
-            console.warn(`⚠️ Interaction ${styleInteraction.id} was already acknowledged.`);
+      // Acknowledge immediately to prevent expiration
+      if (styleInteraction.replied || styleInteraction.deferred) {
+        console.warn(
+          `⚠️ Interaction ${styleInteraction.id} was already acknowledged.`
+        )
+      } else {
+        await styleInteraction
+          .deferUpdate()
+          .catch((err) => console.warn('⚠️ deferUpdate failed:', err))
+      }
+
+      console.log(`Style selected: ${styleInteraction.customId}`)
+
+      const selectedStyle = styleInteraction.customId.split('_')[1]
+      console.log(`Selected battle style: ${selectedStyle}`)
+
+      const playerScore = user[`${selectedStyle}_score`]
+      const advMultiplier = checkAdvantage(selectedStyle, monster.type)
+      console.log(`Advantage multiplier: ${advMultiplier}`)
+
+      console.log('Running battle phases...')
+      const playerWins = await runBattlePhases(
+        styleInteraction,
+        user,
+        playerScore,
+        monsterScore,
+        monster,
+        advMultiplier,
+        huntData,
+        currentBattle.type
+      )
+
+      if (playerWins) {
+        console.log('✅ Player won the battle.')
+        huntData.totalMonstersDefeated += 1
+        huntData.totalGoldEarned += currentBattle.goldReward || 0
+        huntData.currentBattleIndex += 1
+        huntData.retries = 0
+        huntData.lastMonster = null
+
+        if (huntData.currentBattleIndex >= huntData.level.battles.length) {
+          console.log('🏆 Final battle completed! Displaying summary.')
+          await displayHuntSummary(styleInteraction, user, huntData, true)
         } else {
-            await styleInteraction.deferUpdate().catch(err => console.warn('⚠️ deferUpdate failed:', err));
+          console.log('Moving to next battle...')
+          huntData.styleInteractionHandled = false // Reset flag for next battle
+          await startNewEncounter(styleInteraction, user, huntData)
         }
-
-        console.log(`Style selected: ${styleInteraction.customId}`);
-
-        const selectedStyle = styleInteraction.customId.split('_')[1];
-        console.log(`Selected battle style: ${selectedStyle}`);
-
-        const playerScore = user[`${selectedStyle}_score`];
-        const advMultiplier = checkAdvantage(selectedStyle, monster.type);
-        console.log(`Advantage multiplier: ${advMultiplier}`);
-
-        console.log('Running battle phases...');
-        const playerWins = await runBattlePhases(
-            styleInteraction, user, playerScore, monsterScore, monster, advMultiplier, huntData, currentBattle.type
-        );
-
-        if (playerWins) {
-            console.log('✅ Player won the battle.');
-            huntData.totalMonstersDefeated += 1;
-            huntData.totalGoldEarned += currentBattle.goldReward || 0;
-            huntData.currentBattleIndex += 1;
-            huntData.retries = 0;
-            huntData.lastMonster = null;
-
-            if (huntData.currentBattleIndex >= huntData.level.battles.length) {
-                console.log('🏆 Final battle completed! Displaying summary.');
-                await displayHuntSummary(styleInteraction, user, huntData, true);
-            } else {
-                console.log('Moving to next battle...');
-                huntData.styleInteractionHandled = false; // Reset flag for next battle
-                await startNewEncounter(styleInteraction, user, huntData);
-            }
+      } else {
+        console.log('❌ Player lost the battle.')
+        huntData.retries += 1
+        if (huntData.retries < 3) {
+          console.log(`Retrying battle (Attempt ${huntData.retries}/3)...`)
+          huntData.styleInteractionHandled = false // Reset flag for retry
+          await offerRetry(styleInteraction, user, huntData)
         } else {
-            console.log('❌ Player lost the battle.');
-            huntData.retries += 1;
-            if (huntData.retries < 3) {
-                console.log(`Retrying battle (Attempt ${huntData.retries}/3)...`);
-                huntData.styleInteractionHandled = false; // Reset flag for retry
-                await offerRetry(styleInteraction, user, huntData);
-            } else {
-                console.log('💀 Player failed too many times. Ending hunt.');
-                await displayHuntSummary(styleInteraction, user, huntData, false);
-            }
+          console.log('💀 Player failed too many times. Ending hunt.')
+          await displayHuntSummary(styleInteraction, user, huntData, false)
         }
+      }
     } catch (error) {
-        if (error.code === 10062) {
-            console.error('⚠️ DiscordAPIError[10062]: Interaction expired before handling.');
-        } else {
-            console.error('Error processing interaction:', error);
-        }
+      if (error.code === 10062) {
+        console.error(
+          '⚠️ DiscordAPIError[10062]: Interaction expired before handling.'
+        )
+      } else {
+        console.error('Error processing interaction:', error)
+      }
     }
-});
+  })
 
-
-
-styleCollector.on('end', async (_, reason) => {
-    console.log(`Style collector ended. Reason: ${reason}`);
+  styleCollector.on('end', async (_, reason) => {
+    console.log(`Style collector ended. Reason: ${reason}`)
 
     if (reason === 'time') {
-        console.warn('⏳ Style selection timed out.');
-        try {
-            await interaction.followUp({ content: 'Time expired. Please try again.', ephemeral: true });
-        } catch (error) {
-            console.error('⚠️ Error sending timeout message:', error);
-        }
+      console.warn('⏳ Style selection timed out.')
+      try {
+        await interaction.followUp({
+          content: 'Time expired. Please try again.',
+          ephemeral: true,
+        })
+      } catch (error) {
+        console.error('⚠️ Error sending timeout message:', error)
+      }
     }
-});
-
+  })
 }
 
 module.exports = {

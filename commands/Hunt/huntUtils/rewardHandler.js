@@ -1,9 +1,24 @@
-// rewardHandler.js
 const { EmbedBuilder } = require('discord.js')
 const { huntPages } = require('../huntPages')
 
-async function addGoldToUser(user, amount) {
-  user.gold = (user.gold || 0) + amount
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max)
+}
+
+async function addRewardToUser(user, goldAmount = 0, tokenAmount = 0) {
+  goldAmount = Number(goldAmount) || 0
+  tokenAmount = Number(tokenAmount) || 0
+
+  user.gold = (Number(user.gold) || 0) + goldAmount
+  user.currency = {
+    ...user.currency,
+    tokens: (Number(user.currency.tokens) || 0) + tokenAmount,
+  }
+
+  console.log(
+    `💰 Rewarding User ${user.user_id}: +${goldAmount} Gold, +${tokenAmount} Tokens`
+  )
+
   await user.save()
 }
 
@@ -12,10 +27,45 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
 
   if (!user.completedHunts) user.completedHunts = []
 
+  // ✅ Calculate rewards dynamically from hunt battles
+  const currentPage = huntData.level?.page || 'page1'
+  const currentHunt = huntPages[currentPage]?.hunts.find(
+    (hunt) => hunt.key === huntData.level.key
+  )
+
+  if (!currentHunt) {
+    console.error(`❌ Error: Hunt data not found for ${huntData.level.key}`)
+    return
+  }
+
+  let totalGoldEarned = 0
+  let totalTokensEarned = 0
+
+  // ✅ Loop through battles to calculate gold & randomize token drops
+  currentHunt.battles.forEach((battle, index) => {
+    // First-time completion of a mini-boss gives firstGoldReward
+    if (
+      battle.type === 'mini-boss' &&
+      !user.completedHunts.includes(currentHunt.key)
+    ) {
+      totalGoldEarned += battle.firstGoldReward || battle.goldReward
+    } else {
+      totalGoldEarned += battle.goldReward
+    }
+
+    // 🎲 33% chance per battle for a token
+    if (getRandomInt(3) === 0) {
+      totalTokensEarned += 1
+    }
+  })
+
+  // ✅ Add rewards before displaying summary
+  await addRewardToUser(user, totalGoldEarned, totalTokensEarned)
+
   const summaryEmbed = new EmbedBuilder()
     .setTitle('Hunt Summary')
     .setDescription(
-      `**Gold Earned:** 🪙${huntData.totalGoldEarned}\n**Monsters Defeated:** 🧿${huntData.totalMonstersDefeated}`
+      `**Gold Earned:** 🪙${totalGoldEarned}\n**Tokens Earned:** 🧿${totalTokensEarned}`
     )
     .setColor('#FFD700')
 
@@ -29,20 +79,26 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   if (levelCompleted) {
     console.log('✔ Hunt completed. Checking for next unlock...')
 
-    const currentPage = huntData.level?.page || 'page1' // ✅ Ensure we track the correct page
     const nextLevelKey = huntData.level?.unlocks
     const nextPageKey = huntData.level?.unlocksPage
 
-    console.log(`➡ Current Page: ${currentPage}`)
     console.log(`➡ Next Level Key: ${nextLevelKey}`)
     console.log(`➡ Next Page Key: ${nextPageKey}`)
 
-    // Ensure completedLevels exists as an object
-    if (!user.completedLevels) user.completedLevels = {}
+    // ✅ Increase `completedLevels` **only if** the huntNumber is higher
+    const huntNumber = parseInt(huntData.level.key.replace('hunt', ''), 10)
+    if (huntNumber >= user.completedLevels) {
+      console.log(
+        `📈 Increasing completedLevels from ${user.completedLevels} to ${
+          huntNumber + 1
+        }`
+      )
+      user.completedLevels = huntNumber + 1 // Increase only when reaching a new furthest level
+    }
 
-    // Unlock the next hunt within the same page
+    // ✅ Unlock the next hunt if available
     if (nextLevelKey) {
-      const nextHunt = huntPages[currentPage].hunts.find(
+      const nextHunt = huntPages[currentPage]?.hunts.find(
         (hunt) => hunt.key === nextLevelKey
       )
       if (nextHunt) {
@@ -53,14 +109,6 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
             name: 'Next Hunt Unlocked!',
             value: `You have unlocked **${nextHunt.name}**!`,
           })
-
-          const huntNumber = parseInt(nextLevelKey.replace('hunt', ''), 10)
-          if (huntNumber > (user.completedLevels[currentPage] || 0)) {
-            console.log(
-              `📈 Increasing completedLevels for ${currentPage} from ${user.completedLevels[currentPage]} to ${huntNumber}`
-            )
-            user.completedLevels[currentPage] = huntNumber
-          }
         }
       } else {
         console.warn(
@@ -69,23 +117,17 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       }
     }
 
-    // Unlock the next hunt page
+    // ✅ Unlock next hunt page if applicable
     if (nextPageKey) {
       console.log(`📖 Unlocking next hunt page: ${nextPageKey}`)
 
       if (!huntPages[nextPageKey]) {
         console.error(`❌ ERROR: huntPages[${nextPageKey}] is undefined!`)
       } else {
-        // No need to store in database, simply inform the user
         summaryEmbed.addFields({
           name: 'New Hunt Page Unlocked!',
           value: `You have unlocked **${huntPages[nextPageKey].name}**! Use /hunt to access it.`,
         })
-
-        console.log(
-          `🔄 Automatically updating user's current page to ${nextPageKey}`
-        )
-        user.unlockedPage = nextPageKey
       }
     }
 
@@ -106,4 +148,4 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   }
 }
 
-module.exports = { addGoldToUser, displayHuntSummary }
+module.exports = { displayHuntSummary }
