@@ -56,6 +56,7 @@ module.exports = {
 
   async execute(interaction) {
     const userId = interaction.user.id
+    const username = interaction.user.username
     console.log(`[SHOP] Command executed by User: ${userId}`)
 
     await interaction.deferReply({ ephemeral: true })
@@ -109,24 +110,24 @@ module.exports = {
       .setColor(0x00ff00)
       .setTitle(`-- Hunter Store --`)
 
-      if (isStarterPackAvailable) {
-        shopEmbed.setDescription(
-         ` Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!`
-        )
-      } else {
-        shopEmbed.setDescription(
-          `Purchase packs containing monsters or resources.  Use ` +
-            '`' +
-            `/help store` +
-            '`' +
-             `for a detailed description of each pack.` +
-            `Use ` +
-            '`' +
-            `/account` +
-            '`' +
-            `at any time to see your style scores and collection.`
-        )
-      }
+    if (isStarterPackAvailable) {
+      shopEmbed.setDescription(
+        ` Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!`
+      )
+    } else {
+      shopEmbed.setDescription(
+        `Purchase packs containing monsters or resources.  Use ` +
+          '`' +
+          `/help store` +
+          '`' +
+          `for a detailed description of each pack.` +
+          `Use ` +
+          '`' +
+          `/account` +
+          '`' +
+          `at any time to see your style scores and collection.`
+      )
+    }
 
     const row = new ActionRowBuilder()
 
@@ -145,11 +146,27 @@ module.exports = {
     } else {
       shopEmbed
         .addFields(
-          { name: 'Common Pack', value: `🪙${PACK_COSTS.common}`, inline: true },
-          { name: 'Uncommon Pack', value: `🪙${PACK_COSTS.uncommon}`, inline: true },
+          {
+            name: 'Common Pack',
+            value: `🪙${PACK_COSTS.common}`,
+            inline: true,
+          },
+          {
+            name: 'Uncommon Pack',
+            value: `🪙${PACK_COSTS.uncommon}`,
+            inline: true,
+          },
           { name: 'Rare Pack', value: `🪙${PACK_COSTS.rare}`, inline: true },
-          { name: 'Elemental Pack', value: `🪙${PACK_COSTS.elemental}`, inline: true },
-          { name: '🧪Ichor Pack (12)', value: `🪙${PACK_COSTS.ichor}`, inline: true }
+          {
+            name: 'Elemental Pack',
+            value: `🪙${PACK_COSTS.elemental}`,
+            inline: true,
+          },
+          {
+            name: '🧪Ichor Pack (12)',
+            value: `🪙${PACK_COSTS.ichor}`,
+            inline: true,
+          }
         )
         .setFooter({ text: footerText })
 
@@ -193,7 +210,9 @@ module.exports = {
     collectors.set(userId, collector)
 
     collector.on('collect', async (buttonInteraction) => {
-      console.log(`[SHOP] Button clicked: ${buttonInteraction.customId} by User: ${userId}`)
+      console.log(
+        `[SHOP] Button clicked: ${buttonInteraction.customId} by User: ${userId}`
+      )
 
       await buttonInteraction.deferUpdate()
 
@@ -206,22 +225,22 @@ module.exports = {
             ichor: user.currency.ichor + 10,
           }
           await user.save()
-      
+
           const ichorEmbed = new EmbedBuilder()
             .setColor(0x00ff00)
             .setTitle('Ichor Pack Purchased')
             .setDescription(
-              `You have received 🧪10 ichor! You can spend ichor to increase your chances of winning by 20%.`
+              `${username} has received 🧪10 ichor! You can spend ichor to increase your chances of winning by 20%.`
             )
-      
+
           return buttonInteraction.followUp({
-            content: `You purchased an **Ichor Pack**!`,
+            content: `${username} purchased an **Ichor Pack**!`,
             embeds: [ichorEmbed],
           })
         }
-      
+
         const monster = await pullValidMonster(TIER_OPTIONS[packType], packType)
-      
+
         if (!monster) {
           console.error(`[SHOP] No valid monster found for ${packType}`)
           return buttonInteraction.followUp({
@@ -229,22 +248,25 @@ module.exports = {
             ephemeral: true,
           })
         }
-      
-        
+
         const category = classifyMonsterType(monster.type)
         const stars = getStarsBasedOnColor(monster.color)
-        const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
+        const monsterEmbed = generateMonsterRewardEmbed(
+          monster,
+          category,
+          stars
+        )
 
         const result = await updateOrAddMonsterToCollection(userId, monster)
 
         if (result.isDuplicate) {
           await interaction.followUp({
-            content: `You obtained another **${result.name}**. It increased from level **${result.previousLevel}** to **${result.newLevel}**!`,
+            content: `${username} obtained another **${result.name}**. It increased from level **${result.previousLevel}** to **${result.newLevel}**!`,
             embeds: [monsterEmbed],
           })
         } else {
           await interaction.followUp({
-            content: `You pulled a new **${result.name}** from the **${packType} pack!**`,
+            content: `${username} pulled a new **${result.name}** from the **${packType} pack!**`,
             embeds: [monsterEmbed],
           })
         }
@@ -258,7 +280,7 @@ module.exports = {
               '`' +
               `/account` +
               '`' +
-              `to see your current collection or use`  +
+              `to see your current collection or use` +
               '`' +
               `/hunt` +
               '`' +
@@ -266,9 +288,8 @@ module.exports = {
             embeds: [monsterEmbed],
           })
         }
-  
 
-    collector.stop('completed')
+        collector.stop('completed')
       } catch (error) {
         console.error('[SHOP] Error handling button interaction:', error)
       }

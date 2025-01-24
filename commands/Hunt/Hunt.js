@@ -231,20 +231,6 @@ if (process.env.NODE_ENV === 'production') {
       collector.on('collect', async (i) => {
         console.log(`Collector received interaction: ${i.customId}`)
 
-        if (i.customId === 'cancel_hunt') {
-          console.log('⛔ Hunt cancelled by user.')
-          await i.update({
-            content: 'Hunt cancelled. You can start a new hunt anytime!',
-            embeds: [],
-            components: [],
-            ephemeral: true,
-          })
-          huntData.inProgress = false
-          collector.stop()
-          stopUserCollector(interaction.user.id)
-          return
-        }
-
         if (i.customId === 'use_ichor') {
           console.log('🧪 Ichor used!')
           await i.deferUpdate()
@@ -278,6 +264,35 @@ if (process.env.NODE_ENV === 'production') {
           return
         }
 
+        if (i.customId === 'cancel_hunt') {
+          console.log('User canceled hunt.')
+
+          let cancelMessage = 'Hunt cancelled.'
+
+          if (huntData.ichorUsed) {
+            console.log('Refunding Ichor since the hunt was cancelled.')
+            user.currency.ichor += 1
+            huntData.ichorUsed = false
+            await user.save()
+            cancelMessage += ' Your 🧪 Ichor has been refunded.'
+          }
+
+          if (i.replied || i.deferred) {
+            await i.editReply({
+              content: cancelMessage,
+              components: [], // Remove buttons
+            })
+          } else {
+            await i.update({
+              content: cancelMessage,
+              embeds: [],
+              components: [],
+            })
+          }
+
+          collector.stop() // Stop collector since hunt is cancelled
+        }
+
         if (i.customId.startsWith('page_')) {
           const newPage = i.customId.replace('page_', '')
           console.log(`📖 Switching to page: ${newPage}`)
@@ -288,6 +303,8 @@ if (process.env.NODE_ENV === 'production') {
         }
 
         if (i.customId === 'hunt_select') {
+          console.log(`✅ Hunt selected: ${i.values[0]}`)
+
           const selectedHuntKey = i.values[0].replace('hunt_', '')
 
           let selectedHunt = null
@@ -302,25 +319,70 @@ if (process.env.NODE_ENV === 'production') {
               break
             }
           }
+
           if (!selectedHunt || !selectedPage) {
             console.error(
               `❌ ERROR: Hunt '${selectedHuntKey}' not found in any page.`
             )
-            return i.reply({
-              content: 'Error: Hunt not found.',
+            return i
+              .reply({
+                content: 'Error: Hunt not found.',
+                ephemeral: true,
+              })
+              .catch((err) => console.warn(`⚠️ reply failed: ${err}`))
+          }
+
+          if ((user.currency.energy || 0) < 1) {
+            const noEnergyEmbed = new EmbedBuilder()
+              .setColor('#FF0000')
+              .setTitle('Insufficient Energy')
+              .setDescription(
+                'You do not have enough energy to start a hunt. Energy regenerates every 10 minutes or you can try your luck in the /slots.'
+              )
+              .setFooter({
+                text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
+              })
+
+            await interaction.editReply({
+              embeds: [noEnergyEmbed],
+              components: [],
               ephemeral: true,
             })
+            return
           }
-          // ✅ Update the interaction message to remove buttons and dropdowns
-          await i.update({
-            content: `✅ You have selected **${selectedHunt.name}**!`,
-            components: [], // Removes all buttons/dropdowns
-          })
+
+          user.currency.energy -= selectedHunt.energyCost
+          user.changed('currency', true)
+          await user.save()
+
+          // ✅ Ensure we only defer once and prevent multiple replies
+          try {
+            if (!i.replied && !i.deferred) {
+              await i.deferUpdate()
+              console.log(`✅ Interaction ${i.id} deferred successfully.`)
+            } else {
+              console.warn(`⚠️ Interaction ${i.id} was already handled.`)
+            }
+          } catch (error) {
+            console.warn(`⚠️ deferUpdate failed: ${error.message}`)
+          }
+
+          // ✅ Prevent duplicate updates
+          try {
+            if (!i.replied) {
+              await i.editReply({
+                content: `✅ You have selected **${selectedHunt.name}**!`,
+                components: [], // Removes all buttons/dropdowns
+              })
+            }
+          } catch (error) {
+            console.warn(`⚠️ editReply failed: ${error.message}`)
+          }
 
           huntData.level = { ...selectedHunt, page: selectedPage }
 
-          await i.deferUpdate()
           await startNewEncounter(interaction, user, huntData)
+
           return
         }
 

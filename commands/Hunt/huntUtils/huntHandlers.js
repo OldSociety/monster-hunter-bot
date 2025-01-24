@@ -130,6 +130,13 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
     })
 
+  if (huntData.ichorUsed) {
+    embed.addFields({
+      name: 'Ichor Invigoration',
+      value: 'You are invigorated with 🧪ichor! Your strength increases.',
+    })
+  }
+
   // ✅ Arrange components in correct order
   const components = [dropdownRow]
   if (pageRow) components.push(pageRow)

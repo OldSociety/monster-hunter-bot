@@ -117,7 +117,10 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       const nextHunt = huntPages[pageKey].hunts.find(
         (hunt) => hunt.id === currentHunt.unlocks
       )
-      if (nextHunt && !user.completedHunts.includes(nextHunt.key)) {
+      if (
+        nextHunt && 
+        !user.completedHunts.includes(nextHunt.key) && 
+        nextHunt.id > user.completedLevels ) {
         console.log(`🔓 Unlocking next hunt: ${nextHunt.name}`)
         user.completedHunts.push(nextHunt.key)
         summaryEmbed.addFields({

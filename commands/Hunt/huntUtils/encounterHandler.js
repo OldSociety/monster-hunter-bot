@@ -13,6 +13,7 @@ const {
 const { checkAdvantage } = require('./huntHelpers.js')
 const { runBattlePhases } = require('./battleHandler.js')
 const { displayHuntSummary } = require('./rewardHandler.js')
+const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { huntPages } = require('../huntPages.js')
 
 function selectMonster(huntData, currentBattle) {
@@ -219,7 +220,9 @@ async function startNewEncounter(interaction, user, huntData) {
     huntData.styleInteractionHandled = true // Mark as handled
 
     try {
-        await styleInteraction.deferUpdate();
+      if (!styleInteraction.replied && !styleInteraction.deferred) {
+        await styleInteraction.deferUpdate()
+      }
       // Acknowledge immediately to prevent expiration
       if (styleInteraction.replied || styleInteraction.deferred) {
         console.warn(
