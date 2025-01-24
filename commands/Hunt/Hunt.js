@@ -310,7 +310,6 @@ if (process.env.NODE_ENV === 'production') {
           let selectedHunt = null
           let selectedPage = null
 
-          // ✅ Find the selected hunt in huntPages
           for (const [pageKey, pageData] of Object.entries(huntPages)) {
             const hunt = pageData.hunts.find((h) => h.key === selectedHuntKey)
             if (hunt) {
@@ -321,9 +320,7 @@ if (process.env.NODE_ENV === 'production') {
           }
 
           if (!selectedHunt || !selectedPage) {
-            console.error(
-              `❌ ERROR: Hunt '${selectedHuntKey}' not found in any page.`
-            )
+            console.error(`❌ ERROR: Hunt '${selectedHuntKey}' not found.`)
             return i
               .reply({
                 content: 'Error: Hunt not found.',
@@ -332,7 +329,7 @@ if (process.env.NODE_ENV === 'production') {
               .catch((err) => console.warn(`⚠️ reply failed: ${err}`))
           }
 
-          if ((user.currency.energy || 0) < 1) {
+          if ((user.currency.energy || 0) < selectedHunt.energyCost) {
             const noEnergyEmbed = new EmbedBuilder()
               .setColor('#FF0000')
               .setTitle('Insufficient Energy')
@@ -351,11 +348,19 @@ if (process.env.NODE_ENV === 'production') {
             return
           }
 
+          // ✅ Deduct Energy
           user.currency.energy -= selectedHunt.energyCost
           user.changed('currency', true)
           await user.save()
 
-          // ✅ Ensure we only defer once and prevent multiple replies
+          // ✅ Ensure the saved value is correct
+          console.log(
+            `📉 Energy after deduction: ${user.currency.energy} (Should be ${
+              user.currency.energy + selectedHunt.energyCost
+            } - ${selectedHunt.energyCost})`
+          )
+
+          // ✅ Ensure interaction is handled properly
           try {
             if (!i.replied && !i.deferred) {
               await i.deferUpdate()
@@ -367,22 +372,32 @@ if (process.env.NODE_ENV === 'production') {
             console.warn(`⚠️ deferUpdate failed: ${error.message}`)
           }
 
-          // ✅ Prevent duplicate updates
+          // ✅ Fetch the latest user data to ensure values are updated
+          const updatedUser = await checkUserAccount(interaction) // Refetch from DB
+
+          // ✅ Update the embed with the latest values
+          const updatedEmbed = new EmbedBuilder()
+            .setTitle(selectedHunt.name)
+            .setDescription(
+              `${pageData.description}\n\n⚡Energy cost is shown next to the monster's name.`
+            )
+            .setColor('Green')
+            .setFooter({
+              text: `Available: ⚡${updatedUser.currency.energy} 🧪${updatedUser.currency.ichor}`,
+            })
+
           try {
-            if (!i.replied) {
-              await i.editReply({
-                content: `✅ You have selected **${selectedHunt.name}**!`,
-                components: [], // Removes all buttons/dropdowns
-              })
-            }
+            await i.editReply({
+              embeds: [updatedEmbed],
+              components: [],
+            })
           } catch (error) {
             console.warn(`⚠️ editReply failed: ${error.message}`)
           }
 
           huntData.level = { ...selectedHunt, page: selectedPage }
 
-          await startNewEncounter(interaction, user, huntData)
-
+          await startNewEncounter(interaction, updatedUser, huntData)
           return
         }
 
