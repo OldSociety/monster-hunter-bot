@@ -118,30 +118,53 @@ function createStyleButtons(user) {
 }
 
 async function startNewEncounter(interaction, user, huntData) {
-    console.log(`startNewEncounter() called for: ${interaction.user.tag}`);
-  
-    if (!huntData.level || !huntData.level.page) {
-      console.error(`❌ ERROR: huntData.level or huntData.level.page is undefined.`);
-      return interaction.followUp({ content: 'Error: Invalid hunt data.', ephemeral: true });
-    }
-  
-    const pageKey = huntData.level.page;
-    const huntId = huntData.level.id;
-  
-    if (!huntPages[pageKey]) {
-      console.error(`❌ ERROR: huntPages[${pageKey}] is undefined!`);
-      return interaction.followUp({ content: `Error: Invalid hunt page (${pageKey}).`, ephemeral: true });
-    }
-  
-    const currentHunt = huntPages[pageKey].hunts.find((hunt) => hunt.id === huntId);
-    if (!currentHunt) {
-      console.error(`❌ ERROR: Hunt ${huntId} not found in ${pageKey}!`);
-      return interaction.followUp({ content: `Error: Hunt not found.`, ephemeral: true });
-    }
-  
-    console.log(`✅ Starting encounter for ${currentHunt.name} (Page: ${pageKey})`);
-  
-  
+  console.log(`startNewEncounter() called for: ${interaction.user.tag}`)
+
+  console.log(
+    `🔍 HuntData at function start:\n${JSON.stringify(huntData, null, 2)}`
+  )
+
+  if (!huntData.level || !huntData.level.page) {
+    console.error(
+      `❌ ERROR: huntData.level or huntData.level.page is undefined.`
+    )
+    return interaction.followUp({
+      content: 'Error: Invalid hunt data.',
+      ephemeral: true,
+    })
+  }
+
+  const pageKey = huntData.level.page
+  const huntId = huntData.level.id
+  console.log(
+    `✅ Hunt assigned: ${JSON.stringify(huntData, null, 2)} | ID: ${
+      huntData.level.id
+    } | Page: ${huntData.level.page}`
+  )
+
+  if (!huntPages[pageKey]) {
+    console.error(`❌ ERROR: huntPages[${pageKey}] is undefined!`)
+    return interaction.followUp({
+      content: `Error: Invalid hunt page (${pageKey}).`,
+      ephemeral: true,
+    })
+  }
+
+  const currentHunt = huntPages[pageKey].hunts.find(
+    (hunt) => hunt.key === huntData.level.key
+  )
+
+  if (!currentHunt) {
+    console.error(`❌ ERROR: Hunt ${huntId} not found in ${pageKey}!`)
+    return interaction.followUp({
+      content: `Error: Hunt not found.`,
+      ephemeral: true,
+    })
+  }
+
+  console.log(
+    `✅ Starting encounter for ${currentHunt.name} (Page: ${pageKey})`
+  )
 
   const currentBattle = currentHunt.battles[huntData.currentBattleIndex]
   console.log(`Current battle: ${currentBattle ? currentBattle.type : 'None'}`)

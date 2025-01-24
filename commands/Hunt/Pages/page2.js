@@ -6,8 +6,8 @@ module.exports = {
   hunts: [
     {
       id: 6,
-      key: 'hunt1',
-      name: 'Darkmantle',
+      key: 'hunt6',
+      name: 'Bandit Captain',
       description: 'This is page 2.',
       energyCost: 1,
       totalBattles: 3,
@@ -18,7 +18,7 @@ module.exports = {
         {
           type: 'mini-boss',
           cr: 0.25,
-          monsterIndex: 'darkmantle',
+          monsterIndex: 'bandit-captain',
           difficulty: 'boss-half',
           firstGoldReward: 700,
           goldReward: 28,
@@ -28,7 +28,7 @@ module.exports = {
     },
     {
       id: 7,
-      key: 'hunt2',
+      key: 'hunt7',
       name: 'Harpy',
       description: 'Take down the harpy by avoiding her song.',
       energyCost: 1,
@@ -51,7 +51,7 @@ module.exports = {
     },
     {
       id: 8,
-      key: 'hunt3',
+      key: 'hunt8',
       name: 'Rust Monster',
       description:
         'An army will be left unarmed if the rust monster is not hunted.',
@@ -77,7 +77,7 @@ module.exports = {
     },
     {
       id: 9,
-      key: 'hunt4',
+      key: 'hunt9',
       name: 'Sea Hag',
       description:
         'Kill the sea hag before more fall under her drowned man curse!',
@@ -105,7 +105,7 @@ module.exports = {
     },
     {
       id: 10,
-      key: 'hunt5',
+      key: 'hunt10',
       name: 'Red Dragon Wyrmling (Boss)',
       description: 'Face the Red Dragon Wyrmling to prove your worth!',
       energyCost: 1,

@@ -86,9 +86,9 @@ async function runBattlePhases(
     const healthBar = createHealthBar(momentum, maxMomentum)
     const effects =
       [
-        isAdvantaged ? 'Advantage' : '',
-        isDisadvantaged ? 'Disadvantage' : '',
-        huntData.ichorUsed ? 'Boost' : '',
+        isAdvantaged ? '⏫Advantage' : '',
+        isDisadvantaged ? '⏬Disadvantage' : '',
+        huntData.ichorUsed ? '🧪Invigorated' : '',
       ]
         .filter(Boolean)
         .join(', ') || 'None'
