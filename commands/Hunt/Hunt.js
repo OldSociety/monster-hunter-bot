@@ -288,41 +288,42 @@ if (process.env.NODE_ENV === 'production') {
         }
 
         if (i.customId === 'hunt_select') {
-          const selectedHuntKey = i.values[0].replace('hunt_', '');
-          console.log(`🎯 Hunt selected from dropdown: ${selectedHuntKey}`);
-          console.log('KEY: ', selectedHuntKey)
-        
-          let selectedHunt = null;
-          let selectedPage = null;
-        
+          const selectedHuntKey = i.values[0].replace('hunt_', '')
+
+          let selectedHunt = null
+          let selectedPage = null
+
           // ✅ Find the selected hunt in huntPages
           for (const [pageKey, pageData] of Object.entries(huntPages)) {
-            const hunt = pageData.hunts.find((h) => h.key === selectedHuntKey);
+            const hunt = pageData.hunts.find((h) => h.key === selectedHuntKey)
             if (hunt) {
-              selectedHunt = hunt;
-              selectedPage = pageKey;
-              break;
+              selectedHunt = hunt
+              selectedPage = pageKey
+              break
             }
           }
-        console.log('selectedHunt: ',selectedHunt)
           if (!selectedHunt || !selectedPage) {
-            console.error(`❌ ERROR: Hunt '${selectedHuntKey}' not found in any page.`);
-            return i.reply({ content: 'Error: Hunt not found.', ephemeral: true });
+            console.error(
+              `❌ ERROR: Hunt '${selectedHuntKey}' not found in any page.`
+            )
+            return i.reply({
+              content: 'Error: Hunt not found.',
+              ephemeral: true,
+            })
           }
-        
-          console.log(`🔄 Before Assignment: ${JSON.stringify(huntData.level, null, 2)}`);
-        
-          // ✅ Force reassign huntData.level
-          huntData.level = { ...selectedHunt, page: selectedPage };
-        
-          console.log(`✅ After Assignment: ${JSON.stringify(huntData.level, null, 2)}`);
-        
-          await i.deferUpdate();
-          await startNewEncounter(interaction, user, huntData);
-          return;
+          // ✅ Update the interaction message to remove buttons and dropdowns
+          await i.update({
+            content: `✅ You have selected **${selectedHunt.name}**!`,
+            components: [], // Removes all buttons/dropdowns
+          })
+
+          huntData.level = { ...selectedHunt, page: selectedPage }
+
+          await i.deferUpdate()
+          await startNewEncounter(interaction, user, huntData)
+          return
         }
-        
-        
+
         if (
           i.customId.startsWith('prev_page_') ||
           i.customId.startsWith('next_page_')

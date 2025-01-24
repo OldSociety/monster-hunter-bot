@@ -120,9 +120,7 @@ function createStyleButtons(user) {
 async function startNewEncounter(interaction, user, huntData) {
   console.log(`startNewEncounter() called for: ${interaction.user.tag}`)
 
-  console.log(
-    `🔍 HuntData at function start:\n${JSON.stringify(huntData, null, 2)}`
-  )
+  stopUserCollector(interaction.user.id)
 
   if (!huntData.level || !huntData.level.page) {
     console.error(
@@ -208,6 +206,7 @@ async function startNewEncounter(interaction, user, huntData) {
   })
 
   huntData.styleCollector = styleCollector
+  collectors.set(interaction.user.id, styleCollector)
 
   styleCollector.on('collect', async (styleInteraction) => {
     console.log(`Collector received interaction: ${styleInteraction.customId}`)
@@ -220,6 +219,7 @@ async function startNewEncounter(interaction, user, huntData) {
     huntData.styleInteractionHandled = true // Mark as handled
 
     try {
+        await styleInteraction.deferUpdate();
       // Acknowledge immediately to prevent expiration
       if (styleInteraction.replied || styleInteraction.deferred) {
         console.warn(
@@ -239,6 +239,12 @@ async function startNewEncounter(interaction, user, huntData) {
       const playerScore = user[`${selectedStyle}_score`]
       const advMultiplier = checkAdvantage(selectedStyle, monster.type)
       console.log(`Advantage multiplier: ${advMultiplier}`)
+
+      // ✅ Remove the buttons after selection
+      await styleInteraction.editReply({
+        embeds: [monsterEmbed],
+        components: [], // Removes all battle selection buttons
+      })
 
       console.log('Running battle phases...')
       const playerWins = await runBattlePhases(

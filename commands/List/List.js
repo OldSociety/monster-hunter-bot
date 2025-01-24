@@ -6,6 +6,7 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
+const { collectors, stopUserCollector } = require('../../utils/collectors')
 const fs = require('fs')
 const path = require('path')
 let cacheMonstersByTier
@@ -62,6 +63,8 @@ module.exports = {
     }
     await interaction.deferReply()
     const userId = interaction.user.id
+
+    stopUserCollector(userId)
 
     const user = await checkUserAccount(interaction)
     if (!user) return
@@ -147,6 +150,7 @@ module.exports = {
       const collector = interaction.channel.createMessageComponentCollector({
         time: 60000,
       })
+      collectors.set(userId, collector)
 
       collector.on('collect', async (buttonInteraction) => {
         if (buttonInteraction.user.id !== interaction.user.id) {
