@@ -5,6 +5,7 @@ module.exports = {
   finalBoss: 'red-dragon-wyrmling',
   hunts: [
     {
+      id: 6,
       key: 'hunt1',
       name: 'Darkmantle',
       description: 'This is page 2.',
@@ -26,6 +27,7 @@ module.exports = {
       unlocks: 'hunt2',
     },
     {
+      id: 7,
       key: 'hunt2',
       name: 'Harpy',
       description: 'Take down the harpy by avoiding her song.',
@@ -48,6 +50,7 @@ module.exports = {
       unlocks: 'hunt3',
     },
     {
+      id: 8,
       key: 'hunt3',
       name: 'Rust Monster',
       description:
@@ -73,6 +76,7 @@ module.exports = {
       unlocks: 'hunt4',
     },
     {
+      id: 9,
       key: 'hunt4',
       name: 'Sea Hag',
       description:
@@ -100,6 +104,7 @@ module.exports = {
       unlocks: 'hunt5',
     },
     {
+      id: 10,
       key: 'hunt5',
       name: 'Red Dragon Wyrmling (Boss)',
       description: 'Face the Red Dragon Wyrmling to prove your worth!',

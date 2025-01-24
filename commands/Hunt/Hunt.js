@@ -120,7 +120,6 @@ if (process.env.NODE_ENV === 'production') {
   const { Collection } = require('../../Models/model.js')
 
   const { checkUserAccount } = require('../Account/checkAccount.js')
-  // const { cacheHuntMonsters } = require('../../handlers/huntCacheHandler.js')
   const { showLevelSelection } = require('./huntUtils/huntHandlers.js')
   const { startNewEncounter } = require('./huntUtils/encounterHandler.js')
   const { handlePagination } = require('./huntUtils/paginationHandler.js')
@@ -232,6 +231,53 @@ if (process.env.NODE_ENV === 'production') {
       collector.on('collect', async (i) => {
         console.log(`Collector received interaction: ${i.customId}`)
 
+        if (i.customId === 'cancel_hunt') {
+          console.log('⛔ Hunt cancelled by user.')
+          await i.update({
+            content: 'Hunt cancelled. You can start a new hunt anytime!',
+            embeds: [],
+            components: [],
+            ephemeral: true,
+          })
+          huntData.inProgress = false
+          collector.stop()
+          stopUserCollector(interaction.user.id)
+          return
+        }
+
+        if (i.customId === 'use_ichor') {
+          console.log('🧪 Ichor used!')
+          await i.deferUpdate()
+
+          if (user.currency.ichor < 1) {
+            console.warn('⚠️ Not enough ichor!')
+            await interaction.followUp({
+              content: "You don't have enough 🧪ichor to use this option.",
+              ephemeral: true,
+            })
+            return
+          }
+
+          if (huntData.ichorUsed) {
+            console.warn('⚠️ Ichor already used!')
+            await interaction.followUp({
+              content: 'You have already used Ichor for this hunt!',
+              ephemeral: true,
+            })
+            return
+          }
+
+          user.currency.ichor -= 1
+          user.changed('currency', true)
+          await user.save()
+
+          huntData.ichorUsed = true
+
+          console.log('✅ Ichor applied. Reloading hunt selection...')
+          await showLevelSelection(interaction, user, huntData, user.id)
+          return
+        }
+
         if (i.customId.startsWith('page_')) {
           const newPage = i.customId.replace('page_', '')
           console.log(`📖 Switching to page: ${newPage}`)
@@ -242,29 +288,42 @@ if (process.env.NODE_ENV === 'production') {
         }
 
         if (i.customId === 'hunt_select') {
-          const selectedHuntKey = i.values[0].replace('hunt_', '');
-          console.log(`🎯 Hunt selected: ${selectedHuntKey}`);
-        
-          // Find the selected hunt from huntPages
-          const selectedHunt = Object.values(huntPages)
-            .flatMap((page) => page.hunts)
-            .find((hunt) => hunt.key === selectedHuntKey);
-        
-          if (!selectedHunt) {
-            console.error(`❌ ERROR: Selected hunt not found: ${selectedHuntKey}`);
-            await i.reply({ content: 'Error: Hunt not found.', ephemeral: true });
-            return;
+          const selectedHuntKey = i.values[0].replace('hunt_', '')
+          console.log(`🎯 Hunt selected: ${selectedHuntKey}`)
+
+          let selectedHunt = null
+          let selectedPage = null
+
+          // ✅ Loop through huntPages to find which page contains the selected hunt
+          for (const [pageKey, pageData] of Object.entries(huntPages)) {
+            const hunt = pageData.hunts.find((h) => h.key === selectedHuntKey)
+            if (hunt) {
+              selectedHunt = hunt
+              selectedPage = pageKey
+              break
+            }
           }
-        
-          huntData.level = selectedHunt; // ✅ Assign the selected hunt
-          huntData.currentBattleIndex = 0; // ✅ Reset battle progress
-          huntData.inProgress = true;
-        
-          await i.deferUpdate();
-          await startNewEncounter(interaction, user, huntData);
-          return;
+
+          if (!selectedHunt || !selectedPage) {
+            console.error(
+              `❌ ERROR: Hunt '${selectedHuntKey}' not found in any page.`
+            )
+            return i.reply({
+              content: 'Error: Hunt not found.',
+              ephemeral: true,
+            })
+          }
+
+          huntData.level = { ...selectedHunt, page: selectedPage }
+
+          console.log(
+            `✅ Hunt assigned: ${selectedHunt.name} (Page: ${selectedPage})`
+          )
+
+          await i.deferUpdate()
+          await startNewEncounter(interaction, user, huntData)
+          return
         }
-        
 
         if (
           i.customId.startsWith('prev_page_') ||
