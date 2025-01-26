@@ -86,7 +86,7 @@ if (process.env.NODE_ENV === 'production') {
       for (const user of users) {
         let currency = user.currency || {
           energy: 10,
-          gems: 0,
+          tokens: 0,
           eggs: 0,
           ichor: 0,
           dice: 0,

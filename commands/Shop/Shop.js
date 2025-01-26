@@ -1,10 +1,14 @@
+//shop
 const {
   SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
+  StringSelectMenuBuilder,
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
+const { Op } = require('sequelize')
+
 const { Collection } = require('../../Models/model.js')
 
 const {
@@ -15,6 +19,7 @@ const {
   updateOrAddMonsterToCollection,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
+const { calculateMScore } = require('../../handlers/userMonsterHandler.js')
 const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
@@ -36,6 +41,33 @@ const PACK_COSTS = {
   ichor: 650,
 }
 
+const PROMOTION_COSTS = [
+  { cr: 1, cost: 1200 },
+  { cr: 2, cost: 2300 },
+  { cr: 3, cost: 3400 },
+  { cr: 4, cost: 4500 },
+  { cr: 5, cost: 5300 },
+  { cr: 6, cost: 6200 },
+  { cr: 7, cost: 7100 },
+  { cr: 8, cost: 8000 },
+  { cr: 9, cost: 9000 },
+  { cr: 10, cost: 9900 },
+  { cr: 11, cost: 11200 },
+  { cr: 12, cost: 12500 },
+  { cr: 13, cost: 13800 },
+  { cr: 14, cost: 15100 },
+  { cr: 15, cost: 16400 },
+  { cr: 16, cost: 18100 },
+  { cr: 17, cost: 19800 },
+  { cr: 18, cost: 21500 },
+  { cr: 19, cost: 23200 },
+  { cr: 20, cost: 25000 },
+  { cr: 21, cost: 27200 },
+  { cr: 22, cost: 29400 },
+  { cr: 23, cost: 31600 },
+  { cr: 24, cost: 34000 },
+]
+
 // Define tier options for each pack
 const TIER_OPTIONS = {
   common: { name: 'Common' },
@@ -49,6 +81,18 @@ const TIER_OPTIONS = {
   },
 }
 
+function getRarityByCR(cr) {
+  if (cr >= 20) return 'Legendary'
+  if (cr >= 16) return 'Very Rare'
+  if (cr >= 11) return 'Rare'
+  if (cr >= 5) return 'Uncommon'
+  return 'Common'
+}
+
+function convertNameToIndex(name) {
+  return name.toLowerCase().replace(/\s+/g, '-');
+ }
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('shop')
@@ -56,261 +100,440 @@ module.exports = {
 
   async execute(interaction) {
     const userId = interaction.user.id
-    const username = interaction.user.username
-    console.log(`[SHOP] Command executed by User: ${userId}`)
 
-    await interaction.deferReply({ ephemeral: true })
-
-    stopUserCollector(userId) // Stop any previous collectors
-    console.log(`[SHOP] Stopped previous collector for User: ${userId}`)
-
-    const user = await checkUserAccount(interaction)
-    if (!user) return
-
-    let userCollection
     try {
-      userCollection = await Collection.findOne({ where: { userId: userId } })
-    } catch (error) {
-      console.error('[SHOP] Error querying Collection model:', error)
-      return interaction.editReply({
-        content: 'An error occurred while accessing the collection data.',
-        ephemeral: true,
-      })
-    }
+      await interaction.deferReply({ ephemeral: true })
 
-    const isStarterPackAvailable = !userCollection
-    console.log(`[SHOP] Starter Pack Available: ${isStarterPackAvailable}`)
+      stopUserCollector(userId)
 
-    if (!cachePopulated) {
-      console.log('[SHOP] Cache not populated. Showing loading message...')
-      await interaction.editReply({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0xffcc00)
-            .setDescription('Loading shop data, please wait...'),
-        ],
-        components: [],
-      })
+      const user = await checkUserAccount(interaction)
+      if (!user) return
 
-      await cacheMonstersByTier()
-      cachePopulated = true
-      console.log('[SHOP] Cache populated successfully')
-    }
-
-    const gold = user.gold || 0
-    const currency = user.currency || {}
-    const energy = currency.energy || 0
-    const tokens = currency.gems || 0
-    const eggs = currency.eggs || 0
-    const ichor = currency.ichor || 0
-
-    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
-
-    const shopEmbed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setTitle(`-- Hunter Store --`)
-
-    if (isStarterPackAvailable) {
-      shopEmbed.setDescription(
-        ` Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!`
-      )
-    } else {
-      shopEmbed.setDescription(
-        `Purchase packs containing monsters or resources.  Use ` +
-          '`' +
-          `/help store` +
-          '`' +
-          `for a detailed description of each pack.` +
-          `Use ` +
-          '`' +
-          `/account` +
-          '`' +
-          `at any time to see your style scores and collection.`
-      )
-    }
-
-    const row = new ActionRowBuilder()
-
-    if (isStarterPackAvailable) {
-      shopEmbed.addFields({
-        name: 'Starter Pack',
-        value: `🆓 Free for new hunters!`,
-        inline: true,
-      })
-      row.addComponents(
-        new ButtonBuilder()
-          .setCustomId('purchase_starter_pack')
-          .setLabel('Starter Pack')
-          .setStyle(ButtonStyle.Secondary)
-      )
-    } else {
-      shopEmbed
-        .addFields(
-          {
-            name: 'Common Pack',
-            value: `🪙${PACK_COSTS.common}`,
-            inline: true,
-          },
-          {
-            name: 'Uncommon Pack',
-            value: `🪙${PACK_COSTS.uncommon}`,
-            inline: true,
-          },
-          { name: 'Rare Pack', value: `🪙${PACK_COSTS.rare}`, inline: true },
-          {
-            name: 'Elemental Pack',
-            value: `🪙${PACK_COSTS.elemental}`,
-            inline: true,
-          },
-          {
-            name: '🧪Ichor Pack (12)',
-            value: `🪙${PACK_COSTS.ichor}`,
-            inline: true,
-          }
-        )
-        .setFooter({ text: footerText })
-
-      row.addComponents(
-        new ButtonBuilder()
-          .setCustomId('purchase_common_pack')
-          .setLabel('Common Pack')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('purchase_uncommon_pack')
-          .setLabel('Uncommon Pack')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('purchase_rare_pack')
-          .setLabel('Rare Pack')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('purchase_elemental_pack')
-          .setLabel('Elemental Pack')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('purchase_ichor_pack')
-          .setLabel('Ichor Pack')
-          .setStyle(ButtonStyle.Success)
-      )
-    }
-
-    const PromotionAvailable = await Collection.findOne({
-      where: { userId: user.id, copies: { [Op.gt]: 0 } },
-    })
-
-    if (PromotionAvailable) {
-      row.addComponents(
-        new ButtonBuilder()
-          .setCustomId('promote_cards')
-          .setLabel('Promote Cards')
-          .setStyle(ButtonStyle.Secondary)
-      )
-    }
-
-    await interaction.editReply({
-      embeds: [shopEmbed],
-      components: [row],
-    })
-
-    console.log(`[SHOP] Buttons sent. Setting up collector...`)
-
-    const filter = (i) => i.user.id === userId
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter,
-      time: 60000,
-    })
-
-    collectors.set(userId, collector)
-
-    collector.on('collect', async (buttonInteraction) => {
-      console.log(
-        `[SHOP] Button clicked: ${buttonInteraction.customId} by User: ${userId}`
-      )
-
-      await buttonInteraction.deferUpdate()
-
-      const packType = buttonInteraction.customId.split('_')[1]
-
+      let userCollection
       try {
-        if (packType === 'ichor') {
-          user.currency = {
-            ...user.currency,
-            ichor: user.currency.ichor + 10,
-          }
-          await user.save()
+        userCollection = await Collection.findOne({
+          where: { userId: user.user_id },
+        })
+      } catch (error) {
+        console.error('Error querying Collection model:', error)
+        return interaction.editReply({
+          content: 'An error occurred while accessing the collection data.',
+          ephemeral: true,
+        })
+      }
 
-          const ichorEmbed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle('Ichor Pack Purchased')
-            .setDescription(
-              `${username} has received 🧪10 ichor! You can spend ichor to increase your chances of winning by 20%.`
+      const isStarterPackAvailable = !userCollection
+
+      if (!cachePopulated) {
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xffcc00)
+              .setDescription('Loading shop data, please wait...'),
+          ],
+          components: [],
+        })
+
+        await cacheMonstersByTier()
+        cachePopulated = true
+      }
+
+      const gold = user.gold || 0
+      const currency = user.currency || {}
+      const energy = currency.energy || 0
+      const tokens = currency.tokens || 0
+      const eggs = currency.eggs || 0
+      const ichor = currency.ichor || 0
+
+      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+
+      const shopEmbed = new EmbedBuilder()
+        .setColor(0x00ff00)
+        .setTitle('-- Hunter Store --')
+        .setDescription(
+          isStarterPackAvailable
+            ? "Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!"
+            : 'Purchase packs containing monsters or resources. Use `/help store` for a detailed description of each pack. Use `/account` at any time to see your style scores and collection.'
+        )
+
+      if (isStarterPackAvailable) {
+        shopEmbed.addFields({
+          name: 'Starter Pack',
+          value: '🆓 Free for new hunters!',
+          inline: true,
+        })
+      } else {
+        shopEmbed
+          .addFields(
+            {
+              name: 'Common Pack',
+              value: `🪙${PACK_COSTS.common}`,
+              inline: true,
+            },
+            {
+              name: 'Uncommon Pack',
+              value: `🪙${PACK_COSTS.uncommon}`,
+              inline: true,
+            },
+            { name: 'Rare Pack', value: `🪙${PACK_COSTS.rare}`, inline: true },
+            {
+              name: 'Elemental Pack',
+              value: `🪙${PACK_COSTS.elemental}`,
+              inline: true,
+            },
+            {
+              name: '🧪Ichor Pack (12)',
+              value: `🪙${PACK_COSTS.ichor}`,
+              inline: true,
+            }
+          )
+          .setFooter({ text: footerText })
+      }
+
+      const PromotionAvailable = await Collection.findOne({
+        where: { userId: user.user_id, copies: { [Op.gt]: 0 } },
+      })
+
+      const rows = [new ActionRowBuilder()]
+      let currentRow = rows[0]
+
+      function addButton(button) {
+        if (currentRow.components.length >= 5) {
+          currentRow = new ActionRowBuilder()
+          rows.push(currentRow)
+        }
+        currentRow.addComponents(button)
+      }
+
+      if (isStarterPackAvailable) {
+        addButton(
+          new ButtonBuilder()
+            .setCustomId('purchase_starter_pack')
+            .setLabel('Starter Pack')
+            .setStyle(ButtonStyle.Secondary)
+        )
+      } else {
+        const packButtons = [
+          new ButtonBuilder()
+            .setCustomId('purchase_common_pack')
+            .setLabel('Common Pack')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('purchase_uncommon_pack')
+            .setLabel('Uncommon Pack')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('purchase_rare_pack')
+            .setLabel('Rare Pack')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('purchase_elemental_pack')
+            .setLabel('Elemental Pack')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('purchase_ichor_pack')
+            .setLabel('Ichor Pack')
+            .setStyle(ButtonStyle.Success),
+        ]
+
+        packButtons.forEach(addButton)
+      }
+
+      if (PromotionAvailable) {
+        addButton(
+          new ButtonBuilder()
+            .setCustomId('promote_cards')
+            .setLabel('Promote Cards')
+            .setStyle(ButtonStyle.Secondary)
+        )
+      }
+
+      await interaction.editReply({
+        embeds: [shopEmbed],
+        components: rows.filter((row) => row.components.length > 0),
+      })
+
+      const filter = (i) => i.user.id === userId
+      const collector = interaction.channel.createMessageComponentCollector({
+        filter,
+        time: 60000,
+      })
+
+      collectors.set(userId, collector)
+
+      collector.on('collect', async (interaction) => {
+        try {
+          if (interaction.customId.startsWith('purchase_')) {
+            const packType = interaction.customId.split('_')[1]
+
+            await interaction.deferReply({ ephemeral: true })
+            if (packType === 'ichor') {
+              user.currency.ichor += 10
+              await user.save()
+
+              const ichorEmbed = new EmbedBuilder()
+                .setColor(0x00ff00)
+                .setTitle('Ichor Pack Purchased')
+                .setDescription(
+                  `${interaction.user.username} has received 🧪10 ichor! You can spend ichor to increase your chances of winning by 20%.`
+                )
+
+              return interaction.editReply({
+                content: `${interaction.user.username} purchased an **Ichor Pack**!`,
+                embeds: [ichorEmbed],
+              })
+            }
+
+            const monster = await pullValidMonster(
+              TIER_OPTIONS[packType],
+              packType
             )
 
-          return buttonInteraction.followUp({
-            content: `${username} purchased an **Ichor Pack**!`,
-            embeds: [ichorEmbed],
-          })
+            if (!monster) {
+              return interaction.editReply({
+                content: `Could not retrieve a valid monster for the **${packType}** pack. Please try again later or contact support.`,
+                ephemeral: true,
+              })
+            }
+
+            const category = classifyMonsterType(monster.type)
+            const stars = getStarsBasedOnColor(monster.color)
+            const monsterEmbed = generateMonsterRewardEmbed(
+              monster,
+              category,
+              stars
+            )
+
+            const result = await updateOrAddMonsterToCollection(userId, monster)
+
+            await interaction.editReply({
+              content: result.isDuplicate
+                ? `${interaction.user.username} obtained another **${result.name}**. It increased from Rank **${result.previousRank}** to **${result.newLevel}**!`
+                : `${interaction.user.username} pulled a new **${result.name}** from the **${packType} pack**!`,
+              embeds: [monsterEmbed],
+            })
+
+            await updateTop5AndUserScore(userId)
+
+            if (isStarterPackAvailable) {
+              await interaction.followUp({
+                content:
+                  'You have received your first monster and increased one of your fighting style scores! Keep in mind, only your top 3 cards of a style add to its score.\n\nWhen ready, use `/account` to see your current collection or use `/hunt` to begin your first hunt.',
+                embeds: [monsterEmbed],
+              })
+            }
+
+            collector.stop('completed')
+            return
+          }
+
+          if (interaction.customId === 'promote_cards') {
+            const userMonsters = await Collection.findAll({
+              where: { userId, copies: { [Op.gt]: 0 } },
+            })
+
+            if (userMonsters.length === 0) {
+              return interaction.editReply({
+                content: 'You have no cards available for promotion.',
+                components: [],
+              })
+            }
+
+            const monsterOptions = userMonsters.map((monster) => ({
+              label: `${monster.name} (Lv. ${monster.rank})`,
+              value: `promote_${monster.id}`,
+              description: `Copies: ${monster.copies}`,
+            }))
+
+            const selectRow = new ActionRowBuilder().addComponents(
+              new StringSelectMenuBuilder()
+                .setCustomId('select_promotion')
+                .setPlaceholder('Select a card to promote')
+                .addOptions(monsterOptions)
+            )
+
+            const promotionEmbed = new EmbedBuilder()
+              .setTitle('🔼 Monster Promotion')
+              .setDescription('Select a monster to promote.')
+              .setColor('Gold')
+
+            return interaction.update({
+              embeds: [promotionEmbed],
+              components: [selectRow],
+            })
+          }
+
+          if (interaction.customId === 'select_promotion') {
+            const selectedMonsterId = interaction.values[0].replace(
+              'promote_',
+              ''
+            )
+            const selectedMonster = await Collection.findOne({
+              where: { id: selectedMonsterId, userId: user.user_id },
+            })
+
+            if (!selectedMonster) {
+              return interaction.update({
+                content: 'Error: Monster not found.',
+                components: [],
+              })
+            }
+
+            const promotionCostEntry = PROMOTION_COSTS.find(
+              (entry) => entry.cr === selectedMonster.cr
+            )
+            const promotionCost = promotionCostEntry
+              ? promotionCostEntry.cost
+              : 0
+            const nextRank = selectedMonster.rank + 1
+
+            let assignedRarity = getRarityByCR(selectedMonster.cr)
+
+            const imageUrl = selectedMonster
+              ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(selectedMonster.name)}.jpg`
+              : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.jpg'
+
+            const newScore = calculateMScore(
+              selectedMonster.cr,
+              assignedRarity,
+              nextRank
+            )
+
+            const promotionEmbed = new EmbedBuilder()
+              .setTitle(`Promote: ${selectedMonster.name}`)
+              .setDescription(
+                `**Current Rank:** ${selectedMonster.rank}\n**Next Rank:** ${nextRank}\n**Current Score:** ${selectedMonster.m_score}\n**New Score:** ${newScore}\n\n**Cost:** 🪙${promotionCost}`
+              )
+              .setColor('Gold')
+              .setFooter({
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
+              })
+              .setThumbnail(imageUrl)
+
+            const confirmRow = new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId(`confirm_promotion_${selectedMonsterId}`)
+                .setLabel('Promote')
+                .setStyle(ButtonStyle.Success),
+              new ButtonBuilder()
+                .setCustomId('cancel_promotion')
+                .setLabel('Cancel')
+                .setStyle(ButtonStyle.Danger)
+            )
+
+            return interaction.update({
+              embeds: [promotionEmbed],
+              components: [confirmRow],
+            })
+          }
+
+          if (interaction.customId.startsWith('confirm_promotion_')) {
+            const monsterId = interaction.customId.replace(
+              'confirm_promotion_',
+              ''
+            )
+            const monster = await Collection.findOne({
+              where: { id: monsterId, userId },
+            })
+
+            if (!monster) {
+              return interaction.update({
+                content: 'Error: Monster not found.',
+                components: [],
+              })
+            }
+
+            const promotionCostEntry = PROMOTION_COSTS.find(
+              (entry) => entry.cr === monster.cr
+            )
+            const promotionCost = promotionCostEntry
+              ? promotionCostEntry.cost
+              : 0
+
+            if (user.gold < promotionCost) {
+              return interaction.update({
+                content: 'You do not have enough gold to promote this monster.',
+                components: [],
+              })
+            }
+
+            user.gold -= promotionCost
+            monster.rank += 1
+          
+
+            let assignedRarity = getRarityByCR(monster.cr)
+
+            const imageUrl = monster
+              ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(monster.name)}.jpg`
+              : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.jpg'
+
+            monster.m_score = calculateMScore(
+              monster.cr,
+              assignedRarity,
+              monster.rank
+            )
+
+            monster.copies -= 1
+
+            await user.save()
+            await monster.save()
+
+            const successEmbed = new EmbedBuilder()
+              .setTitle('✅ Promotion Successful!')
+              .setDescription(
+                `**${monster.name}** has reached level ${monster.rank}!`
+              )
+              .setColor('Green')
+              .setFooter({
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
+              })
+              .setImage(imageUrl)
+
+            return interaction.update({
+              embeds: [successEmbed],
+              components: [],
+            })
+          }
+
+          if (interaction.customId === 'cancel_promotion') {
+            return interaction.update({
+              content: 'Promotion cancelled. Returning to shop...',
+              components: [],
+            })
+          }
+        } catch (error) {
+          console.error('Error in shop interaction:', error)
+          try {
+            await interaction.reply({
+              content: 'An unexpected error occurred. Please try again.',
+              ephemeral: true,
+            })
+          } catch {
+            await interaction.editReply({
+              content: 'An unexpected error occurred. Please try again.',
+              ephemeral: true,
+            })
+          }
         }
+      })
 
-        const monster = await pullValidMonster(TIER_OPTIONS[packType], packType)
-
-        if (!monster) {
-          console.error(`[SHOP] No valid monster found for ${packType}`)
-          return buttonInteraction.followUp({
-            content: `Could not retrieve a valid monster for the **${packType}** pack. Please try again later or contact support.`,
-            ephemeral: true,
-          })
+      collector.on('end', async () => {
+        try {
+          await interaction.editReply({ components: [] })
+        } catch (error) {
+          console.error('Error ending shop collector:', error)
         }
-
-        const category = classifyMonsterType(monster.type)
-        const stars = getStarsBasedOnColor(monster.color)
-        const monsterEmbed = generateMonsterRewardEmbed(
-          monster,
-          category,
-          stars
-        )
-
-        const result = await updateOrAddMonsterToCollection(userId, monster)
-
-        if (result.isDuplicate) {
-          await interaction.followUp({
-            content: `${username} obtained another **${result.name}**. It increased from level **${result.previousLevel}** to **${result.newLevel}**!`,
-            embeds: [monsterEmbed],
-          })
-        } else {
-          await interaction.followUp({
-            content: `${username} pulled a new **${result.name}** from the **${packType} pack!**`,
-            embeds: [monsterEmbed],
-          })
-        }
-
-        await updateTop5AndUserScore(userId)
-
-        if (isStarterPackAvailable) {
-          await interaction.followUp({
-            content:
-              `You have received your first monster and increased one of your fighting style scores! Keep in mind, only your top 3 cards of a style add to its score.\n\nWhen ready, use ` +
-              '`' +
-              `/account` +
-              '`' +
-              `to see your current collection or use` +
-              '`' +
-              `/hunt` +
-              '`' +
-              `to begin your first hunt.`,
-            embeds: [monsterEmbed],
-          })
-        }
-
-        collector.stop('completed')
-      } catch (error) {
-        console.error('[SHOP] Error handling button interaction:', error)
+      })
+    } catch (error) {
+      console.error('Fatal error in shop command:', error)
+      try {
+        await interaction.editReply({
+          content: 'A critical error occurred. Please contact support.',
+          ephemeral: true,
+        })
+      } catch {
+        console.error('Could not send error reply')
       }
-    })
-
-    collector.on('end', async () => {
-      await interaction.editReply({ components: [] })
-      console.log('[SHOP] Session expired.')
-    })
+    }
   },
 }

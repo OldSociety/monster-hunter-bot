@@ -28,7 +28,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
-      level: {
+      rank: {
         type: Sequelize.INTEGER,
         defaultValue: 1,
       },

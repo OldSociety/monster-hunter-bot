@@ -14,7 +14,7 @@ async function setupFreeRewardCollector(rewardMessage) {
     1000,
     1200,
     2000,
-    'gems',
+    'tokens',
     Math.random() < 0.8
       ? await pullValidMonster({ name: 'Common' })
       : await pullValidMonster({ name: 'Uncommon' }),
@@ -60,8 +60,8 @@ async function setupFreeRewardCollector(rewardMessage) {
       if (typeof selectedReward === 'number') {
         userData.gold += selectedReward
         await userData.save()
-      } else if (selectedReward === 'gems') {
-        userData.currency.gems += 10
+      } else if (selectedReward === 'tokens') {
+        userData.currency.tokens += 10
         await userData.save({ fields: ['currency'] }) // Save only the currency JSON
       } else if (selectedReward) {
         await Collection.create({

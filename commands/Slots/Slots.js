@@ -33,7 +33,7 @@ module.exports = {
       })
     }
 
-    if (userData.currency.gems < 1) {
+    if (userData.currency.tokens < 1) {
       return await interaction.reply({
         content: `🎰 You don't have enough 🧿tokens to play! It costs 1 token per game.`,
         ephemeral: true,
@@ -52,7 +52,7 @@ module.exports = {
 
     const footerText = `Available: 🪙${userData.gold || 0} ⚡${
       userData.currency.energy || 0
-    } 🧿${userData.currency.gems || 0} 🥚${userData.currency.eggs || 0} 🧪${
+    } 🧿${userData.currency.tokens || 0} 🥚${userData.currency.eggs || 0} 🧪${
       userData.currency.ichor || 0
     }`
 
@@ -92,7 +92,7 @@ async function startGame(interaction, userData) {
   const userId = interaction.user.id
 
   // Deduct token cost
-  userData.currency = { ...userData.currency, gems: userData.currency.gems - 1 }
+  userData.currency = { ...userData.currency, tokens: userData.currency.tokens - 1 }
   await userData.save()
   jackpot += Math.floor(Math.random() * 6) + 5
 
@@ -628,7 +628,7 @@ async function startGame(interaction, userData) {
 
         const footerText = `Available: 🪙${userData.gold || 0} ⚡${
           userData.currency.energy || 0
-        } 🧿${userData.currency.gems || 0} 🥚${userData.currency.eggs || 0} 🧪${
+        } 🧿${userData.currency.tokens || 0} 🥚${userData.currency.eggs || 0} 🧪${
           userData.currency.ichor || 0
         }`
 
@@ -692,7 +692,7 @@ async function handlePlayAgain(interaction) {
 
       // **Check if Player Has Enough Tokens**
       const freshUserData = await User.findOne({ where: { user_id: userId } })
-      if (!freshUserData || freshUserData.currency.gems < 1) {
+      if (!freshUserData || freshUserData.currency.tokens < 1) {
         await buttonInteraction.reply({
           content: `❌ You need at least 1 🧿token to play again!`,
           ephemeral: true,

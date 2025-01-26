@@ -49,7 +49,7 @@ describe('Zalathor Slots Command', () => {
   })
 
   test('should not allow a game to start if user has insufficient tokens', async () => {
-    User.findOne.mockResolvedValue({ currency: { gems: 0 } })
+    User.findOne.mockResolvedValue({ currency: { tokens: 0 } })
     await execute(interaction)
 
     expect(interaction.reply).toHaveBeenCalledWith({
@@ -60,7 +60,7 @@ describe('Zalathor Slots Command', () => {
 
   test('should start the game when user has enough tokens', async () => {
     User.findOne.mockResolvedValue({
-      currency: { gems: 5, gold: 50, energy: 10, eggs: 1, ichor: 2 },
+      currency: { tokens: 5, gold: 50, energy: 10, eggs: 1, ichor: 2 },
     })
 
     await execute(interaction)
@@ -76,7 +76,7 @@ describe('Zalathor Slots Command', () => {
 
   test('should handle button interaction for starting the game', async () => {
     User.findOne.mockResolvedValue({
-      currency: { gems: 5, gold: 50, energy: 10, eggs: 1, ichor: 2 },
+      currency: { tokens: 5, gold: 50, energy: 10, eggs: 1, ichor: 2 },
     })
 
     const buttonInteraction = new MessageComponentInteraction(interaction)
@@ -101,7 +101,7 @@ describe('Zalathor Slots Command', () => {
 
   test('should update user balance and jackpot after a game round', async () => {
     User.findOne.mockResolvedValue({
-      currency: { gems: 5, gold: 50, energy: 10, eggs: 1, ichor: 2 },
+      currency: { tokens: 5, gold: 50, energy: 10, eggs: 1, ichor: 2 },
       save: jest.fn(),
     })
 

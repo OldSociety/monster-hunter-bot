@@ -72,7 +72,7 @@ if (process.env.NODE_ENV === 'production') {
                 `to recieve a starter pack.`
             )
             .setFooter({
-              text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+              text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
             })
 
           await interaction.editReply({ embeds: [noMonstersEmbed] })
@@ -848,7 +848,7 @@ if (process.env.NODE_ENV === 'production') {
 //         `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
 //       )
 //       .setFooter({
-//         text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+//         text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
 //       })
 //     await interaction.followUp({
 //       embeds: [noEnergyRetryEmbed],
@@ -866,7 +866,7 @@ if (process.env.NODE_ENV === 'production') {
 //     )
 //     .setColor('#FF0000')
 //     .setFooter({
-//       text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+//       text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
 //     })
 
 //   const retryButton = new ButtonBuilder()
@@ -1050,7 +1050,7 @@ if (process.env.NODE_ENV === 'production') {
 //       momentum -= Math.min(segmentLoss, momentum)
 
 //       if (playerWins >= 4) {
-//         user.currency.gems = (user.currency.gems || 0) + 1
+//         user.currency.tokens = (user.currency.tokens || 0) + 1
 //         user.changed('currency', true)
 //         await user.save()
 //         return true

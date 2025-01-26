@@ -21,7 +21,7 @@ module.exports = {
         type: Sequelize.JSON,
         defaultValue: {
           energy: 10,
-          gems: 0,
+          tokens: 0,
           eggs: 0,
           ichor: 0,
           dice: 0,

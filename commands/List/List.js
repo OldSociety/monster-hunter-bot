@@ -6,7 +6,6 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
-const { collectors, stopUserCollector } = require('../../utils/collectors')
 const fs = require('fs')
 const path = require('path')
 let cacheMonstersByTier
@@ -63,8 +62,6 @@ module.exports = {
     }
     await interaction.deferReply()
     const userId = interaction.user.id
-
-    stopUserCollector(userId)
 
     const user = await checkUserAccount(interaction)
     if (!user) return
@@ -150,7 +147,6 @@ module.exports = {
       const collector = interaction.channel.createMessageComponentCollector({
         time: 60000,
       })
-      collectors.set(userId, collector)
 
       collector.on('collect', async (buttonInteraction) => {
         if (buttonInteraction.user.id !== interaction.user.id) {
@@ -450,63 +446,23 @@ module.exports = {
   },
 }
 
-async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeout)
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal })
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      console.warn(`⚠️ HTTP Error ${response.status} for ${url}`)
-      return null
-    }
-
-    return await response.json() // ✅ Converts Response to JSON before returning
-  } catch (error) {
-    console.error(`🚨 Fetch error for ${url}: ${error.message}`)
-    return null // Prevents crash
-  }
-}
-
 async function cacheMonsterList() {
   if (monsterListCache.length === 0) {
-    console.log('🔄 Fetching monster list...')
-
-    const data = await fetchWithTimeout('https://www.dnd5eapi.co/api/monsters')
-
-    if (!data || !data.results) {
-      console.warn('⚠️ Failed to fetch monster list. Retrying in 30 seconds...')
-      setTimeout(cacheMonsterList, 30000) // Retry after 30s
-      return
-    }
-
+    const response = await fetch('https://www.dnd5eapi.co/api/monsters')
+    const data = await response.json()
     monsterListCache = data.results
-    console.log(`✅ Monster list cached (${monsterListCache.length} entries).`)
   }
 }
 
 async function processMonsterDetails() {
   for (const monster of monsterListCache) {
     if (monster.challenge_rating === undefined) {
-      console.log(`📌 Fetching details for ${monster.index}...`)
-
-      const monsterDetails = await fetchWithTimeout(
+      const detailResponse = await fetch(
         `https://www.dnd5eapi.co/api/monsters/${monster.index}`
       )
-
-      if (!monsterDetails) {
-        console.warn(
-          `⚠️ Failed to fetch details for ${monster.index}. Skipping.`
-        )
-        continue // Skip to the next monster instead of crashing
-      }
-
+      const monsterDetails = await detailResponse.json()
       monster.challenge_rating = monsterDetails.challenge_rating ?? 0
       monster.type = monsterDetails.type || 'unknown'
     }
   }
-
-  console.log('✅ All monster details processed.')
 }

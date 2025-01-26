@@ -68,7 +68,7 @@ module.exports = {
           user_id: userId,
           user_name: interaction.user.username,
           gold: 500,
-          currency: { energy: 15, gems: 0, eggs: 0, ichor: 3, dice: 0 },
+          currency: { energy: 15, tokens: 0, eggs: 0, ichor: 3, dice: 0 },
           score: 0,
           brute_score: 0,
           spellsword_score: 0,
@@ -87,7 +87,7 @@ module.exports = {
             `You have joined the hunt!\n Use \`/shop\` to get your first card.`
           )
           .setFooter({
-            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
           })
           .setThumbnail(interaction.user.displayAvatarURL())
 
@@ -141,7 +141,7 @@ module.exports = {
             })
           )
 
-          const footerText = `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`
+          const footerText = `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`
 
           const statsEmbed = new EmbedBuilder()
             .setColor(embedColor)
@@ -194,7 +194,7 @@ module.exports = {
             `Top ${category.charAt(0).toUpperCase() + category.slice(1)} Cards`
           )
           .setFooter({
-            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.gems} 🧪${user.currency.ichor}`,
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
           })
           .setThumbnail(interaction.user.displayAvatarURL())
 
@@ -206,7 +206,7 @@ module.exports = {
               inline: false,
             },
             { name: 'Score', value: `\`${card.m_score}\``, inline: true },
-            { name: 'Level', value: `\`${card.level} / 8\``, inline: true },
+            { name: 'Rank', value: `\`${card.rank} / 8\``, inline: true },
             { name: 'Type', value: `\`${card.type}\``, inline: true }
           )
         })

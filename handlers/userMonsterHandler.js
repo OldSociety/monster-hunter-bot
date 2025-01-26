@@ -1,4 +1,4 @@
-// monsterhandler.js
+// userMonsterHandler.js
 
 const { Collection, User } = require('../Models/model')
 const {
@@ -193,7 +193,7 @@ async function updateOrAddMonsterToCollection(userId, monster) {
       isDuplicate: true,
       name: monster.name,
       copies: collectionEntry.copies,
-      level: collectionEntry.level,
+      level: collectionEntry.rank,
     }
   } else {
     const initialMScore = calculateMScore(monster.cr, monster.rarity, 1)
@@ -213,4 +213,4 @@ async function updateOrAddMonsterToCollection(userId, monster) {
   }
 }
 
-module.exports = { updateOrAddMonsterToCollection }
+module.exports = { calculateMScore, updateOrAddMonsterToCollection }

@@ -1,8 +1,13 @@
 // pullHandler.js
 const fs = require('fs')
 const path = require('path')
+const { Op } = require('sequelize') // ✅ Ensure Op is imported
 const { allowedMonstersByPack } = require('../utils/shopMonsters')
 const { updateOrAddMonsterToCollection } = require('./userMonsterHandler')
+
+// ✅ Use dynamic import for node-fetch to avoid ESM errors
+const fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args))
 
 // Read all filenames in the assets folder to create validCreatures set
 const assetsPath = path.join(__dirname, '..', 'assets')
@@ -32,49 +37,68 @@ const defaultTiers = [
 async function cacheMonstersByTier() {
   if (cachePopulated) return
 
-  const fetch = (await import('node-fetch')).default
+  console.log('[CACHE] Fetching monster list from API...')
 
-  const response = await fetch('https://www.dnd5eapi.co/api/monsters')
-  const data = await response.json()
+  try {
+    const response = await fetch('https://www.dnd5eapi.co/api/monsters')
+    if (!response.ok) throw new Error(`API response error: ${response.status}`)
 
-  for (const monster of data.results) {
-    try {
-      if (!validCreatures.has(monster.index)) continue
+    const data = await response.json()
 
-      const detailResponse = await fetch(
-        `https://www.dnd5eapi.co/api/monsters/${monster.index}`
-      )
-      const monsterDetails = await detailResponse.json()
+    for (const monster of data.results) {
+      try {
+        if (!validCreatures.has(monster.index)) continue
 
-      let cr = monsterDetails.challenge_rating
-      if (typeof cr === 'string' && cr.includes('/')) {
-        const [numerator, denominator] = cr.split('/').map(Number)
-        cr = numerator / denominator
+        const detailResponse = await fetch(
+          `https://www.dnd5eapi.co/api/monsters/${monster.index}`
+        )
+
+        if (!detailResponse.ok) {
+          console.warn(
+            `[CACHE] Failed to fetch details for ${monster.index}. Skipping.`
+          )
+          continue
+        }
+
+        const monsterDetails = await detailResponse.json()
+        let cr = monsterDetails.challenge_rating
+
+        if (typeof cr === 'string' && cr.includes('/')) {
+          const [numerator, denominator] = cr.split('/').map(Number)
+          cr = numerator / denominator
+        }
+
+        if (cr === undefined || cr === null) continue
+
+        const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+
+        const matchingTier = defaultTiers.find(
+          (tier) => cr >= tier.crRange[0] && cr <= tier.crRange[1]
+        )
+
+        if (matchingTier) {
+          monsterCacheByTier[matchingTier.name].push({
+            name: monsterDetails.name,
+            index: monster.index,
+            cr,
+            type: monsterDetails.type,
+            rarity: matchingTier.name,
+            imageUrl,
+            color: matchingTier.color,
+          })
+        }
+      } catch (error) {
+        console.warn(
+          `[CACHE] Error processing monster ${monster.name}: ${error.message}`
+        )
       }
-
-      if (cr === undefined || cr === null) continue
-
-      const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-
-      const matchingTier = defaultTiers.find(
-        (tier) => cr >= tier.crRange[0] && cr <= tier.crRange[1]
-      )
-      if (matchingTier) {
-        monsterCacheByTier[matchingTier.name].push({
-          name: monsterDetails.name,
-          index: monster.index,
-          cr,
-          type: monsterDetails.type,
-          rarity: matchingTier.name,
-          imageUrl,
-          color: matchingTier.color,
-        })
-      }
-    } catch (error) {
-      console.log(`Error processing monster ${monster.name}:`, error)
     }
+
+    cachePopulated = true
+    console.log('[CACHE] Monster cache populated successfully.')
+  } catch (error) {
+    console.error('[CACHE] Failed to fetch monster data:', error)
   }
-  cachePopulated = true
 }
 
 // Adjusted selectTier function to accept custom tiers
@@ -96,11 +120,11 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
   if (packType === 'starter') {
     const starterMonstersSet = allowedMonstersByPack['starter']
     if (!starterMonstersSet || !starterMonstersSet.size) {
-      console.error('No monsters defined for the Starter Pack')
+      console.error('[PULL] No monsters defined for the Starter Pack')
       return null
     }
     const starterMonsters = Array.from(starterMonstersSet)
-    console.log(`Starter Pack contains: ${starterMonsters.join(', ')}`)
+    console.log(`[PULL] Starter Pack contains: ${starterMonsters.join(', ')}`)
     const randomIndex = Math.floor(Math.random() * starterMonsters.length)
     const monsterName = starterMonsters[randomIndex]
     return await fetchMonsterByName(monsterName)
@@ -116,7 +140,7 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
 
     const eligibleMonsters = monsterCacheByTier[tierName]
     if (!eligibleMonsters || eligibleMonsters.length === 0) {
-      console.log(`No eligible monsters in tier ${tierName}`)
+      console.warn(`[PULL] No eligible monsters in tier ${tierName}`)
       return null
     }
 
@@ -136,15 +160,15 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
     }
 
     if (filteredMonsters.length === 0) {
-      console.log(
-        `No allowed monsters in tier ${tierName} for pack ${packType}`
+      console.warn(
+        `[PULL] No allowed monsters in tier ${tierName} for pack ${packType}`
       )
       return null
     }
 
     // Log the filtered monsters
     console.log(
-      `Pack Type: ${packType}, Tier: ${tierName}, Monsters: ${filteredMonsters
+      `[PULL] Pack Type: ${packType}, Tier: ${tierName}, Monsters: ${filteredMonsters
         .map((m) => m.name)
         .join(', ')}`
     )
@@ -159,12 +183,10 @@ async function pullValidMonster(tierOption, packType, maxAttempts = 10) {
 }
 
 async function fetchMonsterByName(name) {
-  // Check if cache is populated; if not, populate it first
   if (!cachePopulated) {
-    console.log('Cache not populated. Populating cache now...')
+    console.log('[FETCH] Cache not populated. Populating cache now...')
     await cacheMonstersByTier()
-    cachePopulated = true
-    console.log('Cache populated successfully.')
+    console.log('[FETCH] Cache populated successfully.')
   }
 
   for (const tier of Object.values(monsterCacheByTier)) {
@@ -172,13 +194,12 @@ async function fetchMonsterByName(name) {
       (m) => m.name.toLowerCase() === name.toLowerCase()
     )
     if (monster) {
-      console.log(`Monster ${name} found in cache.`)
-      return monster // Return the monster if found
+      console.log(`[FETCH] Monster ${name} found in cache.`)
+      return monster
     }
   }
 
-  // If not found in the cache, log and return null
-  console.log(`Monster ${name} not found in cache.`)
+  console.warn(`[FETCH] Monster ${name} not found in cache.`)
   return null
 }
 
