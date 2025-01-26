@@ -65,10 +65,7 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
 
   // ✅ Calculate rewards dynamically from hunt battles
   currentHunt.battles.forEach((battle) => {
-    if (
-      battle.type === 'mini-boss' &&
-      !user.completedHunts.includes(currentHunt.key)
-    ) {
+    if (battle.type === 'mini-boss' && currentHunt.id > user.completedLevels) {
       totalGoldEarned += battle.firstGoldReward || battle.goldReward
     } else {
       totalGoldEarned += battle.goldReward
@@ -117,12 +114,10 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       const nextHunt = huntPages[pageKey].hunts.find(
         (hunt) => hunt.id === currentHunt.unlocks
       )
-      if (
-        nextHunt && 
-        !user.completedHunts.includes(nextHunt.key) && 
-        nextHunt.id > user.completedLevels ) {
+      if (nextHunt && nextHunt.id > user.completedLevels) {
         console.log(`🔓 Unlocking next hunt: ${nextHunt.name}`)
-        user.completedHunts.push(nextHunt.key)
+        user.completedLevels = nextHunt.id
+        await user.save()
         summaryEmbed.addFields({
           name: 'Next Hunt Unlocked!',
           value: `You have unlocked **${nextHunt.name}**!`,

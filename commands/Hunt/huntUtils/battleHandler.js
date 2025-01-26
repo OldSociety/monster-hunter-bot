@@ -69,13 +69,23 @@ async function runBattlePhases(
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
     console.log(`Phase Result: ${phaseResult}`)
 
+    let segmentLoss = 0
+
     if (phaseResult === 'Hit!') {
       playerWins++
-      momentum = Math.max(momentum - 1, 0)
-      console.log(`Player Wins: ${playerWins}, Momentum: ${momentum}`)
+      const margin = playerRoll - monsterRoll
+
+      if (margin > 15) segmentLoss = 3
+      else if (margin > 5) segmentLoss = 2
+      else segmentLoss = 1
+
+      momentum -= Math.min(segmentLoss, momentum)
 
       if (playerWins >= 4) {
         console.log(`Player won the battle in Phase ${phase}`)
+        user.currency.gems = (user.currency.gems || 0) + 1
+        user.changed('currency', true)
+        await user.save()
         return true
       }
     } else {
@@ -108,12 +118,13 @@ async function runBattlePhases(
       .setColor('#FF4500')
       .setThumbnail(imageUrl)
 
-    // Ensure the interaction is properly acknowledged before editing
+    // Send or update interaction
     try {
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.deferReply({ ephemeral: true })
+      if (!interaction.replied) {
+        await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
+      } else {
+        await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
       }
-      await interaction.editReply({ embeds: [phaseEmbed] })
     } catch (error) {
       console.warn(`⚠️ Failed to update interaction: ${error.message}`)
     }
