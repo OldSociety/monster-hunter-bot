@@ -224,7 +224,7 @@ module.exports = {
       console.log(`Setting up button collector for user: ${userId}`)
       const collector = interaction.channel.createMessageComponentCollector({
         filter: (i) => i.user.id === userId,
-        time: 30000,
+        time: 60000,
       })
 
       collectors.set(userId, collector)

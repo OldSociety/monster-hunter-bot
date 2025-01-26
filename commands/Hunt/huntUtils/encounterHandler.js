@@ -203,7 +203,7 @@ async function startNewEncounter(interaction, user, huntData) {
   const styleCollector = interaction.channel.createMessageComponentCollector({
     filter,
     max: 1,
-    time: 15000,
+    time: 60000,
   })
 
   huntData.styleCollector = styleCollector
@@ -243,10 +243,10 @@ async function startNewEncounter(interaction, user, huntData) {
       const advMultiplier = checkAdvantage(selectedStyle, monster.type)
       console.log(`Advantage multiplier: ${advMultiplier}`)
 
-      // ✅ Remove the buttons after selection
+
       await styleInteraction.editReply({
         embeds: [monsterEmbed],
-        components: [], // Removes all battle selection buttons
+        components: [], 
       })
 
       console.log('Running battle phases...')

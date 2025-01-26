@@ -63,7 +63,6 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   let totalGoldEarned = 0
   let totalTokensEarned = 0
 
-  // ✅ Calculate rewards dynamically from hunt battles
   currentHunt.battles.forEach((battle) => {
     if (battle.type === 'mini-boss' && currentHunt.id > user.completedLevels) {
       totalGoldEarned += battle.firstGoldReward || battle.goldReward
@@ -99,7 +98,6 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       huntData.level.id
     )
 
-    // ✅ Increase completedLevels **only if** the hunt was the highest completed so far
     if (huntData.level.id > user.completedLevels) {
       console.log(
         `📈 Increasing completedLevels from ${user.completedLevels} to ${huntData.level.id}`
@@ -108,25 +106,25 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       await user.save()
     }
 
-    console.log(`✅ New completedLevels saved: ${user.completedLevels}`)
-
     if (currentHunt.unlocks) {
       const nextHunt = huntPages[pageKey].hunts.find(
-        (hunt) => hunt.id === currentHunt.unlocks
+        (hunt) => hunt.key === currentHunt.unlocks
       )
+
       if (nextHunt && nextHunt.id > user.completedLevels) {
         console.log(`🔓 Unlocking next hunt: ${nextHunt.name}`)
+
         user.completedLevels = nextHunt.id
+
         await user.save()
-        summaryEmbed.addFields({
+
+        summaryEmbed.spliceFields(0, 0, {
           name: 'Next Hunt Unlocked!',
           value: `You have unlocked **${nextHunt.name}**!`,
         })
       }
     }
-
     if (currentHunt.unlocksPage && huntPages[currentHunt.unlocksPage]) {
-      console.log(`📖 Unlocking next hunt page: ${currentHunt.unlocksPage}`)
       summaryEmbed.addFields({
         name: 'New Hunt Page Unlocked!',
         value: `You have unlocked **${
@@ -142,7 +140,7 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
 
   try {
     await interaction.followUp({ embeds: [summaryEmbed], ephemeral: false })
-    console.log('✅ Hunt summary successfully sent.')
+    console.log(`✅ Hunt summary successfully sent.`)
   } catch (error) {
     console.error('❌ Error sending hunt summary:', error)
   }

@@ -78,7 +78,7 @@ module.exports = {
       filter: (btnInteraction) =>
         btnInteraction.customId === `start_game_${userId}` &&
         btnInteraction.user.id === userId,
-      time: 30000,
+      time: 60000,
     })
 
     collector.on('collect', async (btnInteraction) => {
