@@ -306,8 +306,9 @@ async function startNewEncounter(interaction, user, huntData) {
     if (reason === 'time') {
       console.warn('⏳ Style selection timed out.')
       try {
-        await interaction.followUp({
-          content: 'Time expired. Please try again.',
+        await interaction.editReply({
+          content: 'Session expired. Please start again.',
+          components: [],
           ephemeral: true,
         })
       } catch (error) {

@@ -374,6 +374,7 @@ if (process.env.NODE_ENV === 'production') {
 
           // ✅ Fetch the latest user data to ensure values are updated
           const updatedUser = await checkUserAccount(interaction) // Refetch from DB
+          const pageData = huntPages[selectedPage]
 
           // ✅ Update the embed with the latest values
           const updatedEmbed = new EmbedBuilder()
@@ -410,10 +411,21 @@ if (process.env.NODE_ENV === 'production') {
         }
       })
 
-      collector.on('end', (collected, reason) => {
+      collector.on('end', async (collected, reason) => {
         console.log(
           `Collector ended. Reason: ${reason}. Interactions collected: ${collected.size}`
         )
+        if (reason === 'time') {
+          try {
+            await interaction.followUp({
+              content:
+                'Session expired. You did not select a fighting style in time. Please use /hunt to try again.',
+              ephemeral: true,
+            })
+          } catch (error) {
+            console.warn(`⚠️ followUp failed: ${error.message}`)
+          }
+        }
         collectors.delete(interaction.user.id)
       })
     },
