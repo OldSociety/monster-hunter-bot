@@ -179,22 +179,11 @@ async function updateOrAddMonsterToCollection(userId, monster) {
   let collectionEntry = await Collection.findOne({
     where: { userId, name: monster.name },
   })
+
   const category = classifyMonsterType(monster.type)
 
   if (collectionEntry) {
     collectionEntry.copies += 1
-    let levelIncreased = false
-
-    if (collectionEntry.copies >= 1 && collectionEntry.level < 7) {
-      collectionEntry.level += 1
-      collectionEntry.copies = 0
-      collectionEntry.m_score = calculateMScore(
-        monster.cr,
-        monster.rarity,
-        collectionEntry.level
-      )
-      levelIncreased = true
-    }
 
     await collectionEntry.save()
 
@@ -203,8 +192,8 @@ async function updateOrAddMonsterToCollection(userId, monster) {
     return {
       isDuplicate: true,
       name: monster.name,
-      previousLevel: collectionEntry.level - (levelIncreased ? 1 : 0),
-      newLevel: collectionEntry.level,
+      copies: collectionEntry.copies,
+      level: collectionEntry.level,
     }
   } else {
     const initialMScore = calculateMScore(monster.cr, monster.rarity, 1)

@@ -194,6 +194,19 @@ module.exports = {
       )
     }
 
+    const PromotionAvailable = await Collection.findOne({
+      where: { userId: user.id, copies: { [Op.gt]: 0 } },
+    })
+
+    if (PromotionAvailable) {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId('promote_cards')
+          .setLabel('Promote Cards')
+          .setStyle(ButtonStyle.Secondary)
+      )
+    }
+
     await interaction.editReply({
       embeds: [shopEmbed],
       components: [row],
