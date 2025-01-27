@@ -90,8 +90,8 @@ function getRarityByCR(cr) {
 }
 
 function convertNameToIndex(name) {
-  return name.toLowerCase().replace(/\s+/g, '-');
- }
+  return name.toLowerCase().replace(/\s+/g, '-')
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -267,6 +267,31 @@ module.exports = {
             const packType = interaction.customId.split('_')[1]
 
             await interaction.deferReply({ ephemeral: true })
+
+            // 🟢 Ensure cost lookup is valid
+            const packCost = PACK_COSTS[packType]
+            if (packCost === undefined) {
+              return interaction.editReply({
+                content: `Invalid pack type: ${packType}. Please contact support.`,
+                ephemeral: true,
+              })
+            }
+
+            // 🟢 Check if the user has enough gold
+            if (user.gold < packCost) {
+              return interaction.editReply({
+                content: `You don't have enough gold to buy this pack. Required: 🪙${packCost}, Available: 🪙${user.gold}`,
+                ephemeral: true,
+              })
+            }
+
+            // 🟢 Deduct gold from the user
+            user.gold -= packCost
+
+            // 🟢 Save user gold update before proceeding
+            await user.save()
+
+            // 🟢 Handle Ichor Pack separately (adds ichor, no monster reward)
             if (packType === 'ichor') {
               user.currency.ichor += 10
               await user.save()
@@ -279,23 +304,24 @@ module.exports = {
                 )
 
               return interaction.editReply({
-                content: `${interaction.user.username} purchased an **Ichor Pack**!`,
+                content: `${interaction.user.username} purchased an Ichor Pack!`,
                 embeds: [ichorEmbed],
               })
             }
 
+            // 🟢 Pull a monster from the selected pack
             const monster = await pullValidMonster(
               TIER_OPTIONS[packType],
               packType
             )
-
             if (!monster) {
               return interaction.editReply({
-                content: `Could not retrieve a valid monster for the **${packType}** pack. Please try again later or contact support.`,
+                content: `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`,
                 ephemeral: true,
               })
             }
 
+            // 🟢 Classify and display monster
             const category = classifyMonsterType(monster.type)
             const stars = getStarsBasedOnColor(monster.color)
             const monsterEmbed = generateMonsterRewardEmbed(
@@ -304,12 +330,13 @@ module.exports = {
               stars
             )
 
+            // 🟢 Update collection
             const result = await updateOrAddMonsterToCollection(userId, monster)
 
             await interaction.editReply({
               content: result.isDuplicate
-                ? `${interaction.user.username} obtained another **${result.name}**. It increased from Rank **${result.previousRank}** to **${result.newLevel}**!`
-                : `${interaction.user.username} pulled a new **${result.name}** from the **${packType} pack**!`,
+                ? `${interaction.user.username} obtained another ${result.name}. It increased from Rank ${result.previousRank} to ${result.newLevel}!`
+                : `${interaction.user.username} pulled a new ${result.name} from the ${packType} pack!`,
               embeds: [monsterEmbed],
             })
 
@@ -390,7 +417,9 @@ module.exports = {
             let assignedRarity = getRarityByCR(selectedMonster.cr)
 
             const imageUrl = selectedMonster
-              ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(selectedMonster.name)}.jpg`
+              ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(
+                  selectedMonster.name
+                )}.jpg`
               : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.jpg'
 
             const newScore = calculateMScore(
@@ -459,12 +488,13 @@ module.exports = {
 
             user.gold -= promotionCost
             monster.rank += 1
-          
 
             let assignedRarity = getRarityByCR(monster.cr)
 
             const imageUrl = monster
-              ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(monster.name)}.jpg`
+              ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(
+                  monster.name
+                )}.jpg`
               : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.jpg'
 
             monster.m_score = calculateMScore(
