@@ -61,37 +61,42 @@ function calculateMonsterHP(monster, difficulty) {
 }
 
 function createMonsterEmbed(monster, difficulty, ichorUsed, huntData) {
-    console.log(
-      `Creating embed for monster: ${monster.name}, difficulty: ${difficulty}, ichorUsed: ${ichorUsed}`
-    );
-  
-    const battleNumber = (huntData.currentBattleIndex ?? 0) + 1;
-    const totalBattles = huntData.level?.battles?.length || 1; 
-  
-    let title = monster.name;
-    if (difficulty === 'boss') title += ' ``Boss!``';
-    if (difficulty === 'mini-boss') title += ' ``Mini-boss``';
-    title += ` - ${battleNumber}/${totalBattles}`;
-  
-    const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setDescription(`**CR:** ${monster.cr ?? 'Unknown'}\n**Type:** ${monster.type ?? 'Unknown'}`)
-      .setColor('#FFA500')
-      .setThumbnail(
-        `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-      );
-  
-    if (ichorUsed) {
-      embed.addFields({
-        name: 'Ichor Invigoration',
-        value: 'You are invigorated with 🧪ichor! Your strength increases.',
-      });
-    }
-  
-    console.log(`Monster embed created. Battle Progress: ${battleNumber}/${totalBattles}`);
-    return embed;
+  console.log(
+    `Creating embed for monster: ${monster.name}, difficulty: ${difficulty}, ichorUsed: ${ichorUsed}`
+  )
+
+  const battleNumber = (huntData.currentBattleIndex ?? 0) + 1
+  const totalBattles = huntData.level?.battles?.length || 1
+
+  let title = monster.name
+  if (difficulty === 'boss') title += ' ``Boss!``'
+  if (difficulty === 'mini-boss') title += ' ``Mini-boss``'
+  title += ` - ${battleNumber}/${totalBattles}`
+
+  const embed = new EmbedBuilder()
+    .setTitle(title)
+    .setDescription(
+      `**CR:** ${monster.cr ?? 'Unknown'}\n**Type:** ${
+        monster.type ?? 'Unknown'
+      }`
+    )
+    .setColor('#FFA500')
+    .setThumbnail(
+      `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
+    )
+
+  if (ichorUsed) {
+    embed.addFields({
+      name: 'Ichor Invigoration',
+      value: 'You are invigorated with 🧪ichor! Your strength increases.',
+    })
   }
-  
+
+  console.log(
+    `Monster embed created. Battle Progress: ${battleNumber}/${totalBattles}`
+  )
+  return embed
+}
 
 function createStyleButtons(user) {
   console.log(`Creating style buttons for user: ${user.id}`)
@@ -341,10 +346,9 @@ async function startNewEncounter(interaction, user, huntData) {
       const advMultiplier = checkAdvantage(selectedStyle, monster.type)
       console.log(`Advantage multiplier: ${advMultiplier}`)
 
-
       await styleInteraction.editReply({
         embeds: [monsterEmbed],
-        components: [], 
+        components: [],
       })
 
       console.log('Running battle phases...')

@@ -138,6 +138,13 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
           huntPages[currentHunt.unlocksPage].name
         }**!`,
       })
+    } else if (currentHunt.unlocksPage === 'finished') {
+      // ✅ Only show this when the last hunt explicitly marks itself as finished
+      summaryEmbed.addFields({
+        name: 'All Available Hunts Completed!',
+        value:
+          'You have completed all the pages so far. Check in regularly for new releases.',
+      })
     }
   }
 

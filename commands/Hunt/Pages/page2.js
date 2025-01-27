@@ -62,7 +62,7 @@ module.exports = {
       totalBattles: 7,
       battles: [
         { type: 'normal', cr: 2, difficulty: 'medium', goldReward: 45 },
-        { type: 'normal', cr: 3, difficulty: 'easy', goldReward: 47 },
+        { type: 'normal', cr: 3, difficulty: 'medium', goldReward: 47 },
         { type: 'normal', cr: 3, difficulty: 'medium', goldReward: 49 },
         { type: 'normal', cr: 3, difficulty: 'medium', goldReward: 51 },
         { type: 'normal', cr: 3, difficulty: 'hard', goldReward: 52 },
@@ -91,8 +91,8 @@ module.exports = {
         { type: 'normal', cr: 3, difficulty: 'medium', goldReward: 47 },
         { type: 'normal', cr: 4, difficulty: 'medium', goldReward: 48 },
         { type: 'normal', cr: 4, difficulty: 'medium', goldReward: 49 },
-        { type: 'normal', cr: 5, difficulty: 'easy', goldReward: 50 },
-        { type: 'normal', cr: 6, difficulty: 'easy', goldReward: 49 },
+        { type: 'normal', cr: 5, difficulty: 'medium', goldReward: 50 },
+        { type: 'normal', cr: 6, difficulty: 'medium', goldReward: 49 },
         { type: 'normal', cr: 5, difficulty: 'medium', goldReward: 50 },
         { type: 'normal', cr: 5, difficulty: 'hard', goldReward: 52 },
         {
@@ -115,7 +115,7 @@ module.exports = {
       energyCost: 2,
       totalBattles: 8,
       battles: [
-        { type: 'normal', cr: 5, difficulty: 'easy', goldReward: 47 },
+        { type: 'normal', cr: 5, difficulty: 'medium', goldReward: 47 },
         { type: 'normal', cr: 5, difficulty: 'medium', goldReward: 47 },
         { type: 'normal', cr: 6, difficulty: 'medium', goldReward: 49 },
         { type: 'normal', cr: 6, difficulty: 'medium', goldReward: 51 },
@@ -136,9 +136,9 @@ module.exports = {
     {
       id: 11,
       key: 'hunt11',
-      name: 'Umber Hulk',
+      name: 'Gorgon',
       description:
-        'Kill the sea hag before more fall under her drowned man curse!',
+        'Maud knows you hunt him and has unleashed the dreaded Gorgon to stop you!',
       energyCost: 2,
       totalBattles: 8,
       battles: [
@@ -152,7 +152,7 @@ module.exports = {
         {
           type: 'mini-boss',
           cr: 2,
-          monsterIndex: 'umber-hulk',
+          monsterIndex: 'gorgon',
           difficulty: 'boss-full',
           firstGoldReward: 970,
           goldReward: 75,
@@ -163,17 +163,17 @@ module.exports = {
     {
       id: 12,
       key: 'hunt12',
-      name: 'Maud',
+      name: 'Vampire Lord Maud',
       description: `Finally, you've reached Maud's lair. Are you ready?`,
       energyCost: 2,
       totalBattles: 10,
       battles: [
         { type: 'normal', cr: 2, difficulty: 'very-hard', goldReward: 75 },
         { type: 'normal', cr: 4, difficulty: 'very-hard', goldReward: 77 },
-        { type: 'normal', cr: 6, difficulty: 'very-hard', goldReward: 79 },
-        { type: 'normal', cr: 8, difficulty: 'very-hard', goldReward: 81 },
+        { type: 'normal', cr: 6, difficulty: 'hard', goldReward: 79 },
+        { type: 'normal', cr: 8, difficulty: 'medium', goldReward: 81 },
         { type: 'normal', cr: 7, difficulty: 'medium', goldReward: 83 },
-        { type: 'normal', cr: 8, difficulty: 'medium', goldReward: 85 },
+        { type: 'normal', cr: 8, difficulty: 'hard', goldReward: 85 },
         { type: 'normal', cr: 9, difficulty: 'medium', goldReward: 87 },
         { type: 'normal', cr: 11, difficulty: 'medium', goldReward: 89 },
         { type: 'normal', cr: 12, difficulty: 'hard', goldReward: 91 },
@@ -186,7 +186,7 @@ module.exports = {
           goldReward: 93,
         },
       ],
-      unlocksPage: 'page2',
+      unlocksPage: 'finished',
     },
   ],
 }

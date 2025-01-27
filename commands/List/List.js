@@ -8,11 +8,19 @@ const {
 const { checkUserAccount } = require('../Account/checkAccount.js')
 const fs = require('fs')
 const path = require('path')
-let cacheMonstersByTier
-;(async () => {
-  const module = await import('../../handlers/pullHandler.js')
-  cacheMonstersByTier = module.cacheMonstersByTier
-})()
+let cacheMonstersByTier;
+
+async function loadMonsterCache() {
+  const module = await import('../../handlers/pullHandler.js');
+  cacheMonstersByTier = module.cacheMonstersByTier;
+}
+
+module.exports = {
+  async execute(interaction) {
+    await loadMonsterCache(); // Ensure it loads before running commands
+  }
+};
+
 
 const assetsPath = path.join(__dirname, '..', '..', 'assets')
 const creatureFiles = fs.readdirSync(assetsPath)
@@ -54,6 +62,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    console.log('hi')
     if (!interaction.member.roles.cache.has(process.env.ADMINROLEID)) {
       return interaction.reply({
         content: 'You do not have permission to run this command.',
@@ -61,6 +70,7 @@ module.exports = {
       })
     }
     await interaction.deferReply()
+    await loadMonsterCache();
     const userId = interaction.user.id
 
     const user = await checkUserAccount(interaction)

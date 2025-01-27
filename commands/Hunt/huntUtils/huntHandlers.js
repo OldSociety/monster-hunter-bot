@@ -71,11 +71,13 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   }
 
   // ✅ Dropdown menu for selecting a hunt
-  const huntOptions = unlockedHunts.map((hunt) => ({
-    label: `${hunt.name} ${energyCostToEmoji(hunt.energyCost)}`,
-    description: hunt.description,
-    value: `hunt_${hunt.key}`,
-  }))
+  const huntOptions = unlockedHunts
+    .map((hunt) => ({
+      label: `${hunt.name} ${energyCostToEmoji(hunt.energyCost)}`,
+      description: hunt.description,
+      value: `hunt_${hunt.key}`,
+    }))
+    .reverse()
 
   const dropdownRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
