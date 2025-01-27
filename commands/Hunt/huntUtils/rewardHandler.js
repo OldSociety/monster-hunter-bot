@@ -77,8 +77,10 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
 
   await addRewardToUser(user, totalGoldEarned, totalTokensEarned)
 
+  const winTitle = levelCompleted ? 'Victory ' : 'Defeated '
+
   const summaryEmbed = new EmbedBuilder()
-    .setTitle('Hunt Summary')
+    .setTitle(`${winTitle}- Hunt Summary`)
     .setDescription(
       `**Gold Earned:** 🪙${totalGoldEarned}\n**Tokens Earned:** 🧿${totalTokensEarned}`
     )
@@ -98,32 +100,37 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       huntData.level.id
     )
 
-    if (huntData.level.id > user.completedLevels) {
+    // Store the old value before updating
+    const previousCompletedLevels = user.completedLevels
+
+    console.log(`🧐 Previous Completed Levels: ${previousCompletedLevels}`)
+    console.log(`🧐 Current Hunt ID: ${huntData.level.id}`)
+
+    // ✅ Single condition to handle both completion and unlock message
+    if (huntData.level.id === user.completedLevels + 1) {
       console.log(
-        `📈 Increasing completedLevels from ${user.completedLevels} to ${huntData.level.id}`
+        `📈 Progressing from ${user.completedLevels} → ${huntData.level.id}`
       )
       user.completedLevels = huntData.level.id
       await user.save()
-    }
 
-    if (currentHunt.unlocks) {
-      const nextHunt = huntPages[pageKey].hunts.find(
-        (hunt) => hunt.key === currentHunt.unlocks
-      )
+      if (currentHunt.unlocks) {
+        const nextHunt = huntPages[pageKey].hunts.find(
+          (hunt) => hunt.key === currentHunt.unlocks
+        )
+        if (nextHunt) {
+          console.log(`🔓 Unlocking: ${nextHunt.name}`)
 
-      if (nextHunt && nextHunt.id > user.completedLevels) {
-        console.log(`🔓 Unlocking next hunt: ${nextHunt.name}`)
+          summaryEmbed.spliceFields(0, 0, {
+            name: 'Next Hunt Unlocked!',
+            value: `You have unlocked **${nextHunt.name}**!`,
+          })
 
-        user.completedLevels = nextHunt.id
-
-        await user.save()
-
-        summaryEmbed.spliceFields(0, 0, {
-          name: 'Next Hunt Unlocked!',
-          value: `You have unlocked **${nextHunt.name}**!`,
-        })
+          console.log(`✅ Unlock message added.`)
+        }
       }
     }
+
     if (currentHunt.unlocksPage && huntPages[currentHunt.unlocksPage]) {
       summaryEmbed.addFields({
         name: 'New Hunt Page Unlocked!',

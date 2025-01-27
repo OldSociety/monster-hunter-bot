@@ -12,12 +12,11 @@ module.exports = {
       energyCost: 1,
       totalBattles: 3,
       battles: [
-        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
-        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
-        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
+        { type: 'normal', minHp: 16, maxHp: 20, difficulty: 'easy', goldReward: 24 },
+        { type: 'normal', minHp: 7, maxHp: 10, difficulty: 'normal', goldReward: 24 },
+        { type: 'normal', minHp: 16, maxHp: 20, difficulty: 'easy', goldReward: 24 },
         {
           type: 'mini-boss',
-          cr: 0.25,
           monsterIndex: 'darkmantle',
           difficulty: 'boss-half',
           firstGoldReward: 700,
@@ -40,7 +39,6 @@ module.exports = {
         { type: 'normal', cr: 0.5, difficulty: 'easy', goldReward: 28 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'harpy',
           difficulty: 'boss-half',
           firstGoldReward: 650,
@@ -66,7 +64,6 @@ module.exports = {
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'rust-monster',
           difficulty: 'boss-full',
           firstGoldReward: 980,
@@ -94,7 +91,6 @@ module.exports = {
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'sea-hag',
           difficulty: 'boss-full',
           firstGoldReward: 1080,
@@ -123,7 +119,6 @@ module.exports = {
         { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
         {
           type: 'mini-boss',
-          cr: 4,
           monsterIndex: 'red-dragon-wyrmling',
           difficulty: 'boss-strong',
           firstGoldReward: 1540,

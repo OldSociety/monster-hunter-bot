@@ -62,7 +62,18 @@ async function runBattlePhases(
         minimumRoll
       )
     )
-    let monsterRoll = Math.round(Math.random() * monsterScore)
+
+    // ✅ Apply Minimum Monster Roll for Mini-Bosses & Bosses
+    let monsterMinRoll =
+      battleType === 'boss'
+        ? monsterScore * 0.5 // Boss min roll is 50% of score
+        : battleType === 'mini-boss'
+        ? monsterScore * 0.25 // Mini-boss min roll is 25% of score
+        : 0 // Normal monsters have no minimum roll
+
+    let monsterRoll = Math.round(
+      Math.max(Math.random() * monsterScore, monsterMinRoll)
+    )
 
     console.log(`Player Roll: ${playerRoll}, Monster Roll: ${monsterRoll}`)
 
@@ -74,11 +85,18 @@ async function runBattlePhases(
     if (phaseResult === 'Hit!') {
       playerWins++
       const margin = playerRoll - monsterRoll
+      const percentage = (margin / monsterScore) * 100 // How much % higher player roll is
 
-      if (margin > 15) segmentLoss = 3
-      else if (margin > 5) segmentLoss = 2
-      else segmentLoss = 1
+      if (percentage >= 50) {
+        segmentLoss = 3
+      } else if (percentage >= 25) {
+        segmentLoss = 2
+      } else {
+        segmentLoss = 1
+      }
 
+      // Ensure at least 1 segment is removed on a hit
+      segmentLoss = Math.max(segmentLoss, 1)
       momentum -= Math.min(segmentLoss, momentum)
 
       if (playerWins >= 4) {
