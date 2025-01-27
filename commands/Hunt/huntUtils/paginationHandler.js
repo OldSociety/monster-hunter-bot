@@ -17,7 +17,7 @@ function createPageButtons(currentPage, completedLevels) {
   const buttons = availablePages.map((page) =>
     new ButtonBuilder()
       .setCustomId(`page_${page}`)
-      .setLabel(page === currentPage ? `[${page}]` : page) // ✅ Highlights current page
+      .setLabel(page === currentPage ? `[${page}]` : page)
       .setStyle(ButtonStyle.Primary)
   )
 

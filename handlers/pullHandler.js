@@ -1,11 +1,10 @@
 // pullHandler.js
 const fs = require('fs')
 const path = require('path')
-const { Op } = require('sequelize') // ✅ Ensure Op is imported
+const { Op } = require('sequelize') 
 const { allowedMonstersByPack } = require('../utils/shopMonsters')
 const { updateOrAddMonsterToCollection } = require('./userMonsterHandler')
 
-// ✅ Use dynamic import for node-fetch to avoid ESM errors
 const fetch = (...args) =>
   import('node-fetch').then(({ default: fetch }) => fetch(...args))
 

@@ -233,19 +233,15 @@ module.exports = {
           return
         }
 
-        // ✅ Deduct Energy
         user.currency.energy -= selectedHunt.energyCost
         user.changed('currency', true)
         await user.save()
 
-        // ✅ Ensure the saved value is correct
         console.log(
           `📉 Energy after deduction: ${user.currency.energy} (Should be ${
             user.currency.energy + selectedHunt.energyCost
           } - ${selectedHunt.energyCost})`
         )
-
-        // ✅ Ensure interaction is handled properly
         try {
           if (!i.replied && !i.deferred) {
             await i.deferUpdate()
@@ -257,11 +253,11 @@ module.exports = {
           console.warn(`⚠️ deferUpdate failed: ${error.message}`)
         }
 
-        // ✅ Fetch the latest user data to ensure values are updated
+
         const updatedUser = await checkUserAccount(interaction) // Refetch from DB
         const pageData = huntPages[selectedPage]
 
-        // ✅ Update the embed with the latest values
+
         const updatedEmbed = new EmbedBuilder()
           .setTitle(selectedHunt.name)
           .setDescription(

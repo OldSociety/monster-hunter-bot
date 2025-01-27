@@ -77,7 +77,6 @@ eventHandler(client)
 const messageHandler = require('./handlers/messageHandler')
 messageHandler(client, User)
 
-// Schedule a cron job to refill energy every 10 minutes
 if (process.env.NODE_ENV === 'production') {
   cron.schedule('*/10 * * * *', async () => {
     try {
@@ -92,7 +91,6 @@ if (process.env.NODE_ENV === 'production') {
           dice: 0,
         }
 
-        // Ensure currency is an object (fix for potential string storage issue)
         if (typeof currency !== 'object') {
           currency = { energy: 10, gems: 0, eggs: 0, ichor: 0, dice: 0 }
         }
@@ -103,26 +101,23 @@ if (process.env.NODE_ENV === 'production') {
           currency.energy = Math.min(currentEnergy + 1, 15)
 
           user.set('currency', currency)
-          user.changed('currency', true) // Mark it as changed manually
+          user.changed('currency', true)
 
           await user.save()
 
-          // console.log(
-          //   `User ID: ${user.user_id} - Energy increased to ${currency.energy}`
-          // )
-        } else {
-          console.log(`User ID: ${user.user_id} already has maximum energy.`)
+          console.log(
+            `User ID: ${user.user_id} - Energy increased to ${currency.energy}`
+          )
         }
       }
 
-      // console.log('Energy refilled for all users.')
+
     } catch (error) {
       console.error('Error refilling energy:', error)
     }
   })
 }
 
-// Log in to Discord with client's token
 client.login(process.env.TOKEN)
 
 module.exports = { sequelize }

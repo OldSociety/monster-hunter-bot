@@ -106,7 +106,6 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
     console.log(`🧐 Previous Completed Levels: ${previousCompletedLevels}`)
     console.log(`🧐 Current Hunt ID: ${huntData.level.id}`)
 
-    // ✅ Single condition to handle both completion and unlock message
     if (huntData.level.id === user.completedLevels + 1) {
       console.log(
         `📈 Progressing from ${user.completedLevels} → ${huntData.level.id}`
@@ -139,7 +138,6 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
         }**!`,
       })
     } else if (currentHunt.unlocksPage === 'finished') {
-      // ✅ Only show this when the last hunt explicitly marks itself as finished
       summaryEmbed.addFields({
         name: 'All Available Hunts Completed!',
         value:

@@ -599,7 +599,7 @@ async function startGame(interaction, userData) {
           return
         }
 
-        userGameState.running = true // ✅ Set flag before calling playRound()
+        userGameState.running = true
 
         try {
           await playRound(btnInteraction)
@@ -609,7 +609,6 @@ async function startGame(interaction, userData) {
           )
         }
 
-        // ✅ Ensure flag resets even if playRound() fails
         console.log(
           `[Collector] Resetting gameState.running for user: ${userId}`
         )

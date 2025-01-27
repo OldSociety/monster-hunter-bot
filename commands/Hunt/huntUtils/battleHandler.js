@@ -63,7 +63,7 @@ async function runBattlePhases(
       )
     )
 
-    // ✅ Apply Minimum Monster Roll for Mini-Bosses & Bosses
+
     let monsterMinRoll =
       battleType === 'boss'
         ? monsterScore * 0.5 // Boss min roll is 50% of score

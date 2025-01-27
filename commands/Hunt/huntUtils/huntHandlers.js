@@ -19,7 +19,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   let totalHuntsBefore = 0
   let unlockedPages = []
 
-  // ✅ Determine unlocked pages based on completed levels
   for (const [pageKey, pageData] of Object.entries(huntPages)) {
     if (completedLevels >= totalHuntsBefore) {
       unlockedPages.push(pageKey)
@@ -30,7 +29,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
   console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
 
-  // ✅ Set the current page based on button press or highest unlocked page
   const currentPage =
     typeof newPage === 'string' ? newPage : highestUnlockedPage
   console.log(`📖 Current Page after button press: ${currentPage}`)
@@ -45,7 +43,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     })
   }
 
-  // ✅ Count previous hunts to determine how many are completed in the current page
   totalHuntsBefore = Object.keys(huntPages)
     .slice(0, Object.keys(huntPages).indexOf(currentPage))
     .reduce((sum, key) => sum + huntPages[key].hunts.length, 0)
@@ -53,7 +50,7 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   let completedLevelsOnPage = completedLevels - totalHuntsBefore
   console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`)
 
-  // ✅ Filter unlocked hunts
+
   const unlockedHunts = pageData.hunts.filter(
     (hunt) => hunt.id <= completedLevels + 1
   )
@@ -70,7 +67,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     })
   }
 
-  // ✅ Dropdown menu for selecting a hunt
   const huntOptions = unlockedHunts
     .map((hunt) => ({
       label: `${hunt.name} ${energyCostToEmoji(hunt.energyCost)}`,
@@ -86,7 +82,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       .addOptions(huntOptions)
   )
 
-  // ✅ Generate page-switching buttons
   let pageRow = null
   if (unlockedPages.length > 1) {
     console.log(`🔄 Adding page-switching buttons: ${unlockedPages}`)
@@ -105,7 +100,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     )
   }
 
-  // ✅ Action buttons: Drink Ichor & Cancel Hunt
   const buttonRow = new ActionRowBuilder().addComponents(
     ...(user.currency.ichor > 0 && !huntData.ichorUsed
       ? [
@@ -121,7 +115,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       .setStyle(ButtonStyle.Danger)
   )
 
-  // ✅ Embed
   const embed = new EmbedBuilder()
     .setTitle(pageData.name)
     .setDescription(
@@ -139,7 +132,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     })
   }
 
-  // ✅ Arrange components in correct order
   const components = [dropdownRow]
   if (pageRow) components.push(pageRow)
   components.push(buttonRow)
