@@ -20,23 +20,17 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    console.log(
-      `Developer Hunt command executed by: ${interaction.user.tag} (ID: ${interaction.user.id})`
-    )
-
     await interaction.deferReply({ ephemeral: true })
 
-    console.log('Checking user account...')
+
     const user = await checkUserAccount(interaction)
     if (!user) {
       console.warn('User does not have an account.')
       return
     }
 
-    console.log('Stopping any existing collector for this user...')
     stopUserCollector(interaction.user.id) //
 
-    console.log('Initializing user hunt state...')
     const highestUnlockedPage = Object.keys(huntPages).find(
       (pageKey, index) => {
         const totalHuntsBefore = Object.keys(huntPages)
@@ -51,7 +45,7 @@ module.exports = {
     user.completedHunts = user.completedHunts || []
 
     try {
-      console.log('Fetching user monster collection...')
+
       const userCollection = await Collection.findOne({
         where: { userId: interaction.user.id },
       })
@@ -77,16 +71,13 @@ module.exports = {
       })
     }
 
-    console.log('Displaying loading message...')
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xffcc00)
       .setDescription('Loading hunt data, please wait...')
     await interaction.editReply({ embeds: [loadingEmbed] })
 
-    console.log('Caching hunt monsters...')
     await cacheHuntMonsters()
 
-    console.log('Initializing hunt data...')
     let huntData = {
       totalMonstersDefeated: 0,
       totalGoldEarned: 0,
@@ -98,10 +89,9 @@ module.exports = {
       inProgress: false,
     }
 
-    console.log('Calling showLevelSelection()...')
+
     await showLevelSelection(interaction, user, huntData)
 
-    console.log('Setting up message component collector...')
     const filter = (i) => i.user.id === interaction.user.id
 
     stopUserCollector(interaction.user.id)
@@ -114,14 +104,14 @@ module.exports = {
     collectors.set(interaction.user.id, collector)
 
     collector.on('collect', async (i) => {
-      console.log(`Collector received interaction: ${i.customId}`)
+
 
       if (i.customId === 'use_ichor') {
-        console.log('🧪 Ichor used!')
+
         await i.deferUpdate()
 
         if (user.currency.ichor < 1) {
-          console.warn('⚠️ Not enough ichor!')
+
           await interaction.followUp({
             content: "You don't have enough 🧪ichor to use this option.",
             ephemeral: true,
@@ -130,7 +120,7 @@ module.exports = {
         }
 
         if (huntData.ichorUsed) {
-          console.warn('⚠️ Ichor already used!')
+
           await interaction.followUp({
             content: 'You have already used Ichor for this hunt!',
             ephemeral: true,
@@ -144,18 +134,17 @@ module.exports = {
 
         huntData.ichorUsed = true
 
-        console.log('✅ Ichor applied. Reloading hunt selection...')
+
         await showLevelSelection(interaction, user, huntData, user.id)
         return
       }
 
       if (i.customId === 'cancel_hunt') {
-        console.log('User canceled hunt.')
+
 
         let cancelMessage = 'Hunt cancelled.'
 
         if (huntData.ichorUsed) {
-          console.log('Refunding Ichor since the hunt was cancelled.')
           user.currency.ichor += 1
           huntData.ichorUsed = false
           await user.save()
@@ -180,7 +169,6 @@ module.exports = {
 
       if (i.customId.startsWith('page_')) {
         const newPage = i.customId.replace('page_', '')
-        console.log(`📖 Switching to page: ${newPage}`)
 
         await i.deferUpdate()
         await showLevelSelection(interaction, user, huntData, newPage)
@@ -188,7 +176,6 @@ module.exports = {
       }
 
       if (i.customId === 'hunt_select') {
-        console.log(`✅ Hunt selected: ${i.values[0]}`)
 
         const selectedHuntKey = i.values[0].replace('hunt_', '')
 
@@ -237,15 +224,9 @@ module.exports = {
         user.changed('currency', true)
         await user.save()
 
-        console.log(
-          `📉 Energy after deduction: ${user.currency.energy} (Should be ${
-            user.currency.energy + selectedHunt.energyCost
-          } - ${selectedHunt.energyCost})`
-        )
         try {
           if (!i.replied && !i.deferred) {
             await i.deferUpdate()
-            console.log(`✅ Interaction ${i.id} deferred successfully.`)
           } else {
             console.warn(`⚠️ Interaction ${i.id} was already handled.`)
           }
@@ -287,15 +268,11 @@ module.exports = {
         i.customId.startsWith('prev_page_') ||
         i.customId.startsWith('next_page_')
       ) {
-        console.log(`Handling pagination for: ${i.customId}`)
         await handlePagination(i, user)
       }
     })
 
     collector.on('end', async (collected, reason) => {
-      console.log(
-        `Collector ended. Reason: ${reason}. Interactions collected: ${collected.size}`
-      )
       if (reason === 'time') {
         try {
           await interaction.followUp({

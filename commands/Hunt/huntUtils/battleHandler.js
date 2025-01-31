@@ -27,12 +27,6 @@ async function runBattlePhases(
   huntData,
   battleType
 ) {
-  console.log(`runBattlePhases() called for user: ${interaction.user.tag}`)
-  console.log(`Battle Type: ${battleType}`)
-  console.log(`Player Score: ${playerScore}, Monster Score: ${monsterScore}`)
-  console.log(`Advantage Multiplier: ${advMultiplier}`)
-  console.log(`Ichor Used: ${huntData.ichorUsed}`)
-
   if (!playerScore || !monsterScore) {
     console.error('Invalid player or monster score provided.')
     return false
@@ -74,11 +68,7 @@ async function runBattlePhases(
     let monsterRoll = Math.round(
       Math.max(Math.random() * monsterScore, monsterMinRoll)
     )
-
-    console.log(`Player Roll: ${playerRoll}, Monster Roll: ${monsterRoll}`)
-
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
-    console.log(`Phase Result: ${phaseResult}`)
 
     let segmentLoss = 0
 
@@ -100,7 +90,6 @@ async function runBattlePhases(
       momentum -= Math.min(segmentLoss, momentum)
 
       if (playerWins >= 4) {
-        console.log(`Player won the battle in Phase ${phase}`)
         user.currency.gems = (user.currency.gems || 0) + 1
         user.changed('currency', true)
         await user.save()
@@ -108,7 +97,6 @@ async function runBattlePhases(
       }
     } else {
       monsterWins++
-      console.log(`Monster Wins: ${monsterWins}`)
     }
 
     const healthBar = createHealthBar(momentum, maxMomentum)
@@ -120,8 +108,6 @@ async function runBattlePhases(
       ]
         .filter(Boolean)
         .join(', ') || 'None'
-
-    console.log(`Effects: ${effects}`)
 
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
@@ -153,11 +139,6 @@ async function runBattlePhases(
     if (monsterWins === 4) return false
   }
 
-  console.log(
-    `Final battle result: ${
-      playerWins >= 4 ? 'Player Victory' : 'Monster Victory'
-    }`
-  )
   return playerWins >= 4
 }
 

@@ -32,7 +32,6 @@ async function setupFreeRewardCollector(rewardMessage) {
   shuffleArray(rewards)
 
   const usersWhoClaimed = new Set() // Track users who claimed
-  console.log(usersWhoClaimed)
 
   const filter = (reaction, user) => {
     return (
@@ -93,7 +92,6 @@ async function setupFreeRewardCollector(rewardMessage) {
 
   collector.on('end', (collected) => {
     if (collected.size === 0) {
-      console.log('No selections were made.')
     }
   })
 

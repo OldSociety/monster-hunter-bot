@@ -17,10 +17,6 @@ const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { huntPages } = require('../huntPages.js')
 
 function selectMonster(huntData, currentBattle) {
-  console.log(
-    `Selecting monster for battle index: ${huntData.currentBattleIndex}, retries: ${huntData.retries}`
-  )
-
   if (huntData.lastMonster && huntData.retries > 0) {
     console.log('Reusing last monster due to retries.')
     return huntData.lastMonster
@@ -31,17 +27,11 @@ function selectMonster(huntData, currentBattle) {
       ? pullSpecificMonster(currentBattle.monsterIndex)
       : pullMonsterByCR(currentBattle.cr)
 
-  console.log(
-    `Monster selected: ${selectedMonster ? selectedMonster.name : 'None found'}`
-  )
+
   return selectedMonster
 }
 
 function calculateMonsterHP(monster, difficulty) {
-  console.log(
-    `Calculating HP for monster: ${monster.name}, difficulty: ${difficulty}`
-  )
-
   const difficultyModifiers = {
     easy: 0.5,
     medium: 1,
@@ -56,15 +46,10 @@ function calculateMonsterHP(monster, difficulty) {
     8
   )
 
-  console.log(`Final monster HP: ${finalHP}`)
   return finalHP
 }
 
 function createMonsterEmbed(monster, difficulty, ichorUsed, huntData) {
-  console.log(
-    `Creating embed for monster: ${monster.name}, difficulty: ${difficulty}, ichorUsed: ${ichorUsed}`
-  )
-
   const battleNumber = (huntData.currentBattleIndex ?? 0) + 1
   const totalBattles = huntData.level?.battles?.length || 1
 
@@ -92,9 +77,6 @@ function createMonsterEmbed(monster, difficulty, ichorUsed, huntData) {
     })
   }
 
-  console.log(
-    `Monster embed created. Battle Progress: ${battleNumber}/${totalBattles}`
-  )
   return embed
 }
 
@@ -289,7 +271,6 @@ async function startNewEncounter(interaction, user, huntData) {
   )
   const styleRow = createStyleButtons(user)
 
-  console.log(`Sending monster embed and buttons to ${interaction.user.tag}...`)
   await interaction.followUp({
     embeds: [monsterEmbed],
     components: [styleRow],
@@ -297,12 +278,10 @@ async function startNewEncounter(interaction, user, huntData) {
   })
 
   if (huntData.styleCollector) {
-    console.log('Stopping previous style collector.')
     huntData.styleCollector.stop()
   }
 
   const filter = (i) => i.user.id === interaction.user.id
-  console.log('Setting up interaction collector for battle style selection...')
   const styleCollector = interaction.channel.createMessageComponentCollector({
     filter,
     max: 1,
@@ -313,9 +292,7 @@ async function startNewEncounter(interaction, user, huntData) {
   collectors.set(interaction.user.id, styleCollector)
 
   styleCollector.on('collect', async (styleInteraction) => {
-    console.log(`Collector received interaction: ${styleInteraction.customId}`)
-
-    // Prevent duplicate interactions
+ // Prevent duplicate interactions
     if (huntData.styleInteractionHandled) {
       console.warn('⚠️ Duplicate interaction detected. Ignoring.')
       return
@@ -337,21 +314,16 @@ async function startNewEncounter(interaction, user, huntData) {
           .catch((err) => console.warn('⚠️ deferUpdate failed:', err))
       }
 
-      console.log(`Style selected: ${styleInteraction.customId}`)
-
       const selectedStyle = styleInteraction.customId.split('_')[1]
-      console.log(`Selected battle style: ${selectedStyle}`)
 
       const playerScore = user[`${selectedStyle}_score`]
       const advMultiplier = checkAdvantage(selectedStyle, monster.type)
-      console.log(`Advantage multiplier: ${advMultiplier}`)
 
       await styleInteraction.editReply({
         embeds: [monsterEmbed],
         components: [],
       })
 
-      console.log('Running battle phases...')
       const playerWins = await runBattlePhases(
         styleInteraction,
         user,
@@ -364,7 +336,6 @@ async function startNewEncounter(interaction, user, huntData) {
       )
 
       if (playerWins) {
-        console.log('✅ Player won the battle.')
         huntData.totalMonstersDefeated += 1
         huntData.totalGoldEarned += currentBattle.goldReward || 0
         huntData.currentBattleIndex += 1
@@ -372,18 +343,14 @@ async function startNewEncounter(interaction, user, huntData) {
         huntData.lastMonster = null
 
         if (huntData.currentBattleIndex >= huntData.level.battles.length) {
-          console.log('🏆 Final battle completed! Displaying summary.')
           await displayHuntSummary(styleInteraction, user, huntData, true)
         } else {
-          console.log('Moving to next battle...')
           huntData.styleInteractionHandled = false // Reset flag for next battle
           await startNewEncounter(styleInteraction, user, huntData)
         }
       } else {
-        console.log('❌ Player lost the battle.')
         huntData.retries += 1
         if (huntData.retries < 3) {
-          console.log(`Retrying battle (Attempt ${huntData.retries}/3)...`)
           huntData.styleInteractionHandled = false // Reset flag for retry
           await offerRetry(styleInteraction, user, huntData)
         } else {

@@ -19,7 +19,6 @@ function getRaritySymbol(cr) {
 }
 
 function createButtons(activePage) {
-  console.log(`Creating buttons, active page: ${activePage}`)
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('overview')
@@ -52,13 +51,11 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    console.log(`Received /account command from user: ${interaction.user.id}`)
     const userId = interaction.user.id
     let category = interaction.options.getString('style') || 'overview'
 
     stopUserCollector(userId)
     await interaction.deferReply({ ephemeral: true })
-    console.log(`Interaction deferred for user: ${userId}`)
 
     try {
       let user = await User.findOne({ where: { user_id: userId } })
@@ -97,10 +94,7 @@ module.exports = {
         })
       }
 
-      console.log(`User found: ${userId}, fetching collection data...`)
-
       const displayEmbed = async (category) => {
-        console.log(`Generating embed for category: ${category}`)
         let embedColor =
           {
             brute: '#FF0000',
@@ -110,7 +104,6 @@ module.exports = {
           }[category] || '#00FF00'
 
         if (category === 'overview') {
-          console.log('Generating overview stats...')
           const crCategories = {
             Common: [0, 4],
             Uncommon: [5, 10],
@@ -136,7 +129,6 @@ module.exports = {
               const count = await Collection.count({
                 where: { userId: userId, ...condition },
               })
-              console.log(`Rarity ${rarity}: ${count} collected`)
               return { rarity, count }
             })
           )
@@ -167,7 +159,6 @@ module.exports = {
           return statsEmbed
         }
 
-        console.log(`Fetching top cards for category: ${category}`)
         const categoryField = `top_${category}s`
         const topCardsIds = user[categoryField] || []
 
@@ -214,14 +205,12 @@ module.exports = {
         return statsEmbed
       }
 
-      console.log(`Sending initial reply for user: ${userId}`)
       await interaction.editReply({
         embeds: [await displayEmbed(category)],
         components: [createButtons(category)],
         ephemeral: true,
       })
 
-      console.log(`Setting up button collector for user: ${userId}`)
       const collector = interaction.channel.createMessageComponentCollector({
         filter: (i) => i.user.id === userId,
         time: 60000,
@@ -230,7 +219,6 @@ module.exports = {
       collectors.set(userId, collector)
 
       collector.on('collect', async (btnInteraction) => {
-        console.log(`Button clicked: ${btnInteraction.customId}`)
         await btnInteraction.deferUpdate()
         await btnInteraction.editReply({
           embeds: [await displayEmbed(btnInteraction.customId)],

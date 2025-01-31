@@ -20,7 +20,6 @@ module.exports = {
         { type: 'normal', cr: 1, difficulty: 'hard', goldReward: 51 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'bandit-captain',
           difficulty: 'boss-full',
           firstGoldReward: 750,
@@ -44,7 +43,6 @@ module.exports = {
         { type: 'normal', cr: 2, difficulty: 'medium', goldReward: 52 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'gibbering-mouther',
           difficulty: 'boss-full',
           firstGoldReward: 810,
@@ -69,7 +67,6 @@ module.exports = {
         { type: 'normal', cr: 4, difficulty: 'medium', goldReward: 53 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'vampire-spawn',
           difficulty: 'boss-full',
           firstGoldReward: 870,
@@ -97,7 +94,6 @@ module.exports = {
         { type: 'normal', cr: 5, difficulty: 'hard', goldReward: 52 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'deva',
           difficulty: 'boss-full',
           firstGoldReward: 1180,
@@ -124,7 +120,6 @@ module.exports = {
         { type: 'normal', cr: 7, difficulty: 'medium', goldReward: 55 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'chimera',
           difficulty: 'boss-full',
           firstGoldReward: 930,
@@ -151,7 +146,6 @@ module.exports = {
         { type: 'normal', cr: 8, difficulty: 'very-hard', goldReward: 56 },
         {
           type: 'mini-boss',
-          cr: 2,
           monsterIndex: 'gorgon',
           difficulty: 'boss-full',
           firstGoldReward: 970,
@@ -179,10 +173,9 @@ module.exports = {
         { type: 'normal', cr: 12, difficulty: 'hard', goldReward: 91 },
         {
           type: 'boss',
-          cr: 13,
           monsterIndex: 'vampire-vampire',
           difficulty: 'boss-strong',
-          firstGoldReward: 2240,
+          firstGoldReward: 2253,
           goldReward: 93,
         },
       ],
