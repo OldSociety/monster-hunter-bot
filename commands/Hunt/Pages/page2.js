@@ -13,7 +13,7 @@ module.exports = {
       energyCost: 1,
       totalBattles: 6,
       battles: [
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 43 },
+        { type: 'normal', monsterIndex: 'nightmare', difficulty: 'hard', goldReward: 43 }, // 102
         { type: 'normal', cr: 2, difficulty: 'medium', goldReward: 45 },
         { type: 'normal', cr: 2, difficulty: 'medium', goldReward: 47 },
         { type: 'normal', cr: 1, difficulty: 'hard', goldReward: 49 },
@@ -21,7 +21,7 @@ module.exports = {
         {
           type: 'mini-boss',
           monsterIndex: 'bandit-captain',
-          difficulty: 'boss-full',
+          difficulty: 'boss-strong', // 97
           firstGoldReward: 750,
           goldReward: 55,
         },

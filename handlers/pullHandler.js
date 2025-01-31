@@ -34,69 +34,74 @@ const defaultTiers = [
 ]
 
 async function cacheMonstersByTier() {
-  if (cachePopulated) return
+  if (cachePopulated) {
+    console.log("[CACHE] Already populated, skipping.");
+    return;
+  }
 
-  console.log('[CACHE] Fetching monster list from API...')
+  console.log("[CACHE] Fetching monster list from API...");
 
   try {
-    const response = await fetch('https://www.dnd5eapi.co/api/monsters')
-    if (!response.ok) throw new Error(`API response error: ${response.status}`)
+    const response = await fetch('https://www.dnd5eapi.co/api/monsters');
+    if (!response.ok) throw new Error(`API response error: ${response.status}`);
 
-    const data = await response.json()
+    const data = await response.json();
+    let addedCount = 0;  // Track how many monsters are added
 
     for (const monster of data.results) {
       try {
-        if (!validCreatures.has(monster.index)) continue
+        if (!validCreatures.has(monster.index)) continue;
 
-        const detailResponse = await fetch(
-          `https://www.dnd5eapi.co/api/monsters/${monster.index}`
-        )
-
+        const detailResponse = await fetch(`https://www.dnd5eapi.co/api/monsters/${monster.index}`);
         if (!detailResponse.ok) {
-          console.warn(
-            `[CACHE] Failed to fetch details for ${monster.index}. Skipping.`
-          )
-          continue
+          console.warn(`[CACHE] Failed to fetch details for ${monster.index}. Skipping.`);
+          continue;
         }
 
-        const monsterDetails = await detailResponse.json()
-        let cr = monsterDetails.challenge_rating
+        const monsterDetails = await detailResponse.json();
+        let cr = monsterDetails.challenge_rating;
 
         if (typeof cr === 'string' && cr.includes('/')) {
-          const [numerator, denominator] = cr.split('/').map(Number)
-          cr = numerator / denominator
+          const [numerator, denominator] = cr.split('/').map(Number);
+          cr = numerator / denominator;
         }
 
-        if (cr === undefined || cr === null) continue
+        if (cr === undefined || cr === null) continue;
 
-        const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
-
-        const matchingTier = defaultTiers.find(
-          (tier) => cr >= tier.crRange[0] && cr <= tier.crRange[1]
-        )
+        const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`;
+        const matchingTier = defaultTiers.find(tier => cr >= tier.crRange[0] && cr <= tier.crRange[1]);
 
         if (matchingTier) {
+          // console.log(`[CACHE] Storing ${monsterDetails.name} - HP: ${monsterDetails.hit_points}`);
+
           monsterCacheByTier[matchingTier.name].push({
             name: monsterDetails.name,
             index: monster.index,
             cr,
             type: monsterDetails.type,
+            hp: monsterDetails.hit_points,
             rarity: matchingTier.name,
             imageUrl,
             color: matchingTier.color,
-          })
+          });
+
+          addedCount++;
         }
       } catch (error) {
-        console.warn(
-          `[CACHE] Error processing monster ${monster.name}: ${error.message}`
-        )
+        console.warn(`[CACHE] Error processing monster ${monster.name}: ${error.message}`);
       }
     }
 
-    cachePopulated = true
-    console.log('[CACHE] Monster cache populated successfully.')
+    if (addedCount > 0) {
+      console.log(`[CACHE] Successfully stored ${addedCount} monsters.`);
+    } else {
+      console.warn("[CACHE] No monsters were stored. Something went wrong.");
+    }
+
+    cachePopulated = true;
+    console.log("[CACHE] Monster cache populated successfully.");
   } catch (error) {
-    console.error('[CACHE] Failed to fetch monster data:', error)
+    console.error("[CACHE] Failed to fetch monster data:", error);
   }
 }
 
@@ -204,6 +209,7 @@ async function fetchMonsterByName(name) {
 
 module.exports = {
   cacheMonstersByTier,
+  monsterCacheByTier,
   selectTier,
   pullValidMonster,
   fetchMonsterByName,

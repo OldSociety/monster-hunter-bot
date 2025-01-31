@@ -12,13 +12,12 @@ module.exports = {
       energyCost: 1,
       totalBattles: 3,
       battles: [
-        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
-        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
-        { type: 'normal', cr: 0, difficulty: 'easy', goldReward: 24 },
+        { type: 'normal', monsterIndex: 'goblin', difficulty: 'medium', goldReward: 24 }, // hp 7
+        { type: 'normal', monsterIndex: 'giant-rat', difficulty: 'medium', goldReward: 24 }, // 9
+        { type: 'normal', monsterIndex: 'magmin', difficulty: 'medium', goldReward: 24 }, //9
         {
           type: 'mini-boss',
-          cr: 0.25,
-          monsterIndex: 'darkmantle',
+          monsterIndex: 'darkmantle', // 16
           difficulty: 'boss-half',
           firstGoldReward: 700,
           goldReward: 28,
@@ -34,14 +33,13 @@ module.exports = {
       energyCost: 1,
       totalBattles: 5,
       battles: [
-        { type: 'normal', cr: 0.25, difficulty: 'easy', goldReward: 26 },
-        { type: 'normal', cr: 0.25, difficulty: 'easy', goldReward: 26 },
-        { type: 'normal', cr: 0.5, difficulty: 'easy', goldReward: 28 },
-        { type: 'normal', cr: 0.5, difficulty: 'easy', goldReward: 28 },
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 26 }, // 11
+        { type: 'normal', monsterIndex: 'ape', difficulty: 'easy', goldReward: 26 }, // 9
+        { type: 'normal', monsterIndex: 'imp', difficulty: 'normal', goldReward: 28 }, // 10
+        { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 'normal', goldReward: 28 }, //11
         {
           type: 'mini-boss',
-          cr: 2,
-          monsterIndex: 'harpy',
+          monsterIndex: 'harpy', // 19
           difficulty: 'boss-half',
           firstGoldReward: 650,
           goldReward: 32,
@@ -58,16 +56,15 @@ module.exports = {
       energyCost: 1,
       totalBattles: 8,
       battles: [
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
+        { type: 'normal', monsterIndex: 'drow', difficulty: 'normal', goldReward: 48 }, // 13
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 48 }, // 
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 50 }, // 
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 50 }, // 
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 50 }, // 
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 52 }, // 
         {
           type: 'mini-boss',
-          cr: 2,
-          monsterIndex: 'rust-monster',
+          monsterIndex: 'rust-monster', // 
           difficulty: 'boss-full',
           firstGoldReward: 980,
           goldReward: 52,
@@ -84,18 +81,17 @@ module.exports = {
       energyCost: 1,
       totalBattles: 10,
       battles: [
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 }, // 
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 }, // 
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 50 }, // 
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 }, // 
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 52 }, // 
         {
           type: 'mini-boss',
-          cr: 2,
-          monsterIndex: 'sea-hag',
+          monsterIndex: 'sea-hag', // 
           difficulty: 'boss-full',
           firstGoldReward: 1080,
           goldReward: 52,
@@ -111,20 +107,19 @@ module.exports = {
       energyCost: 1,
       totalBattles: 10,
       battles: [
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 },
-        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
-        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 },
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.25, difficulty: 'medium', goldReward: 48 }, // 
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 }, // 
+        { type: 'normal', cr: 0.5, difficulty: 'medium', goldReward: 56 }, // 
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 }, // 
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 }, // 
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 }, // 
+        { type: 'normal', cr: 1, difficulty: 'medium', goldReward: 58 }, // 
         {
           type: 'mini-boss',
-          cr: 4,
-          monsterIndex: 'red-dragon-wyrmling',
+          monsterIndex: 'red-dragon-wyrmling', // 
           difficulty: 'boss-strong',
           firstGoldReward: 1540,
           goldReward: 75,

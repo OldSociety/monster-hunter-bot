@@ -17,17 +17,25 @@ const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { huntPages } = require('../huntPages.js')
 
 function selectMonster(huntData, currentBattle) {
-  if (huntData.lastMonster && huntData.retries > 0) {
-    console.log('Reusing last monster due to retries.')
-    return huntData.lastMonster
+  if (!currentBattle || !currentBattle.monsterIndex) {
+    console.error('❌ ERROR: No valid monsterIndex provided for battle.')
+    return null
   }
 
-  const selectedMonster =
-    currentBattle.type === 'mini-boss' || currentBattle.type === 'boss'
-      ? pullSpecificMonster(currentBattle.monsterIndex)
-      : pullMonsterByCR(currentBattle.cr)
+  console.log(`🔹 Selecting specific monster: ${currentBattle.monsterIndex}`)
 
+  const selectedMonster = pullSpecificMonster(currentBattle.monsterIndex)
 
+  if (!selectedMonster) {
+    console.error(
+      `❌ ERROR: Monster '${currentBattle.monsterIndex}' not found.`
+    )
+    return null
+  }
+
+  console.log(
+    `✅ Selected Monster: ${selectedMonster.name} (HP: ${selectedMonster.hp})`
+  )
   return selectedMonster
 }
 
@@ -212,8 +220,7 @@ async function offerRetry(interaction, user, huntData) {
 }
 
 async function startNewEncounter(interaction, user, huntData) {
-  console.log(`startNewEncounter() called for: ${interaction.user.tag}`)
-
+  console.log(`⚔️ Starting a new encounter for: ${interaction.user.tag}`)
   stopUserCollector(interaction.user.id)
 
   if (!huntData.level || !huntData.level.page) {
@@ -249,23 +256,50 @@ async function startNewEncounter(interaction, user, huntData) {
     })
   }
 
+  console.log(`🔍 Hunt Found: ${currentHunt.key}`)
+  console.log(`🗡️ Battles:`, JSON.stringify(currentHunt.battles, null, 2))
+
   const currentBattle = currentHunt.battles[huntData.currentBattleIndex]
-  console.log(`Current battle: ${currentBattle ? currentBattle.type : 'None'}`)
+
+  if (!currentBattle) {
+    console.error('❌ ERROR: No valid battle found.')
+    return interaction.followUp({
+      content: 'Error: No battle data available.',
+      ephemeral: true,
+    })
+  }
+
+  console.log(
+    `🔥 Current Battle Object:`,
+    JSON.stringify(currentBattle, null, 2)
+  )
+
+  if (!currentBattle.monsterIndex) {
+    console.error('❌ ERROR: No valid monsterIndex provided for battle.')
+    return interaction.followUp({
+      content: 'Error: No valid monster assigned to this battle.',
+      ephemeral: true,
+    })
+  }
+
+  console.log(`🔹 Selecting specific monster: ${currentBattle.monsterIndex}`)
 
   const monster = selectMonster(huntData, currentBattle)
   if (!monster) {
-    console.error('No monsters available for this encounter.')
     return interaction.followUp({
-      content: 'No monsters available.',
+      content: 'Error: No monster available for battle.',
       ephemeral: true,
     })
   }
 
   huntData.lastMonster = monster
   const monsterScore = calculateMonsterHP(monster, currentBattle.difficulty)
+
+  console.log(`🦖 Encountering: ${monster.name} (HP: ${monsterScore})`)
+
   const monsterEmbed = createMonsterEmbed(
     monster,
-    currentBattle.type,
+    currentBattle.difficulty,
     huntData.ichorUsed,
     huntData
   )
@@ -292,30 +326,18 @@ async function startNewEncounter(interaction, user, huntData) {
   collectors.set(interaction.user.id, styleCollector)
 
   styleCollector.on('collect', async (styleInteraction) => {
- // Prevent duplicate interactions
     if (huntData.styleInteractionHandled) {
       console.warn('⚠️ Duplicate interaction detected. Ignoring.')
       return
     }
-    huntData.styleInteractionHandled = true // Mark as handled
+    huntData.styleInteractionHandled = true
 
     try {
       if (!styleInteraction.replied && !styleInteraction.deferred) {
         await styleInteraction.deferUpdate()
       }
-      // Acknowledge immediately to prevent expiration
-      if (styleInteraction.replied || styleInteraction.deferred) {
-        console.warn(
-          `⚠️ Interaction ${styleInteraction.id} was already acknowledged.`
-        )
-      } else {
-        await styleInteraction
-          .deferUpdate()
-          .catch((err) => console.warn('⚠️ deferUpdate failed:', err))
-      }
 
       const selectedStyle = styleInteraction.customId.split('_')[1]
-
       const playerScore = user[`${selectedStyle}_score`]
       const advMultiplier = checkAdvantage(selectedStyle, monster.type)
 
@@ -345,13 +367,13 @@ async function startNewEncounter(interaction, user, huntData) {
         if (huntData.currentBattleIndex >= huntData.level.battles.length) {
           await displayHuntSummary(styleInteraction, user, huntData, true)
         } else {
-          huntData.styleInteractionHandled = false // Reset flag for next battle
+          huntData.styleInteractionHandled = false
           await startNewEncounter(styleInteraction, user, huntData)
         }
       } else {
         huntData.retries += 1
         if (huntData.retries < 3) {
-          huntData.styleInteractionHandled = false // Reset flag for retry
+          huntData.styleInteractionHandled = false
           await offerRetry(styleInteraction, user, huntData)
         } else {
           console.log('💀 Player failed too many times. Ending hunt.')
