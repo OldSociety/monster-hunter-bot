@@ -1,15 +1,15 @@
 module.exports = {
-  key: 'page3',
-  name: `Hunt Page 3 - A Dragon's Revenge`,
+  key: 'page4',
+  name: `Hunt Page 4 - `,
   description:
-    'Oryzinax was only the beginning. His brood spread across the land. The young dragon mage Drokkenden continues the terror.',
-  finalBoss: 'young-red-dragon',
+    '',
+  finalBoss: '',
   hunts: [
     {
-      id: 13,
-      key: 'hunt13',
-      name: 'Hobrich the Vexed',
-      description: `Drokkenden’s enchantment has turned Hobrich, the black dragon, into a puppet of terror.`,
+      id: 20,
+      key: 'hunt20',
+      name: '',
+      description: ``,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -24,19 +24,19 @@ module.exports = {
         { type: 'normal', monsterIndex: 'behir', difficulty: 'medium', goldReward: 70 }, // 165
         {
           type: 'mini-boss',
-          monsterIndex: 'young-black-dragon', // 254
-          difficulty: 'boss-epic',
+          monsterIndex: '', // 254
+          difficulty: 'boss-',
           firstGoldReward: 98,
           goldReward: 72,
         },
       ],
-      unlocks: 'hunt14',
+      unlocks: 'hunt21',
     },
     {
-      id: 14,
-      key: 'hunt14',
-      name: `Hydra`,
-      description: `A dragon wasn't enough, Drokkenden now summons a vicious hydra from the depths of the sea.`,
+      id: 21,
+      key: 'hunt21',
+      name: ``,
+      description: ``,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -51,19 +51,19 @@ module.exports = {
         { type: 'normal', monsterIndex: 'ghast', difficulty: 'legend', goldReward: 72 }, // 185
         {
           type: 'mini-boss',
-          monsterIndex: 'hydra', // 258
-          difficulty: 'boss-strong',
+          monsterIndex: '', // 258
+          difficulty: 'boss-',
           firstGoldReward: 102,
           goldReward: 74,
         },
       ],
-      unlocks: 'hunt15',
+      unlocks: 'hunt22',
     },
     {
-      id: 15,
-      key: 'hunt15',
-      name: 'Mummy',
-      description: `Drokkenden has noticed your work and sent an army of cursed souls to stop you.`,
+      id: 22,
+      key: 'hunt22',
+      name: '',
+      description: ``,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -78,17 +78,17 @@ module.exports = {
         { type: 'normal', monsterIndex: 'mammoth', difficulty: 'very-hard', goldReward: 74 }, // 252
         {
           type: 'mini-boss',
-          monsterIndex: 'mummy', // 290
-          difficulty: 'boss-legend',
+          monsterIndex: '', // 290
+          difficulty: 'boss-',
           firstGoldReward: 146,
           goldReward: 76,
         },
       ],
-      unlocks: 'hunt16',
+      unlocks: 'hunt23',
     },
     {
-      id: 16,
-      key: 'hunt16',
+      id: 23,
+      key: 'hunt23',
       name: 'Erinyes',
       description:
         'The deva fell and now serves Drokkenden—stop her before she opens the gates to hell.',
@@ -106,20 +106,20 @@ module.exports = {
         { type: 'normal', monsterIndex: 'lich', difficulty: 'very-hard', goldReward: 149 }, // 270
         {
           type: 'mini-boss',
-          monsterIndex: 'erinyes', // 306
-          difficulty: 'boss-epic',
+          monsterIndex: '', // 306
+          difficulty: 'boss-',
           firstGoldReward: 294,
           goldReward: 92,
         },
       ],
-      unlocks: 'hunt17',
+      unlocks: 'hunt24',
     },
     {
-      id: 17,
-      key: 'hunt17',
-      name: 'Ice Devil',
+      id: 24,
+      key: 'hunt24',
+      name: '',
       description:
-        `You stopped her, but were too late. Devils crossed over and sew chaos at Drokkenden's hand.`,
+        ``,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -134,20 +134,20 @@ module.exports = {
         { type: 'normal', monsterIndex: 'basilisk', difficulty: 'legend', goldReward: 90 }, // 260
         {
           type: 'mini-boss',
-          monsterIndex: 'ice-devil', // 270
-          difficulty: 'boss-strong',
+          monsterIndex: '', // 270
+          difficulty: 'boss-',
           firstGoldReward: 188,
           goldReward: 60,
         },
       ],
-      unlocks: 'hunt18',
+      unlocks: 'hunt25',
     },
     {
-      id: 18,
-      key: 'hunt18',
-      name: 'Glabrezu',
+      id: 25,
+      key: 'hunt25',
+      name: '',
       description:
-        `The last demon general is all that stands between you and your mortal enemy.`,
+        ``,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -162,19 +162,19 @@ module.exports = {
         { type: 'normal', monsterIndex: 'balor', difficulty: 'medium', goldReward: 92 }, // 262 
         {
           type: 'mini-boss',
-          monsterIndex: 'glabrezu', // 314
-          difficulty: 'boss-epic',
+          monsterIndex: '', // 314
+          difficulty: 'boss-',
           firstGoldReward: 188,
           goldReward: 95,
         },
       ],
-      unlocks: 'hunt19',
+      unlocks: 'hunt26',
     },
     {
-      id: 19,
-      key: 'hunt19',
-      name: 'Drokkenden the Dread',
-      description: `At the top of Mount Dread, you face Drokkenden the Dread, behind all this destruction.`,
+      id: 26,
+      key: 'hunt26',
+      name: '',
+      description: ``,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -189,8 +189,8 @@ module.exports = {
         { type: 'normal', monsterIndex: 'minotaur-skeleton', difficulty: 'legend', goldReward: 105 }, // 335
         {
           type: 'boss',
-          monsterIndex: 'young-red-dragon', // 356
-          difficulty: 'boss-epic',
+          monsterIndex: '', // 356
+          difficulty: 'boss-',
           firstGoldReward: 294,
           goldReward: 110,
         },
