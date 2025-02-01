@@ -105,7 +105,7 @@ module.exports = {
       key: 'hunt5',
       name: 'Red Dragon Wyrmling',
       description: `Finally it's time to slay Oryzinax and prove your worth!`,
-      energyCost: 1,
+      energyCost: 2,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'bandit-captain', difficulty: 'medium', goldReward: 31 }, // 65

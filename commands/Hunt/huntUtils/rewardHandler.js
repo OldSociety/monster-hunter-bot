@@ -63,12 +63,15 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   let totalGoldEarned = 0
   let totalTokensEarned = 0
 
-  currentHunt.battles.forEach((battle) => {
-    if (battle.type === 'mini-boss' && currentHunt.id > user.completedLevels) {
-      totalGoldEarned += battle.firstGoldReward || battle.goldReward
-    } else {
-      totalGoldEarned += battle.goldReward
-    }
+  // Only count the monsters defeated, not all battles
+const defeatedBattles = currentHunt.battles.slice(0, huntData.totalMonstersDefeated);
+
+defeatedBattles.forEach((battle) => {
+  if (battle.type === 'mini-boss' && currentHunt.id > user.completedLevels) {
+    totalGoldEarned += battle.firstGoldReward || battle.goldReward;
+  } else {
+    totalGoldEarned += battle.goldReward;
+  }
 
     if (getRandomInt(3) === 0) {
       totalTokensEarned += 1

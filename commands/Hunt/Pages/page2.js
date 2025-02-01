@@ -10,7 +10,7 @@ module.exports = {
       key: 'hunt6',
       name: 'Bandit Captain',
       description: `Track down the bandits to first find Maud's secret identity.`,
-      energyCost: 1,
+      energyCost: 2,
       totalBattles: 6,
       battles: [
         { type: 'normal', monsterIndex: 'gelatinous-cube', difficulty: 'medium', goldReward: 43 }, // 84
@@ -33,7 +33,7 @@ module.exports = {
       key: 'hunt7',
       name: 'Gibbering Mouther',
       description: `The bandit's led you into a trap. Watch out! `,
-      energyCost: 1,
+      energyCost: 2,
       totalBattles: 6,
       battles: [
         { type: 'normal', monsterIndex: 'fire-elemental', difficulty: 'medium', goldReward: 44 }, // 102
@@ -56,7 +56,7 @@ module.exports = {
       key: 'hunt8',
       name: 'Vampire Spawn',
       description: `Turn your luck around by finding one of the vampire's spawns in the harbor.`,
-      energyCost: 1,
+      energyCost: 2,
       totalBattles: 6,
       battles: [
         { type: 'normal', monsterIndex: 'night-hag', difficulty: 'medium', goldReward: 45 }, // 112
@@ -80,7 +80,7 @@ module.exports = {
       name: 'Deva',
       description:
         'The heavens have come to test your valor.',
-      energyCost: 2,
+      energyCost: 3,
       totalBattles: 8,
       battles: [
         { type: 'normal', monsterIndex: 'chuul', difficulty: 'hard', goldReward: 46 }, // 135
@@ -157,7 +157,7 @@ module.exports = {
       key: 'hunt12',
       name: 'Vampire Lord Maud',
       description: `Finally, you've reached Maud's lair. Are you ready?`,
-      energyCost: 2,
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'vampire-spawn', difficulty: 'very-hard', goldReward: 75 }, // 164

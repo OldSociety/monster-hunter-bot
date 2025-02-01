@@ -9,8 +9,8 @@ module.exports = {
       id: 13,
       key: 'hunt13',
       name: 'Hobrich the Vexed',
-      description: ``,
-      energyCost: 2,
+      description: `Find`,
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'remorhaz', difficulty: 'medium', goldReward: 63 }, // 195
@@ -19,7 +19,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'marilith', difficulty: 'medium', goldReward: 69 }, // 189
         { type: 'normal', monsterIndex: 'lich', difficulty: 'hard', goldReward: 71 }, // 202
         { type: 'normal', monsterIndex: 'young-blue-dragon', difficulty: 'hard', goldReward: 64 }, // 228
-        { type: 'normal', monsterIndex: 'wearbear-hybrid', difficulty: 'hard', goldReward: 66 }, // 202
+        { type: 'normal', monsterIndex: 'werebear-hybrid', difficulty: 'hard', goldReward: 66 }, // 202
         { type: 'normal', monsterIndex: 'wyvern', difficulty: 'very-hard', goldReward: 68 }, // 220
         { type: 'normal', monsterIndex: 'behir', difficulty: 'medium', goldReward: 70 }, // 165
         {
@@ -36,8 +36,8 @@ module.exports = {
       id: 14,
       key: 'hunt14',
       name: 'Hydra',
-      description: ` `,
-      energyCost: 2,
+      description: `Me `,
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'ghost', difficulty: 'legend', goldReward: 65 }, // 225
@@ -63,8 +63,8 @@ module.exports = {
       id: 15,
       key: 'hunt15',
       name: 'Mummy',
-      description: ``,
-      energyCost: 2,
+      description: `A `,
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'rhinocerus', difficulty: 'legend', goldReward: 67 }, // 225
@@ -91,8 +91,8 @@ module.exports = {
       key: 'hunt16',
       name: 'Erinyes',
       description:
-        '',
-      energyCost: 2,
+        'Description ',
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 'very-hard', goldReward: 105 }, // 272
@@ -119,8 +119,8 @@ module.exports = {
       key: 'hunt17',
       name: 'Ice Devil',
       description:
-        ``,
-      energyCost: 2,
+        `That `,
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'nalfeshnee', difficulty: 'hard', goldReward: 83 }, // 276
@@ -147,8 +147,8 @@ module.exports = {
       key: 'hunt18',
       name: 'Glabrezu',
       description:
-        '',
-      energyCost: 2,
+        'Matters ',
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'doppleganger', difficulty: 'legend', goldReward: 85 }, // 260
@@ -175,7 +175,7 @@ module.exports = {
       key: 'hunt19',
       name: 'Drokkenden the Dread',
       description: `At the top of Mount Dread, you come face to face to the lava breathing Drokkenden.`,
-      energyCost: 2,
+      energyCost: 3,
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'unicorn', difficulty: 'legend', goldReward: 135 }, // 335
