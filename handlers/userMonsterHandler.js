@@ -201,6 +201,7 @@ async function updateOrAddMonsterToCollection(userId, monster) {
       userId,
       name: monster.name,
       type: monster.type,
+      rarity: monster.rarity,
       cr: monster.cr,
       m_score: initialMScore,
       level: 1,

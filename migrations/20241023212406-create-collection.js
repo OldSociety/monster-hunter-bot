@@ -16,6 +16,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      rarity: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        defaultValue: 'Common',
+      },
       cr: {
         type: Sequelize.INTEGER,
         defaultValue: 0,
