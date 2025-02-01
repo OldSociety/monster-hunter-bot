@@ -45,9 +45,13 @@ function calculateMonsterHP(monster, difficulty) {
     medium: 1,
     hard: 1.5,
     'very-hard': 2,
+    epic: 3,
+    end: 5,
     'boss-half': 0.5,
     'boss-full': 1,
     'boss-strong': 1.25,
+    'boss-epic': 2,
+    'boss-end': 5
   }
   const finalHP = Math.max(
     monster.hp * (difficultyModifiers[difficulty] || 1),

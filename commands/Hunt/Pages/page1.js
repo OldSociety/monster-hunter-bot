@@ -62,7 +62,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'lemure', difficulty: 'medium', goldReward: 50 }, // 13
         { type: 'normal', monsterIndex: 'ape', difficulty: 'medium', goldReward: 50 }, // 19
         { type: 'normal', monsterIndex: 'flying-sword', difficulty: 'medium', goldReward: 52 }, // 17
-        { type: 'normal', monsterIndex: 'deep-gnome', difficulty: 'medium', goldReward: 52 }, // 16
+        { type: 'normal', monsterIndex: 'deep-gnome-svirfneblin', difficulty: 'medium', goldReward: 52 }, // 16
         {
           type: 'mini-boss',
           monsterIndex: 'rust-monster', // 27
@@ -117,7 +117,6 @@ module.exports = {
         { type: 'normal', monsterIndex: 'veteran', difficulty: 'medium', goldReward: 58 }, // 58
         { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 'medium', goldReward: 58 }, // 67
         { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 'medium', goldReward: 58 }, // 66
-        { type: 'normal', monsterIndex: 'nightmare', difficulty: 'medium', goldReward: 58 }, // 68
         {
           type: 'mini-boss',
           monsterIndex: 'red-dragon-wyrmling', // 93

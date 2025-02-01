@@ -1,15 +1,15 @@
 module.exports = {
-  key: 'page2',
-  name: 'Hunt Page 2 - Curse of Maud',
+  key: 'page3',
+  name: `Hunt Page 3 - A Dragon's Revenge`,
   description:
-    'The vampire Maud has started a campaign of terror in the city of Dax. Grab your holy water and get to work!',
-  finalBoss: 'vampire-vampire',
+    'Turns out Oryzinax was just a start. His brood are spreading across our land. Find Drokkenden and bring this to an end.',
+  finalBoss: 'young-red-dragon',
   hunts: [
     {
-      id: 6,
-      key: 'hunt6',
-      name: 'Bandit Captain',
-      description: `Track down the bandits to first find Maud's secret identity.`,
+      id: 13,
+      key: 'hunt13',
+      name: '',
+      description: ``,
       energyCost: 1,
       totalBattles: 6,
       battles: [
@@ -20,19 +20,19 @@ module.exports = {
         { type: 'normal', monsterIndex: 'nightmare', difficulty: 'hard', goldReward: 51 }, // 102
         {
           type: 'mini-boss',
-          monsterIndex: 'bandit-captain',
+          monsterIndex: '',
           difficulty: 'boss-strong', // 97
           firstGoldReward: 750,
           goldReward: 55,
         },
       ],
-      unlocks: 'hunt7',
+      unlocks: 'hunt14',
     },
     {
-      id: 7,
-      key: 'hunt7',
-      name: 'Gibbering Mouther',
-      description: `The bandit's led you into a trap. Watch out! `,
+      id: 14,
+      key: 'hunt14',
+      name: '',
+      description: ` `,
       energyCost: 1,
       totalBattles: 6,
       battles: [
@@ -43,21 +43,21 @@ module.exports = {
         { type: 'normal', monsterIndex: 'gladiator', difficulty: 'medium', goldReward: 52 }, // 112
         {
           type: 'mini-boss',
-          monsterIndex: 'gibbering-mouther', // 110
+          monsterIndex: '', // 110
           difficulty: 'boss-strong',
           firstGoldReward: 810,
           goldReward: 57,
         },
       ],
-      unlocks: 'hunt8',
+      unlocks: 'hunt15',
     },
     {
-      id: 8,
-      key: 'hunt8',
-      name: 'Vampire Spawn',
-      description: `Turn your luck around by finding one of the vampire's spawns in the harbor.`,
+      id: 15,
+      key: 'hunt15',
+      name: '',
+      description: ``,
       energyCost: 1,
-      totalBattles: 6,
+      totalBattles: 7,
       battles: [
         { type: 'normal', monsterIndex: 'night-hag', difficulty: 'medium', goldReward: 45 }, // 112
         { type: 'normal', monsterIndex: 'bone-debil', difficulty: 'medium', goldReward: 47 }, // 110
@@ -66,22 +66,22 @@ module.exports = {
         { type: 'normal', monsterIndex: 'stone-giant', difficulty: 'medium', goldReward: 53 }, // 126
         {
           type: 'mini-boss',
-          monsterIndex: 'vampire-spawn', // 123
+          monsterIndex: '', // 123
           difficulty: 'boss-strong',
           firstGoldReward: 870,
           goldReward: 59,
         },
       ],
-      unlocks: 'hunt9',
+      unlocks: 'hunt16',
     },
     {
-      id: 9,
-      key: 'hunt9',
-      name: 'Deva',
+      id: 16,
+      key: 'hunt16',
+      name: '',
       description:
-        'The heavens have come to test your valor.',
+        '',
       energyCost: 2,
-      totalBattles: 8,
+      totalBattles: 9,
       battles: [
         { type: 'normal', monsterIndex: 'chuul', difficulty: 'hard', goldReward: 46 }, // 135
         { type: 'normal', monsterIndex: 'mummy-lord', difficulty: 'hard', goldReward: 47 }, // 135
@@ -98,14 +98,14 @@ module.exports = {
           goldReward: 60,
         },
       ],
-      unlocks: 'hunt10',
+      unlocks: 'hunt17',
     },
     {
-      id: 10,
-      key: 'hunt10',
-      name: 'Chimera',
+      id: 17,
+      key: 'hunt17',
+      name: '',
       description:
-        `Evil grows around you, you're getting close.`,
+        ``,
       energyCost: 2,
       totalBattles: 8,
       battles: [
@@ -118,20 +118,20 @@ module.exports = {
         { type: 'normal', monsterIndex: 'bearded-devil', difficulty: 'medium', goldReward: 55 }, // 110
         {
           type: 'mini-boss',
-          monsterIndex: 'chimera', // 172
+          monsterIndex: '', // 172
           difficulty: 'boss-strong',
           firstGoldReward: 930,
           goldReward: 70,
         },
       ],
-      unlocks: 'hunt11',
+      unlocks: 'hunt18',
     },
     {
-      id: 11,
-      key: 'hunt11',
-      name: 'Gorgon',
+      id: 18,
+      key: 'hunt18',
+      name: '',
       description:
-        'Maud knows you hunt him and has unleashed the dreaded Gorgon to stop you!',
+        '',
       energyCost: 2,
       totalBattles: 8,
       battles: [
@@ -144,19 +144,19 @@ module.exports = {
         { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 'medium', goldReward: 56 }, // 136
         {
           type: 'mini-boss',
-          monsterIndex: 'gorgon', // 172
+          monsterIndex: '', // 172
           difficulty: 'boss-strong',
           firstGoldReward: 970,
           goldReward: 75,
         },
       ],
-      unlocks: 'hunt12',
+      unlocks: 'hunt19',
     },
     {
-      id: 12,
-      key: 'hunt12',
-      name: 'Vampire Lord Maud',
-      description: `Finally, you've reached Maud's lair. Are you ready?`,
+      id: 19,
+      key: 'hunt19',
+      name: '',
+      description: ``,
       energyCost: 2,
       totalBattles: 10,
       battles: [
@@ -171,8 +171,8 @@ module.exports = {
         { type: 'normal', monsterIndex: 'hill-giant', difficulty: 'very-hard', goldReward: 91 }, // 210
         {
           type: 'boss',
-          monsterIndex: 'vampire-vampire', // 288
-          difficulty: 'boss-epic',
+          monsterIndex: 'young-red-dragon', // 356
+          difficulty: 'boss-strong',
           firstGoldReward: 2253,
           goldReward: 93,
         },
