@@ -1,14 +1,14 @@
 module.exports = {
   key: 'page1',
   name: 'Hunt Page 1 - Wyrmling’s Trial',
-  description: 'Oryzinax, a red dragon wyrmling, has made a lair in the mountains above Harvest Hill. You must strike it down while its still young.',
+  description: `Oryzinax, a red dragon wyrmling, has made a lair in the mountains above Harvest Hill. You must strike it down while it's still young before it grows to full power.`,
   finalBoss: 'red-dragon-wyrmling',
   hunts: [
     {
       id: 1,
       key: 'hunt1',
       name: 'Darkmantle',
-      description: 'Your hunt begins here...',
+      description: 'Your hunt begins in the shadows—track down the darkmantle lurking nearby and test your strength.',
       energyCost: 1,
       totalBattles: 3,
       battles: [
@@ -29,7 +29,7 @@ module.exports = {
       id: 2,
       key: 'hunt2',
       name: 'Harpy',
-      description: 'Take down the harpy by avoiding her song.',
+      description: `A harpy's song to soothes the weary and her claws shred men into meat.`,
       energyCost: 1,
       totalBattles: 5,
       battles: [
@@ -52,7 +52,7 @@ module.exports = {
       key: 'hunt3',
       name: 'Rust Monster',
       description:
-        'An army will be left unarmed if the rust monster is not hunted.',
+        `A nearby rust monster threatens an army's steel—destroy it before nation's soldiers are left defenseless.`,
       energyCost: 1,
       totalBattles: 8,
       battles: [
@@ -78,7 +78,7 @@ module.exports = {
       key: 'hunt4',
       name: 'Sea Hag',
       description:
-        'Kill the sea hag before more fall under her drowned man curse!',
+        `End the sea hag’s curse before more fall victim to her drowned man curse.`,
       energyCost: 1,
       totalBattles: 10,
       battles: [
@@ -104,7 +104,7 @@ module.exports = {
       id: 5,
       key: 'hunt5',
       name: 'Red Dragon Wyrmling',
-      description: `Finally it's time to slay Oryzinax and prove your worth!`,
+      description: `The time has come to face Oryzinax in its lair—slay the wyrmling before its fiery breath brings devastation to Harvest Hill and beyond.`,
       energyCost: 2,
       totalBattles: 10,
       battles: [

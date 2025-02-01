@@ -2,14 +2,14 @@ module.exports = {
   key: 'page2',
   name: 'Hunt Page 2 - Curse of Maud',
   description:
-    'The vampire Maud has started a campaign of terror in the city of Dax. Grab your holy water and get to work!',
+    `The city of Dax is under a vampire's curse. Uncover the truth behind Maud, the cleric who hides her dark nature, and stop the bloodshed before it consumes the city.`,
   finalBoss: 'vampire-vampire',
   hunts: [
     {
       id: 6,
       key: 'hunt6',
       name: 'Bandit Captain',
-      description: `Track down the bandits to first find Maud's secret identity.`,
+      description: `Follow the bandits who may know Maud’s true identity—her reign of terror is only beginning.`,
       energyCost: 2,
       totalBattles: 6,
       battles: [
@@ -32,7 +32,7 @@ module.exports = {
       id: 7,
       key: 'hunt7',
       name: 'Gibbering Mouther',
-      description: `The bandit's led you into a trap. Watch out! `,
+      description: `Due to your own foolishness, you fell into the bandit's trap.`,
       energyCost: 2,
       totalBattles: 6,
       battles: [
@@ -55,7 +55,7 @@ module.exports = {
       id: 8,
       key: 'hunt8',
       name: 'Vampire Spawn',
-      description: `Turn your luck around by finding one of the vampire's spawns in the harbor.`,
+      description: `Maud’s spawn lurks in the harbor, spreading her blood curse—it's time to unmask the Maud true identity.`,
       energyCost: 2,
       totalBattles: 6,
       battles: [
@@ -79,7 +79,7 @@ module.exports = {
       key: 'hunt9',
       name: 'Deva',
       description:
-        'The heavens have come to test your valor.',
+        `Before the vampire can speak, the spawn dies to a divine light but there’s a darker power at work. Break Maud's influence to set the deva free.`,
       energyCost: 3,
       totalBattles: 8,
       battles: [
@@ -105,7 +105,7 @@ module.exports = {
       key: 'hunt10',
       name: 'Chimera',
       description:
-        `Evil grows around you, you're getting close.`,
+        `Maud's real name is Ezmerelda, the city cleric. Fight your way to her and end this madness.`,
       energyCost: 2,
       totalBattles: 8,
       battles: [
@@ -131,7 +131,7 @@ module.exports = {
       key: 'hunt11',
       name: 'Gorgon',
       description:
-        'Maud knows you hunt him and has unleashed the dreaded Gorgon to stop you!',
+        `As Maud’s dark magic warps the city, she calls upon a Gorgon to stop your hunt.`,
       energyCost: 2,
       totalBattles: 8,
       battles: [
@@ -156,7 +156,7 @@ module.exports = {
       id: 12,
       key: 'hunt12',
       name: 'Vampire Lord Maud',
-      description: `Finally, you've reached Maud's lair. Are you ready?`,
+      description: `You fight your way to the heart of the city, kneeling on the steps of the Church of Light. It's time to end this.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [

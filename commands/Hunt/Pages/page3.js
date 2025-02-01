@@ -2,14 +2,14 @@ module.exports = {
   key: 'page3',
   name: `Hunt Page 3 - A Dragon's Revenge`,
   description:
-    'Turns out Oryzinax was just a start. His brood are spreading across our land. Find Drokkenden and bring this to an end.',
+    'Oryzinax was only the beginning. His brood spread across the land. The young dragon mage Drokkenden continues the terror.',
   finalBoss: 'young-red-dragon',
   hunts: [
     {
       id: 13,
       key: 'hunt13',
       name: 'Hobrich the Vexed',
-      description: `Find`,
+      description: `Drokkenden's enchantment have overcome the black dragon, Hobrich, turning his fierce foe into a puppet.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -35,8 +35,8 @@ module.exports = {
     {
       id: 14,
       key: 'hunt14',
-      name: 'Hydra',
-      description: `Me `,
+      name: `Hydra`,
+      description: `A dragon wasn't enough, Drokkenden now summons a vicious hydra from the depths of the sea.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -63,11 +63,11 @@ module.exports = {
       id: 15,
       key: 'hunt15',
       name: 'Mummy',
-      description: `A `,
+      description: `Drokkenden has noticed your meddling. He has sent an army of cursed souls to stop you.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'rhinocerus', difficulty: 'legend', goldReward: 67 }, // 225
+        { type: 'normal', monsterIndex: 'rhinoceros', difficulty: 'legend', goldReward: 67 }, // 225
         { type: 'normal', monsterIndex: 'earth-elemental', difficulty: 'hard', goldReward: 79 }, // 189
         { type: 'normal', monsterIndex: 'drider', difficulty: 'hard', goldReward: 71 }, // 184
         { type: 'normal', monsterIndex: 'fire-giant', difficulty: 'hard', goldReward: 73 }, // 243
@@ -91,7 +91,7 @@ module.exports = {
       key: 'hunt16',
       name: 'Erinyes',
       description:
-        'Description ',
+        'The deva you once saved has fallen and now serves the dragons. Stop her before she opens the gates to hell.',
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -119,7 +119,7 @@ module.exports = {
       key: 'hunt17',
       name: 'Ice Devil',
       description:
-        `That `,
+        `You stopped her, but were too late. Devils crossed over and sew chaos at Drokkenden's hand.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -147,7 +147,7 @@ module.exports = {
       key: 'hunt18',
       name: 'Glabrezu',
       description:
-        'Matters ',
+        `The last demon general is all that stands between you and your mortal enemy.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -174,7 +174,7 @@ module.exports = {
       id: 19,
       key: 'hunt19',
       name: 'Drokkenden the Dread',
-      description: `At the top of Mount Dread, you come face to face to the lava breathing Drokkenden.`,
+      description: `At the top of Mount Dread, you face Drokkenden dread, the lava-breathing dragon who pulls the strings behind this destruction.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
