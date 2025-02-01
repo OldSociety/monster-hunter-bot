@@ -22,7 +22,7 @@ module.exports = {
           type: 'mini-boss',
           monsterIndex: 'bandit-captain',
           difficulty: 'boss-strong', // 97
-          firstGoldReward: 750,
+          firstGoldReward: 80,
           goldReward: 55,
         },
       ],
@@ -45,7 +45,7 @@ module.exports = {
           type: 'mini-boss',
           monsterIndex: 'gibbering-mouther', // 110
           difficulty: 'boss-strong',
-          firstGoldReward: 810,
+          firstGoldReward: 85,
           goldReward: 57,
         },
       ],
@@ -60,7 +60,7 @@ module.exports = {
       totalBattles: 6,
       battles: [
         { type: 'normal', monsterIndex: 'night-hag', difficulty: 'medium', goldReward: 45 }, // 112
-        { type: 'normal', monsterIndex: 'bone-debil', difficulty: 'medium', goldReward: 47 }, // 110
+        { type: 'normal', monsterIndex: 'bone-devil', difficulty: 'medium', goldReward: 47 }, // 110
         { type: 'normal', monsterIndex: 'lich', difficulty: 'medium', goldReward: 49 }, // 135
         { type: 'normal', monsterIndex: 'medusa', difficulty: 'medium', goldReward: 51 }, // 127
         { type: 'normal', monsterIndex: 'stone-giant', difficulty: 'medium', goldReward: 53 }, // 126
@@ -68,7 +68,7 @@ module.exports = {
           type: 'mini-boss',
           monsterIndex: 'vampire-spawn', // 123
           difficulty: 'boss-strong',
-          firstGoldReward: 870,
+          firstGoldReward: 96,
           goldReward: 59,
         },
       ],
@@ -84,18 +84,18 @@ module.exports = {
       totalBattles: 8,
       battles: [
         { type: 'normal', monsterIndex: 'chuul', difficulty: 'hard', goldReward: 46 }, // 135
-        { type: 'normal', monsterIndex: 'mummy-lord', difficulty: 'hard', goldReward: 47 }, // 135
-        { type: 'normal', monsterIndex: 'vrock', difficulty: 'hard', goldReward: 48 }, // 152
-        { type: 'normal', monsterIndex: 'archmage', difficulty: 'hard', goldReward: 49 }, // 145
-        { type: 'normal', monsterIndex: 'bulette', difficulty: 'hard', goldReward: 50 }, // 140
-        { type: 'normal', monsterIndex: 'chain-devil', difficulty: 'hard', goldReward: 49 }, // 129
-        { type: 'normal', monsterIndex: 'invisible-stalker', difficulty: 'hard', goldReward: 52 }, // 156
+        { type: 'normal', monsterIndex: 'mummy-lord', difficulty: 'hard', goldReward: 48 }, // 135
+        { type: 'normal', monsterIndex: 'vrock', difficulty: 'hard', goldReward: 50 }, // 152
+        { type: 'normal', monsterIndex: 'archmage', difficulty: 'hard', goldReward: 52 }, // 145
+        { type: 'normal', monsterIndex: 'bulette', difficulty: 'hard', goldReward: 47 }, // 140
+        { type: 'normal', monsterIndex: 'chain-devil', difficulty: 'hard', goldReward: 51 }, // 129
+        { type: 'normal', monsterIndex: 'invisible-stalker', difficulty: 'hard', goldReward: 53 }, // 156
         {
           type: 'mini-boss',
           monsterIndex: 'deva', // 204
           difficulty: 'boss-strong',
-          firstGoldReward: 1180,
-          goldReward: 60,
+          firstGoldReward: 118,
+          goldReward: 55,
         },
       ],
       unlocks: 'hunt10',
@@ -109,18 +109,18 @@ module.exports = {
       energyCost: 2,
       totalBattles: 8,
       battles: [
-        { type: 'normal', monsterIndex: 'ettin', difficulty: 'medium', goldReward: 47 }, // 85
-        { type: 'normal', monsterIndex: 'wyvern', difficulty: 'medium', goldReward: 47 }, // 110
-        { type: 'normal', monsterIndex: 'rakshasa', difficulty: 'medium', goldReward: 49 }, // 110
-        { type: 'normal', monsterIndex: 'mammoth', difficulty: 'medium', goldReward: 51 }, // 126
-        { type: 'normal', monsterIndex: 'aboleth', difficulty: 'medium', goldReward: 51 }, // 135 
-        { type: 'normal', monsterIndex: 'weretiger-hybrid', difficulty: 'medium', goldReward: 53 }, // 120
-        { type: 'normal', monsterIndex: 'bearded-devil', difficulty: 'medium', goldReward: 55 }, // 110
+        { type: 'normal', monsterIndex: 'ettin', difficulty: 'medium', goldReward: 48 }, // 85
+        { type: 'normal', monsterIndex: 'wyvern', difficulty: 'medium', goldReward: 50 }, // 110
+        { type: 'normal', monsterIndex: 'rakshasa', difficulty: 'medium', goldReward: 52 }, // 110
+        { type: 'normal', monsterIndex: 'mammoth', difficulty: 'medium', goldReward: 54 }, // 126
+        { type: 'normal', monsterIndex: 'aboleth', difficulty: 'medium', goldReward: 56 }, // 135 
+        { type: 'normal', monsterIndex: 'weretiger-hybrid', difficulty: 'medium', goldReward: 49 }, // 120
+        { type: 'normal', monsterIndex: 'bearded-devil', difficulty: 'medium', goldReward: 51 }, // 110
         {
           type: 'mini-boss',
           monsterIndex: 'chimera', // 172
           difficulty: 'boss-strong',
-          firstGoldReward: 930,
+          firstGoldReward: 106,
           goldReward: 70,
         },
       ],
@@ -135,19 +135,19 @@ module.exports = {
       energyCost: 2,
       totalBattles: 8,
       battles: [
-        { type: 'normal', monsterIndex: 'tyrannosaurus-rex', difficulty: 'medium', goldReward: 48 }, // 136
-        { type: 'normal', monsterIndex: 'treant', difficulty: 'medium', goldReward: 50 }, // 138
-        { type: 'normal', monsterIndex: 'gynosphinx', difficulty: 'medium', goldReward: 52 }, // 136 
-        { type: 'normal', monsterIndex: 'shield-guardian', difficulty: 'medium', goldReward: 54 }, // 142
-        { type: 'normal', monsterIndex: 'young-green-dragon', difficulty: 'medium', goldReward: 56 }, // 136
-        { type: 'normal', monsterIndex: 'vampire-mist', difficulty: 'medium', goldReward: 56 }, // 144
-        { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 'medium', goldReward: 56 }, // 136
+        { type: 'normal', monsterIndex: 'tyrannosaurus-rex', difficulty: 'medium', goldReward: 63 }, // 136
+        { type: 'normal', monsterIndex: 'treant', difficulty: 'medium', goldReward: 65 }, // 138
+        { type: 'normal', monsterIndex: 'gynosphinx', difficulty: 'medium', goldReward: 67 }, // 136 
+        { type: 'normal', monsterIndex: 'shield-guardian', difficulty: 'medium', goldReward: 69 }, // 142
+        { type: 'normal', monsterIndex: 'young-green-dragon', difficulty: 'medium', goldReward: 71 }, // 136
+        { type: 'normal', monsterIndex: 'vampire-mist', difficulty: 'medium', goldReward: 64 }, // 144
+        { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 'medium', goldReward: 66 }, // 136
         {
           type: 'mini-boss',
           monsterIndex: 'gorgon', // 172
           difficulty: 'boss-strong',
-          firstGoldReward: 970,
-          goldReward: 75,
+          firstGoldReward: 108,
+          goldReward: 68,
         },
       ],
       unlocks: 'hunt12',
@@ -165,15 +165,15 @@ module.exports = {
         { type: 'normal', monsterIndex: 'ogre-zombie', difficulty: 'very-hard', goldReward: 79 }, // 170
         { type: 'normal', monsterIndex: 'air-elemental', difficulty: 'very-hard', goldReward: 81 }, // 135
         { type: 'normal', monsterIndex: 'spirit-naga', difficulty: 'very-hard', goldReward: 83 }, // 105
-        { type: 'normal', monsterIndex: 'troll', difficulty: 'very-hard', goldReward: 85 }, // 168
+        { type: 'normal', monsterIndex: 'troll', difficulty: 'very-hard', goldReward: 84 }, // 168
         { type: 'normal', monsterIndex: 'green-hag', difficulty: 'very-hard', goldReward: 87 }, // 164
         { type: 'normal', monsterIndex: 'lamia', difficulty: 'very-hard', goldReward: 89 }, // 194
-        { type: 'normal', monsterIndex: 'hill-giant', difficulty: 'very-hard', goldReward: 91 }, // 210
+        { type: 'normal', monsterIndex: 'hill-giant', difficulty: 'very-hard', goldReward: 90 }, // 210
         {
           type: 'boss',
           monsterIndex: 'vampire-vampire', // 288
           difficulty: 'boss-epic',
-          firstGoldReward: 2253,
+          firstGoldReward: 225,
           goldReward: 93,
         },
       ],
