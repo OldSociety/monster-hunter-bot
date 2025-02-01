@@ -57,11 +57,12 @@ module.exports = {
       totalBattles: 8,
       battles: [
         { type: 'normal', monsterIndex: 'drow', difficulty: 'normal', goldReward: 48 }, // 13
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 48 }, // 
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 50 }, // 
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 50 }, // 
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 50 }, // 
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'normal', goldReward: 52 }, // 
+        { type: 'normal', monsterIndex: 'orc', difficulty: 'normal', goldReward: 48 }, // 15
+        { type: 'normal', monsterIndex: 'camel', difficulty: 'normal', goldReward: 50 }, // 15
+        { type: 'normal', monsterIndex: 'lemure', difficulty: 'normal', goldReward: 50 }, // 13
+        { type: 'normal', monsterIndex: 'ape', difficulty: 'normal', goldReward: 50 }, // 19
+        { type: 'normal', monsterIndex: 'flying-sword', difficulty: 'normal', goldReward: 52 }, // 17
+        { type: 'normal', monsterIndex: 'deep-gnome', difficulty: 'normal', goldReward: 52 }, // 16
         {
           type: 'mini-boss',
           monsterIndex: 'rust-monster', // 
