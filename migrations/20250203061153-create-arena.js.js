@@ -39,10 +39,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 10,
       },
-      war_points: {
-        type: Sequelize.INTEGER,
-        defaultValue: 100,
-      },
       equippedCount: {
         type: Sequelize.INTEGER,
         allowNull: false,

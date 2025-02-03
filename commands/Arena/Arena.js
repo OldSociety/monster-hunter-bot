@@ -1,6 +1,72 @@
 const { ActionRowBuilder, ButtonBuilder, EmbedBuilder } = require('discord.js')
 const { User, Arena, } = require('../../Models')
 
+const ATT_BOOSTS = [
+  { threshold: 750, multiplier: 16 },
+  { threshold: 700, multiplier: 15 },
+  { threshold: 650, multiplier: 14 },
+  { threshold: 600, multiplier: 13 },
+  { threshold: 550, multiplier: 12 },
+  { threshold: 500, multiplier: 11 },
+  { threshold: 450, multiplier: 9.75 },
+  { threshold: 400, multiplier: 8.5 },
+  { threshold: 350, multiplier: 7.5 },
+  { threshold: 300, multiplier: 6.5 },
+  { threshold: 250, multiplier: 5.5 },
+  { threshold: 200, multiplier: 4.5 },
+  { threshold: 125, multiplier: 3 },
+  { threshold: 85, multiplier: 2.5 },
+  { threshold: 55, multiplier: 2 },
+  { threshold: 35, multiplier: 1.5 },
+  { threshold: 20, multiplier: 1.25 },
+  { threshold: 13, multiplier: 1 },
+  { threshold: 8, multiplier: 0.75 },
+  { threshold: 0, multiplier: 0.5 },
+]
+
+async function getOrCreatePlayer(userId) {
+  try {
+    let player = await WinterWar.findOne({ where: { userId } })
+    if (!player) {
+      player = await WinterWar.create({
+        userId,
+        hp: 5,
+        strength: 4,
+        defense: 4,
+        intelligence: 4,
+        agility: 4,
+        statPoints: 10,
+      })
+    }
+    return player
+  } catch (error) {
+    console.error(`Error in getOrCreatePlayer: ${error.message}`)
+    throw new Error('Could not retrieve or create player.')
+  }
+}
+
+function getBoostMultiplier(stat) {
+  for (const boost of ATT_BOOSTS) {
+    if (stat >= boost.threshold) {
+      return boost.multiplier
+    }
+  }
+  return 0.5
+}
+
+// Function to determine the first turn
+const determineFirstTurn = (playerAgility, monsterAgility) => {
+  const totalAgility = playerAgility + monsterAgility
+
+  // Calculate player and monster probabilities
+  const playerChance = playerAgility / totalAgility
+  const monsterChance = monsterAgility / totalAgility
+
+  // Generate a random number to determine first turn
+  const randomValue = Math.random()
+  return randomValue < playerChance ? 'player' : 'monster'
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('arena')
