@@ -50,7 +50,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   let completedLevelsOnPage = completedLevels - totalHuntsBefore
   console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`)
 
-
   const unlockedHunts = pageData.hunts.filter(
     (hunt) => hunt.id <= completedLevels + 1
   )

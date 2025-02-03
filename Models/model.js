@@ -6,11 +6,11 @@ const User = require('./User/User')(sequelize, DataTypes)
 const Collection = require('./Collection/Collection')(sequelize, DataTypes)
 
 // Arena models
-const Arena = require('./Arena/Arenas')(sequelize, DataTypes)
+const Arena = require('./Arena/Arena')(sequelize, DataTypes)
 const ArenaMonster = require('./Arena/ArenaMonster')(sequelize, DataTypes)
-const BaseItem = require('./Arena/BaseItems')(sequelize, DataTypes)
-const Inventory = require('./Arena/Inventories')(sequelize, DataTypes)
-const PlayerProgressStat = require('./Arena/PlayerProgressStats')(
+const BaseItem = require('./Arena/BaseItem')(sequelize, DataTypes)
+const Inventory = require('./Arena/Inventory')(sequelize, DataTypes)
+const PlayerProgressStat = require('./Arena/PlayerProgressStat')(
   sequelize,
   DataTypes
 )
@@ -56,8 +56,6 @@ Inventory.belongsTo(BaseItem, {
   as: 'item',
 })
 
-// (Optional) Set up associations for player progress stats.
-// Assuming that playerId in PlayerProgressStat refers to the Arena id and monsterId to ArenaMonster id.
 Arena.hasMany(PlayerProgressStat, {
   foreignKey: 'playerId',
   as: 'progressStats',

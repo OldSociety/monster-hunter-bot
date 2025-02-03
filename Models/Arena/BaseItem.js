@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       theme: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       damageMin: {
         type: DataTypes.INTEGER,

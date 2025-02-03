@@ -40,10 +40,10 @@ module.exports = {
         description: 'A basic snowball, perfect for beginners.',
       },
       {
-        name: 'Basic Shield',
+        name: 'Winter Shield',
         type: 'defense',
         rarity: 'common',
-        theme: null,
+        theme: 'winter',
         damageMin: 0,
         damageMax: 0,
         damageType: null,

@@ -23,7 +23,7 @@ module.exports = {
       },
       theme: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       damageMin: {
         type: Sequelize.INTEGER,
