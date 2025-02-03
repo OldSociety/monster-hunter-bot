@@ -12,13 +12,13 @@ module.exports = {
       energyCost: 1,
       totalBattles: 3,
       battles: [
-        { type: 'normal', monsterIndex: 'goblin', difficulty: 'medium', goldReward: 24 }, // hp 7
-        { type: 'normal', monsterIndex: 'giant-rat', difficulty: 'medium', goldReward: 26 }, // 9
-        { type: 'normal', monsterIndex: 'magmin', difficulty: 'medium', goldReward: 28 }, //9
+        { type: 'normal', monsterIndex: 'goblin', difficulty: 1, goldReward: 24 }, // hp 7
+        { type: 'normal', monsterIndex: 'giant-rat', difficulty: 1, goldReward: 26 }, // 9
+        { type: 'normal', monsterIndex: 'magmin', difficulty: 1, goldReward: 28 }, //9
         {
           type: 'mini-boss',
           monsterIndex: 'darkmantle', // 16
-          difficulty: 'boss-half',
+          difficulty: 0.5,
           firstGoldReward: 70,
           goldReward: 28,
         },
@@ -33,14 +33,14 @@ module.exports = {
       energyCost: 1,
       totalBattles: 5,
       battles: [
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 'medium', goldReward: 25 }, // 11
-        { type: 'normal', monsterIndex: 'ape', difficulty: 'easy', goldReward: 27 }, // 9
-        { type: 'normal', monsterIndex: 'imp', difficulty: 'medium', goldReward: 29 }, // 10
-        { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 'medium', goldReward: 31 }, //11
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 1, goldReward: 25 }, // 11
+        { type: 'normal', monsterIndex: 'ape', difficulty: 0.5, goldReward: 27 }, // 9
+        { type: 'normal', monsterIndex: 'imp', difficulty: 1, goldReward: 29 }, // 10
+        { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 1, goldReward: 31 }, //11
         {
           type: 'mini-boss',
           monsterIndex: 'harpy', // 19
-          difficulty: 'boss-half',
+          difficulty: 0.5,
           firstGoldReward: 90,
           goldReward: 32,
         },
@@ -52,21 +52,21 @@ module.exports = {
       key: 'hunt3',
       name: 'Rust Monster',
       description:
-        `A nearby rust monster threatens an army's steel—destroy it before nation's soldiers are left defenseless.`,
+        `A nearby rust monster threatens an army's steel—destroy it before it's left defenseless.`,
       energyCost: 1,
       totalBattles: 8,
       battles: [
-        { type: 'normal', monsterIndex: 'drow', difficulty: 'medium', goldReward: 26 }, // 13
-        { type: 'normal', monsterIndex: 'orc', difficulty: 'medium', goldReward: 28 }, // 15
-        { type: 'normal', monsterIndex: 'camel', difficulty: 'medium', goldReward: 30 }, // 15
-        { type: 'normal', monsterIndex: 'lemure', difficulty: 'medium', goldReward: 32 }, // 13
-        { type: 'normal', monsterIndex: 'ape', difficulty: 'medium', goldReward: 34 }, // 19
-        { type: 'normal', monsterIndex: 'flying-sword', difficulty: 'medium', goldReward: 27 }, // 17
-        { type: 'normal', monsterIndex: 'deep-gnome-svirfneblin', difficulty: 'medium', goldReward: 29 }, // 16
+        { type: 'normal', monsterIndex: 'drow', difficulty: 1, goldReward: 26 }, // 13
+        { type: 'normal', monsterIndex: 'orc', difficulty: 1, goldReward: 28 }, // 15
+        { type: 'normal', monsterIndex: 'camel', difficulty: 1, goldReward: 30 }, // 15
+        { type: 'normal', monsterIndex: 'lemure', difficulty: 1, goldReward: 32 }, // 13
+        { type: 'normal', monsterIndex: 'ape', difficulty: 1, goldReward: 34 }, // 19
+        { type: 'normal', monsterIndex: 'flying-sword', difficulty: 1, goldReward: 27 }, // 17
+        { type: 'normal', monsterIndex: 'deep-gnome-svirfneblin', difficulty: 1, goldReward: 29 }, // 16
         {
           type: 'mini-boss',
           monsterIndex: 'rust-monster', // 27
-          difficulty: 'boss-full',
+          difficulty: 1.5,
           firstGoldReward: 80,
           goldReward: 52,
         },
@@ -82,18 +82,18 @@ module.exports = {
       energyCost: 1,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 'medium', goldReward: 31 }, // 33
-        { type: 'normal', monsterIndex: 'azer', difficulty: 'medium', goldReward: 33 }, // 39
-        { type: 'normal', monsterIndex: 'ettercap', difficulty: 'medium', goldReward: 70 }, // 44
-        { type: 'normal', monsterIndex: 'black-dragon-wyrmling', difficulty: 'normal', goldReward: 28 }, // 32
-        { type: 'normal', monsterIndex: 'dire-wolf', difficulty: 'medium', goldReward: 30 }, // 37
-        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 'hard', goldReward: 32 }, // 33
-        { type: 'normal', monsterIndex: 'dryad', difficulty: 'hard', goldReward: 34 }, // 33
-        { type: 'normal', monsterIndex: 'cockatrice', difficulty: 'medium', goldReward: 36 }, // 27
+        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 1, goldReward: 31 }, // 33
+        { type: 'normal', monsterIndex: 'azer', difficulty: 1, goldReward: 33 }, // 39
+        { type: 'normal', monsterIndex: 'ettercap', difficulty: 1, goldReward: 70 }, // 44
+        { type: 'normal', monsterIndex: 'black-dragon-wyrmling', difficulty: '1', goldReward: 28 }, // 32
+        { type: 'normal', monsterIndex: 'dire-wolf', difficulty: 1, goldReward: 30 }, // 37
+        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 1.5, goldReward: 32 }, // 33
+        { type: 'normal', monsterIndex: 'dryad', difficulty: 1.5, goldReward: 34 }, // 33
+        { type: 'normal', monsterIndex: 'cockatrice', difficulty: 1, goldReward: 36 }, // 27
         {
           type: 'mini-boss',
           monsterIndex: 'sea-hag', // 52
-          difficulty: 'boss-full',
+          difficulty: 1.5,
           firstGoldReward: 80,
           goldReward: 52,
         },
@@ -104,23 +104,23 @@ module.exports = {
       id: 5,
       key: 'hunt5',
       name: 'Red Dragon Wyrmling',
-      description: `The time has come to face Oryzinax in its lair—slay the wyrmling before its fiery breath brings devastation to Harvest Hill and beyond.`,
+      description: `The time has come to face Oryzinax—slay the wyrmling before Harvest Hill burns.`,
       energyCost: 2,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'bandit-captain', difficulty: 'medium', goldReward: 31 }, // 65
-        { type: 'normal', monsterIndex: 'satyr', difficulty: 'hard', goldReward: 45 }, // 45
-        { type: 'normal', monsterIndex: 'duegar', difficulty: 'medium', goldReward: 48 }, // 39
-        { type: 'normal', monsterIndex: 'knight', difficulty: 'medium', goldReward: 51 }, // 52
-        { type: 'normal', monsterIndex: 'green-hag', difficulty: 'medium', goldReward: 54 }, // 82
-        { type: 'normal', monsterIndex: 'werewolf-hybrid', difficulty: 'medium', goldReward: 57 }, // 58
-        { type: 'normal', monsterIndex: 'veteran', difficulty: 'medium', goldReward: 60 }, // 58
-        { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 'medium', goldReward: 63 }, // 67
-        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 'medium', goldReward: 58 }, // 66
+        { type: 'normal', monsterIndex: 'bandit-captain', difficulty: 1, goldReward: 31 }, // 65
+        { type: 'normal', monsterIndex: 'satyr', difficulty: 1.5, goldReward: 45 }, // 45
+        { type: 'normal', monsterIndex: 'duergar', difficulty: 1, goldReward: 48 }, // 39
+        { type: 'normal', monsterIndex: 'knight', difficulty: 1, goldReward: 51 }, // 52
+        { type: 'normal', monsterIndex: 'green-hag', difficulty: 1, goldReward: 54 }, // 82
+        { type: 'normal', monsterIndex: 'werewolf-hybrid', difficulty: 1, goldReward: 57 }, // 58
+        { type: 'normal', monsterIndex: 'veteran', difficulty: 1, goldReward: 60 }, // 58
+        { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 1, goldReward: 63 }, // 67
+        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 1, goldReward: 58 }, // 66
         {
           type: 'mini-boss',
           monsterIndex: 'red-dragon-wyrmling', // 93
-          difficulty: 'boss-strong',
+          difficulty: 2,
           firstGoldReward: 300,
           goldReward: 75,
         },

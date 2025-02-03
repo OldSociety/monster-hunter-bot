@@ -70,25 +70,11 @@ async function runBattlePhases(
     )
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
 
-    let segmentLoss = 0
-
     if (phaseResult === 'Hit!') {
       playerWins++
-      const margin = playerRoll - monsterRoll
-      const percentage = (margin / monsterScore) * 100 // How much % higher player roll is
-
-      if (percentage >= 50) {
-        segmentLoss = 3
-      } else if (percentage >= 25) {
-        segmentLoss = 2
-      } else {
-        segmentLoss = 1
-      }
-
-      // Ensure at least 1 segment is removed on a hit
-      segmentLoss = Math.max(segmentLoss, 1)
-      momentum -= Math.min(segmentLoss, momentum)
-
+      const flatDamage = 4 
+      momentum -= Math.min(flatDamage, momentum)
+    
       if (playerWins >= 4) {
         user.currency.gems = (user.currency.gems || 0) + 1
         user.changed('currency', true)
@@ -98,6 +84,7 @@ async function runBattlePhases(
     } else {
       monsterWins++
     }
+    
 
     const healthBar = createHealthBar(momentum, maxMomentum)
     const effects =

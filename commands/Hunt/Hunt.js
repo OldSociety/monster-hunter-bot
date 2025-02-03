@@ -1,14 +1,10 @@
-// hunt.js
-
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { Collection } = require('../../Models/model.js')
-
 const { checkUserAccount } = require('../Account/checkAccount.js')
 const { showLevelSelection } = require('./huntUtils/huntHandlers.js')
 const { startNewEncounter } = require('./huntUtils/encounterHandler.js')
 const { handlePagination } = require('./huntUtils/paginationHandler.js')
 const { huntPages } = require('./huntPages.js')
-
 const { cacheHuntMonsters } = require('../../handlers/huntCacheHandler')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
@@ -20,8 +16,10 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true })
-
+    // Only defer reply if this interaction has not already been acknowledged.
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply({ ephemeral: true })
+    }
 
     const user = await checkUserAccount(interaction)
     if (!user) {
@@ -29,7 +27,7 @@ module.exports = {
       return
     }
 
-    stopUserCollector(interaction.user.id) //
+    stopUserCollector(interaction.user.id)
 
     const highestUnlockedPage = Object.keys(huntPages).find(
       (pageKey, index) => {
@@ -41,24 +39,20 @@ module.exports = {
     )
 
     user.unlockedPage = highestUnlockedPage || 'page1'
-
     user.completedHunts = user.completedHunts || []
 
     try {
-
       const userCollection = await Collection.findOne({
         where: { userId: interaction.user.id },
       })
-
       if (!userCollection) {
-        console.warn('No monster collection found for user.')
         return interaction.editReply({
           embeds: [
             new EmbedBuilder()
               .setColor('#FF0000')
               .setTitle('No Monsters Found')
               .setDescription(
-                'You need at least one card to go on a hunt.\nUse `/shop` to receive a starter pack.'
+                'You need at least one card to go on a hunt. Use `/shop` to receive a starter pack.'
               ),
           ],
         })
@@ -78,7 +72,7 @@ module.exports = {
 
     await cacheHuntMonsters()
 
-    let huntData = {
+    const huntData = {
       totalMonstersDefeated: 0,
       totalGoldEarned: 0,
       currentBattleIndex: 0,
@@ -89,96 +83,68 @@ module.exports = {
       inProgress: false,
     }
 
-
     await showLevelSelection(interaction, user, huntData)
 
     const filter = (i) => i.user.id === interaction.user.id
-
     stopUserCollector(interaction.user.id)
 
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: 60000,
     })
-
     collectors.set(interaction.user.id, collector)
 
     collector.on('collect', async (i) => {
-
-
       if (i.customId === 'use_ichor') {
-
         await i.deferUpdate()
-
         if (user.currency.ichor < 1) {
-
           await interaction.followUp({
             content: "You don't have enough 🧪ichor to use this option.",
             ephemeral: true,
           })
           return
         }
-
         if (huntData.ichorUsed) {
-
           await interaction.followUp({
             content: 'You have already used Ichor for this hunt!',
             ephemeral: true,
           })
           return
         }
-
         user.currency.ichor -= 1
         user.changed('currency', true)
         await user.save()
-
         huntData.ichorUsed = true
-
-
         await showLevelSelection(interaction, user, huntData, user.id)
         return
       }
 
       if (i.customId === 'cancel_hunt') {
-
-
         let cancelMessage = 'Hunt cancelled.'
-
         if (huntData.ichorUsed) {
           user.currency.ichor += 1
           huntData.ichorUsed = false
           await user.save()
-          cancelMessage += ' Your 🧪 Ichor has been refunded.'
+          cancelMessage += ' Your 🧪Ichor has been refunded.'
         }
-
         if (i.replied || i.deferred) {
-          await i.editReply({
-            content: cancelMessage,
-            components: [], // Remove buttons
-          })
+          await i.editReply({ content: cancelMessage, components: [] })
         } else {
-          await i.update({
-            content: cancelMessage,
-            embeds: [],
-            components: [],
-          })
+          await i.update({ content: cancelMessage, embeds: [], components: [] })
         }
-
-        collector.stop() // Stop collector since hunt is cancelled
+        collector.stop()
+        return
       }
 
       if (i.customId.startsWith('page_')) {
         const newPage = i.customId.replace('page_', '')
-
         await i.deferUpdate()
         await showLevelSelection(interaction, user, huntData, newPage)
         return
       }
 
       if (i.customId === 'hunt_select') {
-
         const selectedHuntKey = i.values[0].replace('hunt_', '')
-
         let selectedHunt = null
         let selectedPage = null
 
@@ -192,13 +158,8 @@ module.exports = {
         }
 
         if (!selectedHunt || !selectedPage) {
-          console.error(`❌ ERROR: Hunt '${selectedHuntKey}' not found.`)
-          return i
-            .reply({
-              content: 'Error: Hunt not found.',
-              ephemeral: true,
-            })
-            .catch((err) => console.warn(`⚠️ reply failed: ${err}`))
+          console.error(`Error: Hunt '${selectedHuntKey}' not found.`)
+          return i.reply({ content: 'Error: Hunt not found.', ephemeral: true })
         }
 
         if ((user.currency.energy || 0) < selectedHunt.energyCost) {
@@ -211,7 +172,6 @@ module.exports = {
             .setFooter({
               text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
             })
-
           await interaction.editReply({
             embeds: [noEnergyEmbed],
             components: [],
@@ -227,18 +187,13 @@ module.exports = {
         try {
           if (!i.replied && !i.deferred) {
             await i.deferUpdate()
-          } else {
-            console.warn(`⚠️ Interaction ${i.id} was already handled.`)
           }
         } catch (error) {
-          console.warn(`⚠️ deferUpdate failed: ${error.message}`)
+          console.warn(`deferUpdate failed: ${error.message}`)
         }
 
-
-        const updatedUser = await checkUserAccount(interaction) // Refetch from DB
+        const updatedUser = await checkUserAccount(interaction)
         const pageData = huntPages[selectedPage]
-
-
         const updatedEmbed = new EmbedBuilder()
           .setTitle(selectedHunt.name)
           .setDescription(
@@ -248,18 +203,12 @@ module.exports = {
           .setFooter({
             text: `Available: ⚡${updatedUser.currency.energy} 🧪${updatedUser.currency.ichor}`,
           })
-
         try {
-          await i.editReply({
-            embeds: [updatedEmbed],
-            components: [],
-          })
+          await i.editReply({ embeds: [updatedEmbed], components: [] })
         } catch (error) {
-          console.warn(`⚠️ editReply failed: ${error.message}`)
+          console.warn(`editReply failed: ${error.message}`)
         }
-
         huntData.level = { ...selectedHunt, page: selectedPage }
-
         await startNewEncounter(interaction, updatedUser, huntData)
         return
       }
@@ -272,7 +221,8 @@ module.exports = {
       }
     })
 
-    collector.on('end', async (collected, reason) => {
+    collector.on('end', async (_, reason) => {
+      collectors.delete(interaction.user.id)
       if (reason === 'time') {
         try {
           await interaction.followUp({
@@ -281,10 +231,9 @@ module.exports = {
             ephemeral: true,
           })
         } catch (error) {
-          console.warn(`⚠️ followUp failed: ${error.message}`)
+          console.warn(`followUp failed: ${error.message}`)
         }
       }
-      collectors.delete(interaction.user.id)
     })
   },
 }

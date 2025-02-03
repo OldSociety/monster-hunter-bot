@@ -92,7 +92,10 @@ async function startGame(interaction, userData) {
   const userId = interaction.user.id
 
   // Deduct token cost
-  userData.currency = { ...userData.currency, tokens: userData.currency.tokens - 1 }
+  userData.currency = {
+    ...userData.currency,
+    tokens: userData.currency.tokens - 1,
+  }
   await userData.save()
   jackpot += Math.floor(Math.random() * 6) + 5
 
@@ -361,6 +364,8 @@ async function startGame(interaction, userData) {
         .setStyle('Secondary')
     )
 
+    let collector
+
   // Function to handle each round of the game
   const playRound = async (interactionObject, isInitial = false) => {
     const userId = interactionObject.user.id // Ensure correct user ID reference
@@ -420,8 +425,10 @@ async function startGame(interaction, userData) {
       activePlayers.delete(userId)
       message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`
       gameState.totalGold = 0
-      // Ensure the collector stops processing more inputs
-      collector.stop()
+      // Only call stop() if collector exists.
+      if (typeof collector !== 'undefined' && collector) {
+        collector.stop()
+      }
     } else if (roll.type === 'energy') {
       if (userData.currency.energy < 15) {
         userData.currency = {
@@ -564,7 +571,7 @@ async function startGame(interaction, userData) {
 
   await playRound(interaction, true)
 
-  const collector = interaction.channel.createMessageComponentCollector({
+   collector = interaction.channel.createMessageComponentCollector({
     filter: (btnInteraction) => btnInteraction.user.id === userId,
     time: 60000,
   })
@@ -627,9 +634,9 @@ async function startGame(interaction, userData) {
 
         const footerText = `Available: 🪙${userData.gold || 0} ⚡${
           userData.currency.energy || 0
-        } 🧿${userData.currency.tokens || 0} 🥚${userData.currency.eggs || 0} 🧪${
-          userData.currency.ichor || 0
-        }`
+        } 🧿${userData.currency.tokens || 0} 🥚${
+          userData.currency.eggs || 0
+        } 🧪${userData.currency.ichor || 0}`
 
         const finalEmbed = new EmbedBuilder()
           .setTitle(`Zalathor's Table Results 🎰`)

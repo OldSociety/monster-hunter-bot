@@ -1,33 +1,33 @@
 module.exports = {
   key: 'page4',
-  name: `Hunt Page 4 - `,
+  name: `Hunt Page 4 - Road to Hell`,
   description:
-    '',
-  finalBoss: '',
+    `The battle against Drokkenden left hell's gates open and a demonic new threat has found its way from the abyss.`,
+  finalBoss: 'Rakshasa',
   hunts: [
     {
       id: 20,
       key: 'hunt20',
-      name: '',
-      description: ``,
+      name: 'Purple Worm',
+      description: `An entire town vanished thanks to the hungry terror beneath its sewers.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'remorhaz', difficulty: 'medium', goldReward: 63 }, // 195
-        { type: 'normal', monsterIndex: 'androsphinx', difficulty: 'medium', goldReward: 65 }, // 199
-        { type: 'normal', monsterIndex: 'planetar', difficulty: 'medium', goldReward: 67 }, // 200
-        { type: 'normal', monsterIndex: 'marilith', difficulty: 'medium', goldReward: 69 }, // 189
-        { type: 'normal', monsterIndex: 'lich', difficulty: 'hard', goldReward: 71 }, // 202
-        { type: 'normal', monsterIndex: 'young-blue-dragon', difficulty: 'hard', goldReward: 64 }, // 228
-        { type: 'normal', monsterIndex: 'werebear-hybrid', difficulty: 'hard', goldReward: 66 }, // 202
-        { type: 'normal', monsterIndex: 'wyvern', difficulty: 'very-hard', goldReward: 68 }, // 220
-        { type: 'normal', monsterIndex: 'behir', difficulty: 'medium', goldReward: 70 }, // 165
+        { type: 'normal', monsterIndex: 'winter-wolf', difficulty: '5', goldReward: 104 }, // 375
+        { type: 'normal', monsterIndex: 'elephant', difficulty: '5', goldReward: 106 }, // 380
+        { type: 'normal', monsterIndex: 'troll', difficulty: '5', goldReward: 108 }, // 420
+        { type: 'normal', monsterIndex: 'spirit-naga', difficulty: '5', goldReward: 110 }, // 375
+        { type: 'normal', monsterIndex: 'black-pudding', difficulty: '5', goldReward: 112 }, // 425
+        { type: 'normal', monsterIndex: 'ogre-zombie', difficulty: '5', goldReward: 114 }, // 425
+        { type: 'normal', monsterIndex: 'gelatinous-cube', difficulty: '5', goldReward: 116 }, // 420
+        { type: 'normal', monsterIndex: 'minotaur', difficulty: '5', goldReward: 105 }, // 380
+        { type: 'normal', monsterIndex: 'giant-crocodile', difficulty: '5', goldReward: 107 }, // 425
         {
           type: 'mini-boss',
-          monsterIndex: '', // 254
-          difficulty: 'boss-',
-          firstGoldReward: 98,
-          goldReward: 72,
+          monsterIndex: 'purple-worm', // 494
+          difficulty: 2,
+          firstGoldReward: 228,
+          goldReward: 109,
         },
       ],
       unlocks: 'hunt21',
@@ -35,26 +35,26 @@ module.exports = {
     {
       id: 21,
       key: 'hunt21',
-      name: ``,
-      description: ``,
+      name: `Duergar`,
+      description: `The demon has corrupted the Duergar, turning them into twisted protectors of its dark rituals.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'ghost', difficulty: 'legend', goldReward: 65 }, // 225
-        { type: 'normal', monsterIndex: 'wight', difficulty: 'legend', goldReward: 67 }, // 225
-        { type: 'normal', monsterIndex: 'satyr', difficulty: 'legend', goldReward: 69 }, // 155
-        { type: 'normal', monsterIndex: 'hell-hound', difficulty: 'legend', goldReward: 71 }, // 225
-        { type: 'normal', monsterIndex: 'harpy', difficulty: 'legend', goldReward: 73 }, // 190
-        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 'legend', goldReward: 66 }, // 165
-        { type: 'normal', monsterIndex: 'centaur', difficulty: 'legend', goldReward: 68 }, // 225
-        { type: 'normal', monsterIndex: 'ettercap', difficulty: 'legend', goldReward: 70 }, // 220
-        { type: 'normal', monsterIndex: 'ghast', difficulty: 'legend', goldReward: 72 }, // 185
+        { type: 'normal', monsterIndex: 'lizardfolk', difficulty: '6', goldReward: 107 }, // 440
+        { type: 'normal', monsterIndex: 'treant', difficulty: '3', goldReward: 109 }, // 414
+        { type: 'normal', monsterIndex: 'young-white-dragon', difficulty: '3', goldReward: 110 }, // 399
+        { type: 'normal', monsterIndex: 'gray-ooze', difficulty: '5', goldReward: 113 }, // 440
+        { type: 'normal', monsterIndex: 'hezrou', difficulty: '3', goldReward: 106 }, // 408
+        { type: 'normal', monsterIndex: 'giant-shark', difficulty: '3', goldReward: 108 }, // 375
+        { type: 'normal', monsterIndex: 'clay-golem', difficulty: '3', goldReward: 110 }, // 399
+        { type: 'normal', monsterIndex: 'specter', difficulty: '5', goldReward: 112 }, // 440
+        { type: 'normal', monsterIndex: 'stone-giant', difficulty: '3', goldReward: 107 }, // 378
         {
           type: 'mini-boss',
-          monsterIndex: '', // 258
-          difficulty: 'boss-',
-          firstGoldReward: 102,
-          goldReward: 74,
+          monsterIndex: 'duergar', // 520
+          difficulty: 20,
+          firstGoldReward: 220,
+          goldReward: 109,
         },
       ],
       unlocks: 'hunt22',
@@ -62,25 +62,25 @@ module.exports = {
     {
       id: 22,
       key: 'hunt22',
-      name: '',
-      description: ``,
+      name: 'Fire Elemental',
+      description: `This polluted wildfire will consume everyone and everything unless it's stopped.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'rhinoceros', difficulty: 'legend', goldReward: 67 }, // 225
-        { type: 'normal', monsterIndex: 'earth-elemental', difficulty: 'hard', goldReward: 79 }, // 189
-        { type: 'normal', monsterIndex: 'drider', difficulty: 'hard', goldReward: 71 }, // 184
-        { type: 'normal', monsterIndex: 'fire-giant', difficulty: 'hard', goldReward: 73 }, // 243
-        { type: 'normal', monsterIndex: 'balor', difficulty: 'medium', goldReward: 75 }, // 262
-        { type: 'normal', monsterIndex: 'vampire-bat', difficulty: 'hard', goldReward: 680 }, // 216
-        { type: 'normal', monsterIndex: 'giant-ape', difficulty: 'hard', goldReward: 70 }, // 186
-        { type: 'normal', monsterIndex: 'gladiator', difficulty: 'very-hard', goldReward: 72 }, // 224
-        { type: 'normal', monsterIndex: 'mammoth', difficulty: 'very-hard', goldReward: 74 }, // 252
+        { type: 'normal', monsterIndex: 'gnoll', difficulty: '20', goldReward: 109 }, // 225
+        { type: 'normal', monsterIndex: 'giant-crocodile', difficulty: '5', goldReward: 111 }, // 189
+        { type: 'normal', monsterIndex: 'ice-mephit', difficulty: '20', goldReward: 113 }, // 184
+        { type: 'normal', monsterIndex: 'ettin', difficulty: '5', goldReward: 115 }, // 243
+        { type: 'normal', monsterIndex: 'bulette', difficulty: '5', goldReward: 117 }, // 262
+        { type: 'normal', monsterIndex: 'steam-mephit', difficulty: '20', goldReward: 108 }, // 216
+        { type: 'normal', monsterIndex: 'will-o-wisp', difficulty: '20', goldReward: 110 }, // 186
+        { type: 'normal', monsterIndex: 'magma-mephit', difficulty: '20', goldReward: 112 }, // 224
+        { type: 'normal', monsterIndex: 'triceratops', difficulty: '5', goldReward: 114 }, // 252
         {
           type: 'mini-boss',
-          monsterIndex: '', // 290
-          difficulty: 'boss-',
-          firstGoldReward: 146,
+          monsterIndex: 'fire-elemental', // 510
+          difficulty: 5,
+          firstGoldReward: 226,
           goldReward: 76,
         },
       ],
@@ -89,27 +89,27 @@ module.exports = {
     {
       id: 23,
       key: 'hunt23',
-      name: 'Erinyes',
+      name: 'Balor',
       description:
-        'The deva fell and now serves Drokkenden—stop her before she opens the gates to hell.',
+        `Finally! We've found the balor behind this terror all along... right?`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 'very-hard', goldReward: 105 }, // 272
-        { type: 'normal', monsterIndex: 'otyugh', difficulty: 'very-hard', goldReward: 108 }, // 228
-        { type: 'normal', monsterIndex: 'shield-guardian', difficulty: 'very-hard', goldReward: 111 }, // 284
-        { type: 'normal', monsterIndex: 'stone-golem', difficulty: 'hard', goldReward: 114 }, // 267
-        { type: 'normal', monsterIndex: 'djinni', difficulty: 'hard', goldReward: 117 }, // 241
-        { type: 'normal', monsterIndex: 'gargoyle', difficulty: 'legend', goldReward: 120 }, // 260
-        { type: 'normal', monsterIndex: 'water-elemental', difficulty: 'very-hard', goldReward: 123 }, // 228
-        { type: 'normal', monsterIndex: 'young-gold-dragon', difficulty: 'hard', goldReward: 145 }, // 267
-        { type: 'normal', monsterIndex: 'lich', difficulty: 'very-hard', goldReward: 149 }, // 270
+        { type: 'normal', monsterIndex: 'chain-devil', difficulty: '5', goldReward: 116 }, // 272
+        { type: 'normal', monsterIndex: 'zombie', difficulty: '20', goldReward: 118 }, // 228
+        { type: 'normal', monsterIndex: 'frost-giant', difficulty: '3', goldReward: 120 }, // 284
+        { type: 'normal', monsterIndex: 'flesh-golem', difficulty: '5', goldReward: 111 }, // 267
+        { type: 'normal', monsterIndex: 'salamander', difficulty: '5', goldReward: 165 }, // 241
+        { type: 'normal', monsterIndex: 'magmin', difficulty: '50', goldReward: 168 }, // 260
+        { type: 'normal', monsterIndex: 'tyrannosaurus-rex', difficulty: '3', goldReward: 171 }, // 228
+        { type: 'normal', monsterIndex: 'young-bronze-dragon', difficulty: '3', goldReward: 174 }, // 267
+        { type: 'normal', monsterIndex: 'air-elemental', difficulty: '5', goldReward: 180 }, // 270
         {
           type: 'mini-boss',
-          monsterIndex: '', // 306
-          difficulty: 'boss-',
-          firstGoldReward: 294,
-          goldReward: 92,
+          monsterIndex: 'balor', // 524
+          difficulty: 3,
+          firstGoldReward: 410,
+          goldReward: 183,
         },
       ],
       unlocks: 'hunt24',
@@ -117,26 +117,26 @@ module.exports = {
     {
       id: 24,
       key: 'hunt24',
-      name: '',
+      name: 'Priest',
       description:
-        ``,
+        `Even with the Balor defeated, evil priests speak of the hushed one's return.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'nalfeshnee', difficulty: 'hard', goldReward: 83 }, // 276
-        { type: 'normal', monsterIndex: 'storm-giant', difficulty: 'medium', goldReward: 85 }, // 230
-        { type: 'normal', monsterIndex: 'roc', difficulty: 'medium', goldReward: 87 }, // 248
-        { type: 'normal', monsterIndex: 'giant-boar', difficulty: 'legend', goldReward: 89 }, // 210
-        { type: 'normal', monsterIndex: 'knight', difficulty: 'legend', goldReward: 91 }, // 260 
-        { type: 'normal', monsterIndex: 'mage', difficulty: 'legend', goldReward: 84 }, // 200 
-        { type: 'normal', monsterIndex: 'giant-constrictor-snake', difficulty: 'legend', goldReward: 86 }, // 300
-        { type: 'normal', monsterIndex: 'triceratops', difficulty: 'epic', goldReward: 88 }, // 285
-        { type: 'normal', monsterIndex: 'basilisk', difficulty: 'legend', goldReward: 90 }, // 260
+        { type: 'normal', monsterIndex: 'giant-weasel', difficulty: '50', goldReward: 123 }, // 276
+        { type: 'normal', monsterIndex: 'archmage', difficulty: '5', goldReward: 125 }, // 230
+        { type: 'normal', monsterIndex: 'werebear-hybrid', difficulty: '3', goldReward: 127 }, // 248
+        { type: 'normal', monsterIndex: 'bugbear', difficulty: '20', goldReward: 129 }, // 210
+        { type: 'normal', monsterIndex: 'imp', difficulty: '50', goldReward: 131 }, // 260 
+        { type: 'normal', monsterIndex: 'noble', difficulty: '50', goldReward: 133 }, // 200 
+        { type: 'normal', monsterIndex: 'mummy-lord', difficulty: '5', goldReward: 135 }, // 300
+        { type: 'normal', monsterIndex: 'invisible-stalker', difficulty: '4.7', goldReward: 137 }, // 285
+        { type: 'normal', monsterIndex: 'knight', difficulty: '10', goldReward: 139 }, // 260
         {
           type: 'mini-boss',
-          monsterIndex: '', // 270
-          difficulty: 'boss-',
-          firstGoldReward: 188,
+          monsterIndex: 'priest', // 540
+          difficulty: 20,
+          firstGoldReward: 354,
           goldReward: 60,
         },
       ],
@@ -145,26 +145,26 @@ module.exports = {
     {
       id: 25,
       key: 'hunt25',
-      name: '',
+      name: 'Giant Spider',
       description:
-        ``,
+        `This web of lies will come undone. Even with the fiendish spider guarding its secrets.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'doppleganger', difficulty: 'legend', goldReward: 85 }, // 260
-        { type: 'normal', monsterIndex: 'gargoyle', difficulty: 'legend', goldReward: 87 }, // 250
-        { type: 'normal', monsterIndex: 'archmage', difficulty: 'epic', goldReward: 89 }, // 300 
-        { type: 'normal', monsterIndex: 'griffon', difficulty: 'legend', goldReward: 91 }, // 295
-        { type: 'normal', monsterIndex: 'solar', difficulty: 'medium', goldReward: 93 }, // 243
-        { type: 'normal', monsterIndex: 'hydra', difficulty: 'hard', goldReward: 86 }, // 258
-        { type: 'normal', monsterIndex: 'mimic', difficulty: 'legend', goldReward: 88 }, // 290
-        { type: 'normal', monsterIndex: 'assassin', difficulty: 'epic', goldReward: 90 }, // 234
-        { type: 'normal', monsterIndex: 'balor', difficulty: 'medium', goldReward: 92 }, // 262 
+        { type: 'normal', monsterIndex: 'lamia', difficulty: '5', goldReward: 141 }, // 260
+        { type: 'normal', monsterIndex: 'violet-fungus', difficulty: '26', goldReward: 143 }, // 250
+        { type: 'normal', monsterIndex: 'zombie', difficulty: '22', goldReward: 145 }, // 300 
+        { type: 'normal', monsterIndex: 'shrieker', difficulty: '38', goldReward: 124 }, // 295
+        { type: 'normal', monsterIndex: 'couatl', difficulty: '5', goldReward: 126 }, // 243
+        { type: 'normal', monsterIndex: 'orc', difficulty: '34', goldReward: 128 }, // 258
+        { type: 'normal', monsterIndex: 'shadow', difficulty: '31', goldReward: 130 }, // 290
+        { type: 'normal', monsterIndex: 'satyr', difficulty: '16', goldReward: 132 }, // 234
+        { type: 'normal', monsterIndex: 'rug-of-smothering', difficulty: '15', goldReward: 134 }, // 262 
         {
           type: 'mini-boss',
-          monsterIndex: '', // 314
-          difficulty: 'boss-',
-          firstGoldReward: 188,
+          monsterIndex: 'giant-spider', // 520
+          difficulty: 20,
+          firstGoldReward: 372,
           goldReward: 95,
         },
       ],
@@ -173,26 +173,26 @@ module.exports = {
     {
       id: 26,
       key: 'hunt26',
-      name: '',
-      description: ``,
+      name: 'Rakshasa',
+      description: `At the heart of chaos stands the Rakshasa. His mechinations end here and now.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'unicorn', difficulty: 'legend', goldReward: 135 }, // 335
-        { type: 'normal', monsterIndex: 'owlbear', difficulty: 'legend', goldReward: 138 }, // 295
-        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 'legend', goldReward: 141 }, // 330
-        { type: 'normal', monsterIndex: 'mummy-lord', difficulty: 'epic', goldReward: 144 }, // 285
-        { type: 'normal', monsterIndex: 'wraith', difficulty: 'legend', goldReward: 147 }, // 335
-        { type: 'normal', monsterIndex: 'cloud-giant', difficulty: 'very-hard', goldReward: 150 }, // 350
-        { type: 'normal', monsterIndex: 'hill-giant', difficulty: 'epic', goldReward: 153 }, // 315
-        { type: 'normal', monsterIndex: 'otyugh', difficulty: 'epic', goldReward: 106 }, // 342
-        { type: 'normal', monsterIndex: 'minotaur-skeleton', difficulty: 'legend', goldReward: 105 }, // 335
+        { type: 'normal', monsterIndex: 'lion', difficulty: '5', goldReward: 141 }, // 335
+        { type: 'normal', monsterIndex: 'gladiator', difficulty: '5', goldReward: 143 }, // 295
+        { type: 'normal', monsterIndex: 'vrock', difficulty: '5', goldReward: 145 }, // 330
+        { type: 'normal', monsterIndex: 'hippogriff', difficulty: '38', goldReward: 147 }, // 285
+        { type: 'normal', monsterIndex: 'grick', difficulty: '20', goldReward: 149 }, // 335
+        { type: 'normal', monsterIndex: 'axe-beak', difficulty: '28', goldReward: 151 }, // 350
+        { type: 'normal', monsterIndex: 'worg', difficulty: '20', goldReward: 153 }, // 315
+        { type: 'normal', monsterIndex: 'hill-giant', difficulty: '5', goldReward: 155 }, // 342
+        { type: 'normal', monsterIndex: 'dryad', difficulty: '23', goldReward: 157 }, // 335
         {
           type: 'boss',
-          monsterIndex: '', // 356
-          difficulty: 'boss-',
-          firstGoldReward: 294,
-          goldReward: 110,
+          monsterIndex: 'rakshasa', // 550
+          difficulty: 5,
+          firstGoldReward: 312,
+          goldReward: 462,
         },
       ],
       unlocksPage: 'finished',

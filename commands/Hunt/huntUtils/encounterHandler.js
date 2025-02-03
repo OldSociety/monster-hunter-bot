@@ -1,15 +1,10 @@
-// encounterHandler.js
-
 const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const {
-  pullSpecificMonster,
-  pullMonsterByCR,
-} = require('../../../handlers/huntCacheHandler')
+const { pullSpecificMonster } = require('../../../handlers/huntCacheHandler')
 const { checkAdvantage } = require('./huntHelpers.js')
 const { runBattlePhases } = require('./battleHandler.js')
 const { displayHuntSummary } = require('./rewardHandler.js')
@@ -17,57 +12,24 @@ const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { huntPages } = require('../huntPages.js')
 
 function selectMonster(huntData, currentBattle) {
-  if (!currentBattle || !currentBattle.monsterIndex) {
-    console.error('❌ ERROR: No valid monsterIndex provided for battle.')
-    return null
-  }
-
-  console.log(`🔹 Selecting specific monster: ${currentBattle.monsterIndex}`)
-
   const selectedMonster = pullSpecificMonster(currentBattle.monsterIndex)
-
   if (!selectedMonster) {
-    console.error(
-      `❌ ERROR: Monster '${currentBattle.monsterIndex}' not found.`
-    )
+    console.error(`Error: Monster '${currentBattle.monsterIndex}' not found.`)
     return null
   }
-
-  console.log(
-    `✅ Selected Monster: ${selectedMonster.name} (HP: ${selectedMonster.hp})`
-  )
   return selectedMonster
 }
 
 function calculateMonsterHP(monster, difficulty) {
-  const difficultyModifiers = {
-    easy: 0.5,
-    medium: 1,
-    hard: 1.5,
-    'very-hard': 2,
-    epic: 3,
-    legend: 5,
-    'boss-half': 0.5,
-    'boss-full': 1,
-    'boss-strong': 1.25,
-    'boss-epic': 2,
-    'boss-legend': 5
-  }
-  const finalHP = Math.max(
-    monster.hp * (difficultyModifiers[difficulty] || 1),
-    8
-  )
-
-  return finalHP
+  return Math.max(monster.hp * difficulty, 8)
 }
 
 function createMonsterEmbed(monster, difficulty, ichorUsed, huntData) {
   const battleNumber = (huntData.currentBattleIndex ?? 0) + 1
   const totalBattles = huntData.level?.battles?.length || 1
-
   let title = monster.name
-  if (difficulty === 'boss') title += ' ``Boss!``'
-  if (difficulty === 'mini-boss') title += ' ``Mini-boss``'
+  if (difficulty === 'boss') title += ' Boss!'
+  if (difficulty === 'mini-boss') title += ' Mini-boss'
   title += ` - ${battleNumber}/${totalBattles}`
 
   const embed = new EmbedBuilder()
@@ -88,13 +50,10 @@ function createMonsterEmbed(monster, difficulty, ichorUsed, huntData) {
       value: 'You are invigorated with 🧪ichor! Your strength increases.',
     })
   }
-
   return embed
 }
 
 function createStyleButtons(user) {
-  console.log(`Creating style buttons for user: ${user.id}`)
-
   const styles = ['brute', 'spellsword', 'stealth']
   const styleColors = {
     brute: ButtonStyle.Danger,
@@ -105,7 +64,6 @@ function createStyleButtons(user) {
   const styleRow = new ActionRowBuilder()
   styles.forEach((style) => {
     if (user[`${style}_score`] > 0) {
-      console.log(`Adding button for style: ${style}`)
       styleRow.addComponents(
         new ButtonBuilder()
           .setCustomId(`style_${style}`)
@@ -118,12 +76,10 @@ function createStyleButtons(user) {
       )
     }
   })
-
   return styleRow
 }
 
 async function offerRetry(interaction, user, huntData) {
-  // Prevent retry if out of energy
   if (user.currency.energy < huntData.level.energyCost) {
     const noEnergyRetryEmbed = new EmbedBuilder()
       .setColor('#FF0000')
@@ -145,8 +101,11 @@ async function offerRetry(interaction, user, huntData) {
   const retryEmbed = new EmbedBuilder()
     .setTitle('You have been defeated!')
     .setDescription(
-      `You were defeated by the ${huntData.lastMonster.name}. Would you like to try again?\n` +
-        `You have ${3 - huntData.retries} revives left.`
+      `You were defeated by the ${
+        huntData.lastMonster.name
+      }. Would you like to try again?\nYou have ${
+        3 - huntData.retries
+      } revives left.`
     )
     .setColor('#FF0000')
     .setFooter({
@@ -174,7 +133,6 @@ async function offerRetry(interaction, user, huntData) {
   })
 
   const filter = (i) => i.user.id === interaction.user.id
-
   const collector = interaction.channel.createMessageComponentCollector({
     filter,
     max: 1,
@@ -199,11 +157,9 @@ async function offerRetry(interaction, user, huntData) {
         collector.stop()
         return
       }
-
       user.currency.energy -= huntData.level.energyCost
       user.changed('currency', true)
       await user.save()
-
       await startNewEncounter(interaction, user, huntData)
     } else if (i.customId === 'end_hunt') {
       await displayHuntSummary(interaction, user, huntData, false)
@@ -211,7 +167,7 @@ async function offerRetry(interaction, user, huntData) {
     collector.stop()
   })
 
-  collector.on('end', async (collected, reason) => {
+  collector.on('end', async (_, reason) => {
     if (reason === 'time') {
       await interaction.followUp({
         content:
@@ -224,13 +180,9 @@ async function offerRetry(interaction, user, huntData) {
 }
 
 async function startNewEncounter(interaction, user, huntData) {
-  console.log(`⚔️ Starting a new encounter for: ${interaction.user.tag}`)
   stopUserCollector(interaction.user.id)
 
   if (!huntData.level || !huntData.level.page) {
-    console.error(
-      `❌ ERROR: huntData.level or huntData.level.page is undefined.`
-    )
     return interaction.followUp({
       content: 'Error: Invalid hunt data.',
       ephemeral: true,
@@ -238,10 +190,7 @@ async function startNewEncounter(interaction, user, huntData) {
   }
 
   const pageKey = huntData.level.page
-  const huntId = huntData.level.id
-
   if (!huntPages[pageKey]) {
-    console.error(`❌ ERROR: huntPages[${pageKey}] is undefined!`)
     return interaction.followUp({
       content: `Error: Invalid hunt page (${pageKey}).`,
       ephemeral: true,
@@ -251,42 +200,26 @@ async function startNewEncounter(interaction, user, huntData) {
   const currentHunt = huntPages[pageKey].hunts.find(
     (hunt) => hunt.key === huntData.level.key
   )
-
   if (!currentHunt) {
-    console.error(`❌ ERROR: Hunt ${huntId} not found in ${pageKey}!`)
     return interaction.followUp({
-      content: `Error: Hunt not found.`,
+      content: 'Error: Hunt not found.',
       ephemeral: true,
     })
   }
 
-  console.log(`🔍 Hunt Found: ${currentHunt.key}`)
-  console.log(`🗡️ Battles:`, JSON.stringify(currentHunt.battles, null, 2))
-
   const currentBattle = currentHunt.battles[huntData.currentBattleIndex]
-
   if (!currentBattle) {
-    console.error('❌ ERROR: No valid battle found.')
     return interaction.followUp({
       content: 'Error: No battle data available.',
       ephemeral: true,
     })
   }
-
-  console.log(
-    `🔥 Current Battle Object:`,
-    JSON.stringify(currentBattle, null, 2)
-  )
-
   if (!currentBattle.monsterIndex) {
-    console.error('❌ ERROR: No valid monsterIndex provided for battle.')
     return interaction.followUp({
       content: 'Error: No valid monster assigned to this battle.',
       ephemeral: true,
     })
   }
-
-  console.log(`🔹 Selecting specific monster: ${currentBattle.monsterIndex}`)
 
   const monster = selectMonster(huntData, currentBattle)
   if (!monster) {
@@ -298,9 +231,6 @@ async function startNewEncounter(interaction, user, huntData) {
 
   huntData.lastMonster = monster
   const monsterScore = calculateMonsterHP(monster, currentBattle.difficulty)
-
-  console.log(`🦖 Encountering: ${monster.name} (HP: ${monsterScore})`)
-
   const monsterEmbed = createMonsterEmbed(
     monster,
     currentBattle.difficulty,
@@ -325,22 +255,17 @@ async function startNewEncounter(interaction, user, huntData) {
     max: 1,
     time: 60000,
   })
-
   huntData.styleCollector = styleCollector
   collectors.set(interaction.user.id, styleCollector)
 
   styleCollector.on('collect', async (styleInteraction) => {
-    if (huntData.styleInteractionHandled) {
-      console.warn('⚠️ Duplicate interaction detected. Ignoring.')
-      return
-    }
+    if (huntData.styleInteractionHandled) return
     huntData.styleInteractionHandled = true
 
     try {
       if (!styleInteraction.replied && !styleInteraction.deferred) {
         await styleInteraction.deferUpdate()
       }
-
       const selectedStyle = styleInteraction.customId.split('_')[1]
       const playerScore = user[`${selectedStyle}_score`]
       const advMultiplier = checkAdvantage(selectedStyle, monster.type)
@@ -349,7 +274,6 @@ async function startNewEncounter(interaction, user, huntData) {
         embeds: [monsterEmbed],
         components: [],
       })
-
       const playerWins = await runBattlePhases(
         styleInteraction,
         user,
@@ -362,12 +286,11 @@ async function startNewEncounter(interaction, user, huntData) {
       )
 
       if (playerWins) {
-        huntData.totalMonstersDefeated += 1
+        huntData.totalMonstersDefeated++
         huntData.totalGoldEarned += currentBattle.goldReward || 0
-        huntData.currentBattleIndex += 1
+        huntData.currentBattleIndex++
         huntData.retries = 0
         huntData.lastMonster = null
-
         if (huntData.currentBattleIndex >= huntData.level.battles.length) {
           await displayHuntSummary(styleInteraction, user, huntData, true)
         } else {
@@ -375,20 +298,17 @@ async function startNewEncounter(interaction, user, huntData) {
           await startNewEncounter(styleInteraction, user, huntData)
         }
       } else {
-        huntData.retries += 1
+        huntData.retries++
         if (huntData.retries < 3) {
           huntData.styleInteractionHandled = false
           await offerRetry(styleInteraction, user, huntData)
         } else {
-          console.log('💀 Player failed too many times. Ending hunt.')
           await displayHuntSummary(styleInteraction, user, huntData, false)
         }
       }
     } catch (error) {
       if (error.code === 10062) {
-        console.error(
-          '⚠️ DiscordAPIError[10062]: Interaction expired before handling.'
-        )
+        console.error('Interaction expired before handling.')
       } else {
         console.error('Error processing interaction:', error)
       }
@@ -396,10 +316,7 @@ async function startNewEncounter(interaction, user, huntData) {
   })
 
   styleCollector.on('end', async (_, reason) => {
-    console.log(`Style collector ended. Reason: ${reason}`)
-
     if (reason === 'time') {
-      console.warn('⏳ Style selection timed out.')
       try {
         await interaction.editReply({
           content: 'Session expired. Please start again.',
@@ -407,7 +324,7 @@ async function startNewEncounter(interaction, user, huntData) {
           ephemeral: true,
         })
       } catch (error) {
-        console.error('⚠️ Error sending timeout message:', error)
+        console.error('Error sending timeout message:', error)
       }
     }
   })

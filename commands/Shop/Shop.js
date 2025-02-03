@@ -268,7 +268,6 @@ module.exports = {
 
             await interaction.deferReply({ ephemeral: true })
 
-            // 🟢 Ensure cost lookup is valid
             const packCost = PACK_COSTS[packType]
             if (packCost === undefined) {
               return interaction.editReply({
@@ -277,7 +276,6 @@ module.exports = {
               })
             }
 
-            // 🟢 Check if the user has enough gold
             if (user.gold < packCost) {
               return interaction.editReply({
                 content: `You don't have enough gold to buy this pack. Required: 🪙${packCost}, Available: 🪙${user.gold}`,
@@ -285,13 +283,10 @@ module.exports = {
               })
             }
 
-            // 🟢 Deduct gold from the user
             user.gold -= packCost
 
-            // 🟢 Save user gold update before proceeding
             await user.save()
 
-            // 🟢 Handle Ichor Pack separately (adds ichor, no monster reward)
             if (packType === 'ichor') {
               user.currency.ichor += 10
               await user.save()
@@ -335,7 +330,7 @@ module.exports = {
 
             await interaction.editReply({
               content: result.isDuplicate
-                ? `${interaction.user.username} obtained another ${result.name}. It increased from Rank ${result.previousRank} to ${result.newLevel}!`
+                ? `${interaction.user.username} obtained another ${result.name}. Come back to the /shop to promote your card and increase its score!`
                 : `${interaction.user.username} pulled a new ${result.name} from the ${packType} pack!`,
               embeds: [monsterEmbed],
             })
@@ -477,7 +472,7 @@ module.exports = {
             )
             const promotionCost = promotionCostEntry
               ? promotionCostEntry.cost
-              : 0
+              : 1200
 
             if (user.gold < promotionCost) {
               return interaction.update({
