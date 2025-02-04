@@ -25,15 +25,19 @@ module.exports = {
       },
       strength: {
         type: Sequelize.INTEGER,
-        defaultValue: 5,
+        defaultValue: 4,
       },
       defense: {
         type: Sequelize.INTEGER,
-        defaultValue: 5,
+        defaultValue: 4,
+      },
+      intelligence: {
+        type: Sequelize.INTEGER,
+        defaultValue: 4,
       },
       agility: {
         type: Sequelize.INTEGER,
-        defaultValue: 5,
+        defaultValue: 4,
       },
       statPoints: {
         type: Sequelize.INTEGER,

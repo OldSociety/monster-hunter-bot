@@ -172,6 +172,7 @@ async function offerRetry(interaction, user, huntData) {
       await interaction.followUp({
         content:
           'Session expired. You did not choose to retry or end the hunt in time.',
+          components: [],
         ephemeral: true,
       })
       await displayHuntSummary(interaction, user, huntData, false)

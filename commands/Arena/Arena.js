@@ -109,6 +109,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    console.log('test')
     const allowedChannels = [
       // process.env.WINTERCHANNELID,
       process.env.DEVBOTTESTCHANNELID,
@@ -125,7 +126,7 @@ module.exports = {
     const userId = interaction.user.id
     const subcommand = interaction.options.getSubcommand()
 
-    if (subcommand === 'account') {
+    if (subcommand === 'overview') {
       const player = await getOrCreatePlayer(userId)
 
       const equippedItems = await Inventory.findAll({
@@ -166,7 +167,7 @@ module.exports = {
         return new EmbedBuilder()
           .setTitle(`${interaction.user.username}'s Arena Account`)
           .setDescription(description)
-          .setFooter({ text: `Arena Ranking` })
+          .setFooter({ text: `Arena Ranking` }).setThumbnail(interaction.user.displayAvatarURL())
           .setColor('Blue')
       }
 
@@ -562,7 +563,7 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true })
 
         // Fetch all monsters from the database
-        const monsters = await WinterMonster.findAll()
+        const monsters = await ArenaMonster.findAll()
 
         if (!monsters || monsters.length === 0) {
           await interaction.editReply({
@@ -648,7 +649,7 @@ module.exports = {
           )
           .setColor('Blue')
           .setThumbnail(
-            `https://raw.githubusercontent.com/OldSociety/sanity-bot/main/assets/${monster.url}.png`
+            `https://raw.githubusercontent.com/OldSociety/blood-hunter-bot/main/assets/${monster.url}.png`
           )
 
       const generateActionButtons = () => {

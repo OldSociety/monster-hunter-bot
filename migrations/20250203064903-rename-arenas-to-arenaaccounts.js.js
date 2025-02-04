@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.renameTable('Arenas', 'ArenaAccounts');
+    await queryInterface.addColumn('Arenas', 'intelligence');
   },
 
   down: async (queryInterface, Sequelize) => {
