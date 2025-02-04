@@ -91,6 +91,9 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       `**Gold Earned:** 🪙${totalGoldEarned}\n**Tokens Earned:** 🧿${totalTokensEarned}`
     )
     .setColor('#FFD700')
+    .setFooter({
+      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+    })
 
   if (huntData.ichorUsed) {
     summaryEmbed.addFields({
