@@ -288,7 +288,10 @@ module.exports = {
             await user.save()
 
             if (packType === 'ichor') {
-              user.currency.ichor += 10
+              user.currency = {
+                ...user.currency,
+                ichor: user.currency.ichor + 10,
+              }
               await user.save()
 
               const ichorEmbed = new EmbedBuilder()
@@ -406,7 +409,7 @@ module.exports = {
             )
             const promotionCost = promotionCostEntry
               ? promotionCostEntry.cost
-              : 0
+              : 1200
             const nextRank = selectedMonster.rank + 1
 
             let assignedRarity = getRarityByCR(selectedMonster.cr)

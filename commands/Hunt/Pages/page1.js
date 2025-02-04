@@ -120,7 +120,7 @@ module.exports = {
         {
           type: 'mini-boss',
           monsterIndex: 'red-dragon-wyrmling', // 93
-          difficulty: 2,
+          difficulty: 1.25,
           firstGoldReward: 300,
           goldReward: 75,
         },
