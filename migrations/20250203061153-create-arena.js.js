@@ -33,7 +33,7 @@ module.exports = {
       },
       effective_strength: {
         type: Sequelize.INTEGER,
-        defaultValue: 4,
+        defaultValue: 0,
       },
       defense: {
         type: Sequelize.INTEGER,
@@ -41,7 +41,7 @@ module.exports = {
       },
       effective_defense: {
         type: Sequelize.INTEGER,
-        defaultValue: 4,
+        defaultValue: 0,
       },
       intelligence: {
         type: Sequelize.INTEGER,
@@ -49,7 +49,7 @@ module.exports = {
       },
       effective_intelligence: {
         type: Sequelize.INTEGER,
-        defaultValue: 4,
+        defaultValue: 0,
       },
       agility: {
         type: Sequelize.INTEGER,
@@ -57,7 +57,7 @@ module.exports = {
       },
       effective_agility: {
         type: Sequelize.INTEGER,
-        defaultValue: 4,
+        defaultValue: 0,
       },
       statPoints: {
         type: Sequelize.INTEGER,
