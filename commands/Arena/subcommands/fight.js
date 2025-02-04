@@ -274,7 +274,7 @@ module.exports = {
         )
         battleState.monsterHP = Math.max(battleState.monsterHP - finalFierce, 0)
         battleState.history.push(
-          `${interaction.user.username} unleashes a fierce attack for ${finalFierce} damage!`
+          `${interaction.user.username} unleashes a ⚔️ fierce attack for ${finalFierce} damage!`
         )
       }
 
@@ -302,7 +302,32 @@ module.exports = {
           .setImage(
             `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.url}.png`
           )
+          .setFooter({
+            text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
+          })
+          .setThumbnail(interaction.user.displayAvatarURL())
         await player.increment('arenaScore', { by: 10 })
+
+        // 🏆 Loot Drop Calculation
+        if (monster.loot && Math.random() < monster.droprate) {
+          // Find or create the loot item
+          const lootItem = await BaseItem.findOne({
+            where: { name: monster.loot },
+          })
+
+          if (lootItem) {
+            await Inventory.create({
+              ArenaId: player.id,
+              itemId: lootItem.id,
+              equipped: false, // Not automatically equipped
+            })
+
+            resultEmbed.addFields({
+              name: 'Loot Obtained!',
+              value: `You received **${monster.loot}**! 🎁`,
+            })
+          }
+        }
       } else if (reason === 'defeat') {
         resultEmbed
           .setTitle('Defeat - Battle Result')
@@ -311,6 +336,11 @@ module.exports = {
           .setThumbnail(
             `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.url}.png`
           )
+          .setFooter({
+            text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
+          })
+          .setThumbnail(interaction.user.displayAvatarURL())
+        await player.increment('arenaScore', { by: -10 })
       } else {
         resultEmbed
           .setDescription('⏳ The battle ended due to inactivity.')
