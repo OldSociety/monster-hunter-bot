@@ -16,7 +16,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'gelatinous-cube', difficulty: 1, goldReward: 43 }, // 84
         { type: 'normal', monsterIndex: 'wereboar-hybrid', difficulty: 1, goldReward: 45 }, // 78
         { type: 'normal', monsterIndex: 'minotaur', difficulty: 1, goldReward: 47 }, // 76
-        { type: 'normal', monsterIndex: 'lamia', difficulty: 1.5, goldReward: 49 }, // 97
+        { type: 'normal', monsterIndex: 'lamia', difficulty: 1, goldReward: 49 }, // 97
         { type: 'normal', monsterIndex: 'nightmare', difficulty: 1.5, goldReward: 51 }, // 102
         {
           type: 'mini-boss',
