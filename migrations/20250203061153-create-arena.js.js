@@ -19,6 +19,10 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
+      arenaScore: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
       hp: {
         type: Sequelize.INTEGER,
         defaultValue: 5,
@@ -27,7 +31,15 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 4,
       },
+      effective_strength: {
+        type: Sequelize.INTEGER,
+        defaultValue: 4,
+      },
       defense: {
+        type: Sequelize.INTEGER,
+        defaultValue: 4,
+      },
+      effective_defense: {
         type: Sequelize.INTEGER,
         defaultValue: 4,
       },
@@ -35,7 +47,15 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 4,
       },
+      effective_intelligence: {
+        type: Sequelize.INTEGER,
+        defaultValue: 4,
+      },
       agility: {
+        type: Sequelize.INTEGER,
+        defaultValue: 4,
+      },
+      effective_agility: {
         type: Sequelize.INTEGER,
         defaultValue: 4,
       },

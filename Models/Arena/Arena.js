@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
           key: 'user_id',
         },
       },
+      arenaScore: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
       hp: {
         type: DataTypes.INTEGER,
         defaultValue: 5,
@@ -23,7 +27,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 4,
       },
+      effective_strength: {
+        type: DataTypes.INTEGER,
+        defaultValue: 4,
+      },
       defense: {
+        type: DataTypes.INTEGER,
+        defaultValue: 4,
+      },
+      effective_defense: {
         type: DataTypes.INTEGER,
         defaultValue: 4,
       },
@@ -31,7 +43,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 4,
       },
+      effective_intelligence: {
+        type: DataTypes.INTEGER,
+        defaultValue: 4,
+      },
       agility: {
+        type: DataTypes.INTEGER,
+        defaultValue: 4,
+      },
+      effective_agility: {
         type: DataTypes.INTEGER,
         defaultValue: 4,
       },
