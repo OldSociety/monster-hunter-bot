@@ -110,36 +110,32 @@ if (process.env.NODE_ENV === 'production') {
           )
         }
       }
-
-
     } catch (error) {
       console.error('Error refilling energy:', error)
     }
   })
 }
 
-// **🔄 Auto-reconnect with retry logic**
+// Auto-reconnect with retry logic
 async function connectBot(retries = 5) {
   try {
-    console.log('Connecting to Discord...');
-    await client.login(process.env.TOKEN);
-    console.log('Bot connected successfully!');
+    console.log('Connecting to Discord...')
+    await client.login(process.env.TOKEN)
+    console.log('Bot connected successfully!')
   } catch (error) {
     if (error.status === 503 && retries > 0) {
       console.error(
         `Service Unavailable (503). Retrying in 10 seconds... [${retries} attempts left]`
-      );
-      setTimeout(() => connectBot(retries - 1), 10000);
+      )
+      setTimeout(() => connectBot(retries - 1), 10000)
     } else {
-      console.error('Failed to connect:', error);
-      process.exit(1); // Exit if retries are exhausted
+      console.error('Failed to connect:', error)
+      process.exit(1) // Exit if retries are exhausted
     }
   }
 }
 
-// 🔥 Start bot with retry logic
-connectBot();
-
+connectBot()
 
 client.login(process.env.TOKEN)
 
