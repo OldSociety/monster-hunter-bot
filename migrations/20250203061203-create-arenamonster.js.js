@@ -46,7 +46,7 @@ module.exports = {
         allowNull: true,
       },
       loot: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
         allowNull: true,
       },
       droprate: {

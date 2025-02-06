@@ -40,7 +40,7 @@ module.exports = {
         ]),
         flavorText: 'A mischievous goat that curses your name!',
         url: 'uglysnowman',
-        loot: 'snowball',
+        loot: 1,
         droprate: 0.9,
       },
       {

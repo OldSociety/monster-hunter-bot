@@ -310,9 +310,9 @@ module.exports = {
 
         // 🏆 Loot Drop Calculation
         if (monster.loot && Math.random() < monster.droprate) {
-          // Find or create the loot item
+          // 🔹 Find loot item by ID instead of name
           const lootItem = await BaseItem.findOne({
-            where: { name: monster.loot },
+            where: { id: monster.loot },
           })
 
           if (lootItem) {
@@ -324,7 +324,7 @@ module.exports = {
 
             resultEmbed.addFields({
               name: 'Loot Obtained!',
-              value: `You received **${monster.loot}**! 🎁`,
+              value: `You received **${lootItem.name}**! 🎁`, // Use name from BaseItem
             })
           }
         }

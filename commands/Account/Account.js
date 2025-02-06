@@ -174,7 +174,7 @@ module.exports = {
 
         const topCards = await Collection.findAll({
           where: { id: topCardsIds },
-          attributes: ['name', 'm_score', 'level', 'copies', 'cr', 'type'],
+          attributes: ['name', 'm_score', 'rank', 'copies', 'cr', 'type'],
           order: [['m_score', 'DESC']],
           limit: 3,
         })
