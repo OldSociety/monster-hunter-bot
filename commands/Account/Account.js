@@ -7,15 +7,14 @@ const {
 } = require('discord.js')
 const { User, Collection } = require('../../Models/model.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
-
 const { Op } = require('sequelize')
 
 function getRaritySymbol(cr) {
-  if (cr >= 20) return '⭐⭐⭐⭐⭐' // Legendary
-  if (cr >= 16) return '⭐⭐⭐⭐★' // Very Rare
-  if (cr >= 11) return '⭐⭐⭐★★' // Rare
-  if (cr >= 5) return '⭐⭐★★★' // Uncommon
-  return '⭐★★★★' // Common
+  if (cr >= 20) return '⭐⭐⭐⭐⭐'
+  if (cr >= 16) return '⭐⭐⭐⭐★'
+  if (cr >= 11) return '⭐⭐⭐★★'
+  if (cr >= 5) return '⭐⭐★★★'
+  return '⭐★★★★'
 }
 
 function createButtons(activePage) {
@@ -54,13 +53,12 @@ module.exports = {
     const userId = interaction.user.id
     let category = interaction.options.getString('style') || 'overview'
 
-    stopUserCollector(userId)
+    stopUserCollector(userId) // Stop previous collectors for this user
     await interaction.deferReply({ ephemeral: true })
 
     try {
       let user = await User.findOne({ where: { user_id: userId } })
       if (!user) {
-        console.log(`Creating new user record for: ${userId}`)
         user = await User.create({
           user_id: userId,
           user_name: interaction.user.username,
@@ -163,7 +161,6 @@ module.exports = {
         const topCardsIds = user[categoryField] || []
 
         if (topCardsIds.length === 0) {
-          console.log(`No cards found for category: ${category}`)
           return new EmbedBuilder()
             .setColor(embedColor)
             .setTitle(`No ${category} Cards Found`)
@@ -172,14 +169,7 @@ module.exports = {
             )
         }
 
-        const topCards = await Collection.findAll({
-          where: { id: topCardsIds },
-          attributes: ['name', 'm_score', 'level', 'copies', 'cr', 'type'],
-          order: [['m_score', 'DESC']],
-          limit: 3,
-        })
-
-        const statsEmbed = new EmbedBuilder()
+        return new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(
             `Top ${category.charAt(0).toUpperCase() + category.slice(1)} Cards`
@@ -188,30 +178,15 @@ module.exports = {
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
           })
           .setThumbnail(interaction.user.displayAvatarURL())
-
-        topCards.forEach((card) => {
-          statsEmbed.addFields(
-            {
-              name: `${card.name}`,
-              value: `${getRaritySymbol(card.cr)}`,
-              inline: false,
-            },
-            { name: 'Score', value: `\`${card.m_score}\``, inline: true },
-            { name: 'Rank', value: `\`${card.rank} / 8\``, inline: true },
-            { name: 'Type', value: `\`${card.type}\``, inline: true }
-          )
-        })
-
-        return statsEmbed
       }
 
-      await interaction.editReply({
+      const message = await interaction.editReply({
         embeds: [await displayEmbed(category)],
         components: [createButtons(category)],
         ephemeral: true,
       })
 
-      const collector = interaction.channel.createMessageComponentCollector({
+      const collector = message.createMessageComponentCollector({
         filter: (i) => i.user.id === userId,
         time: 60000,
       })
@@ -219,8 +194,7 @@ module.exports = {
       collectors.set(userId, collector)
 
       collector.on('collect', async (btnInteraction) => {
-        await btnInteraction.deferUpdate()
-        await btnInteraction.editReply({
+        await btnInteraction.update({
           embeds: [await displayEmbed(btnInteraction.customId)],
           components: [createButtons(btnInteraction.customId)],
         })
