@@ -69,8 +69,11 @@ module.exports = {
           'agility',
           'attacks',
           'url',
+          'loot',        
+          'droprate', 
         ],
       })
+      
 
       if (!monsters || monsters.length === 0) {
         return interaction.editReply({
@@ -307,26 +310,50 @@ module.exports = {
           })
           .setThumbnail(interaction.user.displayAvatarURL())
         await player.increment('arenaScore', { by: 10 })
-
-        // 🏆 Loot Drop Calculation
+console.log(monster)
+        // 🏆 Loot Drop Calculation with Logging
         if (monster.loot && Math.random() < monster.droprate) {
-          // 🔹 Find loot item by ID instead of name
-          const lootItem = await BaseItem.findOne({
-            where: { id: monster.loot },
-          })
+          console.log(`[LOOT] Checking loot drop...`)
+          console.log(
+            `[LOOT] Monster Loot ID: ${monster.loot}, Drop Rate: ${monster.droprate}`
+          )
 
-          if (lootItem) {
-            await Inventory.create({
-              ArenaId: player.id,
-              itemId: lootItem.id,
-              equipped: false, // Not automatically equipped
+          try {
+            // 🔹 Find loot item by ID instead of name
+            const lootItem = await BaseItem.findOne({
+              where: { id: monster.loot },
             })
 
-            resultEmbed.addFields({
-              name: 'Loot Obtained!',
-              value: `You received **${lootItem.name}**! 🎁`, // Use name from BaseItem
-            })
+            if (!lootItem) {
+              console.warn(
+                `[LOOT] Loot item with ID ${monster.loot} not found in BaseItem!`
+              )
+            } else {
+              console.log(
+                `[LOOT] Found loot item: ${lootItem.name} (ID: ${lootItem.id})`
+              )
+
+              // Create inventory entry
+              await Inventory.create({
+                ArenaId: player.id,
+                itemId: lootItem.id,
+                equipped: false, // Not automatically equipped
+              })
+
+              console.log(`[LOOT] Added ${lootItem.name} to player inventory.`)
+
+              resultEmbed.addFields({
+                name: 'Loot Obtained!',
+                value: `You received **${lootItem.name}**! 🎁`, // Use name from BaseItem
+              })
+            }
+          } catch (error) {
+            console.error(`[LOOT ERROR] Failed to award loot: ${error.message}`)
           }
+        } else {
+          console.log(
+            `[LOOT] No loot dropped. Monster drop rate condition not met.`
+          )
         }
       } else if (reason === 'defeat') {
         resultEmbed

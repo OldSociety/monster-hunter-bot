@@ -4,7 +4,7 @@ const {
   ButtonBuilder,
   StringSelectMenuBuilder,
 } = require('discord.js')
-const { Inventory, BaseItem, Arena } = require('../../../Models/model.js')
+const { User, Inventory, BaseItem, Arena } = require('../../../Models/model.js')
 const { getOrCreatePlayer } = require('../helpers/accountHelpers.js')
 
 
@@ -21,7 +21,7 @@ module.exports = {
         })
         return
       }
-    const itemType = interaction.options.getString('type') || 'weapon'
+    let itemType = interaction.options.getString('type') || 'weapon'
 
     // Fetch player's inventory filtered by type
     const inventoryItems = await Inventory.findAll({
