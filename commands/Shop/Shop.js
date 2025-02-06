@@ -9,17 +9,18 @@ const {
 } = require('discord.js')
 const { Op } = require('sequelize')
 
-const { Collection } = require('../../Models/model.js')
+const { Inventory, Collection } = require('../../Models/model.js')
 
 const {
-  cacheMonstersByTier,
+  populateMonsterCache,
   pullValidMonster,
-} = require('../../handlers/pullHandler')
+} = require('../../handlers/cacheHandler')
 const {
   updateOrAddMonsterToCollection,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
 const { calculateMScore } = require('../../handlers/userMonsterHandler.js')
+const { pullSpecificMonster } = require('../../handlers/cacheHandler.js')
 const {
   generateMonsterRewardEmbed,
 } = require('../../utils/embeds/monsterRewardEmbed')
@@ -27,6 +28,11 @@ const { getStarsBasedOnColor } = require('../../utils/starRating')
 const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
+
+const {
+  handleDragonPack,
+  DRAGON_PACK_COSTS,
+} = require('./handlers/handleDragonPack.js')
 
 // Cache tracking variable
 let cachePopulated = false
@@ -134,7 +140,7 @@ module.exports = {
           components: [],
         })
 
-        await cacheMonstersByTier()
+        await populateMonsterCache()
         cachePopulated = true
       }
 
@@ -153,7 +159,7 @@ module.exports = {
         .setDescription(
           isStarterPackAvailable
             ? "Here you can purchase packs containing monsters, tokens and other resources. Collecting monsters represent your hunter's growing prowess. The more you collect, the stronger you become.\n\nEach card falls under one of three fighting styles: **brute** / **spellsword** / **stealth** based on their monster type. You will need a solid collection of all types to make progress.\n\nHere's a complimentary starter pack to get you started!"
-            : 'Purchase packs containing monsters or resources. Use `/help store` for a detailed description of each pack. Use `/account` at any time to see your style scores and collection.'
+            : 'Purchase packs containing monsters or resources. Use `/help store`(NOT YET AVAILABLE) for a detailed description of each pack. Use `/account` at any time to see your style scores and collection.'
         )
 
       if (isStarterPackAvailable) {
@@ -247,6 +253,14 @@ module.exports = {
             .setStyle(ButtonStyle.Secondary)
         )
       }
+      if (eggs >= Math.min(...Object.values(DRAGON_PACK_COSTS))) {
+        addButton(
+          new ButtonBuilder()
+            .setCustomId('open_dragon_pack')
+            .setLabel('Dragon Pack')
+            .setStyle(ButtonStyle.Danger)
+        )
+      }
 
       await interaction.editReply({
         embeds: [shopEmbed],
@@ -263,6 +277,100 @@ module.exports = {
 
       collector.on('collect', async (interaction) => {
         try {
+          if (interaction.customId === 'open_dragon_pack') {
+            return await handleDragonPack(interaction)
+          }
+
+          if (interaction.customId === 'select_dragon_pack') {
+            const selectedItem = interaction.values[0]
+
+            await interaction.deferReply({ ephemeral: true })
+
+            if (!DRAGON_PACK_COSTS[selectedItem]) {
+              return interaction.editReply({
+                content: `Invalid selection: ${selectedItem}. Please contact support.`,
+                ephemeral: true,
+              })
+            }
+
+            if (user.currency.eggs < DRAGON_PACK_COSTS[selectedItem]) {
+              return interaction.editReply({
+                content: `You don't have enough eggs to buy this. Required: 🥚${DRAGON_PACK_COSTS[selectedItem]}, Available: 🥚${user.currency.eggs}`,
+                ephemeral: true,
+              })
+            }
+
+            user.currency = {
+              ...user.currency,
+              eggs: user.currency.eggs - DRAGON_PACK_COSTS[selectedItem],
+            }
+            await user.setDataValue('currency', user.currency) // Force update
+            console.log(
+              `[DEBUG] Deducting 🥚${
+                DRAGON_PACK_COSTS[selectedItem]
+              } eggs. Remaining: ${
+                user.currency.eggs - DRAGON_PACK_COSTS[selectedItem]
+              }`
+            )
+
+            await user.save()
+
+            if (selectedItem === 'dragon') {
+              const monster = await pullSpecificMonster('adult-red-dragon')
+
+              if (!monster) {
+                return interaction.editReply({
+                  content:
+                    'Could not retrieve the Adult Red Dragon card. Please try again later or contact support.',
+                  ephemeral: true,
+                })
+              }
+
+              // Ensure necessary fields exist
+              monster.rarity = 'Very Rare'
+              monster.rank = 1
+
+              const result = await updateOrAddMonsterToCollection(
+                userId,
+                monster
+              )
+              if (!result) {
+                return interaction.editReply({
+                  content: `An error occurred while adding **${monster.name}** to your collection. Please try again.`,
+                  ephemeral: true,
+                })
+              }
+
+              await updateTop5AndUserScore(userId)
+
+              const category = classifyMonsterType(monster.type)
+              const stars = getStarsBasedOnColor(monster.color || 0x000000) // Default color if missing
+              const monsterEmbed = generateMonsterRewardEmbed(
+                monster,
+                category,
+                stars
+              )
+
+              return interaction.editReply({
+                content: `You have obtained the **${result.name}** from the Dragon Pack!`,
+                embeds: [monsterEmbed],
+              })
+            } else {
+              // Handle normal equipment purchase (adding to Inventories table)
+              // await Inventory.create({ userId, itemName: selectedItem })
+              console.log(
+                selectedItem,
+                ' purchased. Not added to Inventory. (TEST)'
+              )
+              return interaction.editReply({
+                content: `You have successfully purchased **${selectedItem
+                  .replace(/_/g, ' ')
+                  .toUpperCase()}**!`,
+                ephemeral: true,
+              })
+            }
+          }
+
           if (interaction.customId.startsWith('purchase_')) {
             const packType = interaction.customId.split('_')[1]
 
@@ -307,10 +415,10 @@ module.exports = {
               })
             }
 
-            // 🟢 Pull a monster from the selected pack
             const monster = await pullValidMonster(
               TIER_OPTIONS[packType],
-              packType
+              packType,
+              userId
             )
             if (!monster) {
               return interaction.editReply({
@@ -319,7 +427,6 @@ module.exports = {
               })
             }
 
-            // 🟢 Classify and display monster
             const category = classifyMonsterType(monster.type)
             const stars = getStarsBasedOnColor(monster.color)
             const monsterEmbed = generateMonsterRewardEmbed(
@@ -328,7 +435,6 @@ module.exports = {
               stars
             )
 
-            // 🟢 Update collection
             const result = await updateOrAddMonsterToCollection(userId, monster)
 
             await interaction.editReply({

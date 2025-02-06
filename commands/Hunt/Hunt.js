@@ -5,7 +5,7 @@ const { showLevelSelection } = require('./huntUtils/huntHandlers.js')
 const { startNewEncounter } = require('./huntUtils/encounterHandler.js')
 const { handlePagination } = require('./huntUtils/paginationHandler.js')
 const { huntPages } = require('./huntPages.js')
-const { cacheHuntMonsters } = require('../../handlers/huntCacheHandler')
+const { populateMonsterCache } = require('../../handlers/cacheHandler')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
 module.exports = {
@@ -70,7 +70,7 @@ module.exports = {
       .setDescription('Loading hunt data, please wait...')
     await interaction.editReply({ embeds: [loadingEmbed] })
 
-    await cacheHuntMonsters()
+    await populateMonsterCache()
 
     const huntData = {
       totalMonstersDefeated: 0,

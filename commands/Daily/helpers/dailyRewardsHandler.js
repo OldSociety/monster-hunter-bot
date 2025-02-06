@@ -1,7 +1,7 @@
 const {
   fetchMonsterByName,
   cacheMonstersByTier,
-} = require('../../../handlers/pullHandler')
+} = require('../../../handlers/cacheHandler')
 const {
   updateOrAddMonsterToCollection,
 } = require('../../../handlers/userMonsterHandler')

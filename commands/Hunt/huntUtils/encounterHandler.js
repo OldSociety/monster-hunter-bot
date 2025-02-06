@@ -4,7 +4,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const { pullSpecificMonster } = require('../../../handlers/huntCacheHandler')
+const { pullSpecificMonster } = require('../../../handlers/cacheHandler')
 const { checkAdvantage } = require('./huntHelpers.js')
 const { runBattlePhases } = require('./battleHandler.js')
 const { displayHuntSummary } = require('./rewardHandler.js')
