@@ -7,20 +7,20 @@ module.exports = {
     {
       id: 1,
       key: 'hunt1',
-      name: 'Darkmantle',
-      description: 'Your hunt begins in the shadows—track down the darkmantle lurking nearby and test your strength.',
+      name: 'Giant Fire Beetle',
+      description: 'Your first test. Use your SPELLSWORD for an advantage.',
       energyCost: 1,
-      totalBattles: 3,
+      totalBattles: 4,
       battles: [
-        { type: 'normal', monsterIndex: 'goblin', difficulty: 1, goldReward: 24 }, // hp 7
-        { type: 'normal', monsterIndex: 'giant-rat', difficulty: 1, goldReward: 26 }, // 9
-        { type: 'normal', monsterIndex: 'magmin', difficulty: 1, goldReward: 28 }, //9
+        { type: 'normal', monsterIndex: 'hyena', difficulty: 1, goldReward: 24 }, // hp 4
+        { type: 'normal', monsterIndex: 'shrieker', difficulty: 0.5, goldReward: 26 }, // 6 (13)
+        { type: 'normal', monsterIndex: 'crab', difficulty: 3, goldReward: 28 }, //6 (2)
         {
           type: 'mini-boss',
-          monsterIndex: 'darkmantle', // 16
-          difficulty: 0.5,
-          firstGoldReward: 70,
-          goldReward: 28,
+          monsterIndex: 'giant-fire-beetle', // 8 (4)
+          difficulty: 2,
+          firstGoldReward: 55,
+          goldReward: 23,
         },
       ],
       unlocks: 'hunt2',
@@ -28,21 +28,20 @@ module.exports = {
     {
       id: 2,
       key: 'hunt2',
-      name: 'Harpy',
-      description: `A harpy's song to soothes the weary and her claws shred men into meat.`,
+      name: 'Imp',
+      description: `Second Test. Use STEALTH against magical creatures.`,
       energyCost: 1,
-      totalBattles: 5,
+      totalBattles: 4,
       battles: [
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 1, goldReward: 25 }, // 11
-        { type: 'normal', monsterIndex: 'ape', difficulty: 0.5, goldReward: 27 }, // 9
-        { type: 'normal', monsterIndex: 'imp', difficulty: 1, goldReward: 29 }, // 10
-        { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 1, goldReward: 31 }, //11
+        { type: 'normal', monsterIndex: 'sprite', difficulty: 3, goldReward: 25 }, // 6 (2)
+        { type: 'normal', monsterIndex: 'quasit', difficulty: 1, goldReward: 27 }, // 7
+        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 0.4, goldReward: 31 }, //(8) 22
         {
           type: 'mini-boss',
-          monsterIndex: 'harpy', // 19
-          difficulty: 0.5,
-          firstGoldReward: 90,
-          goldReward: 32,
+          monsterIndex: 'imp', // 10
+          difficulty: 1,
+          firstGoldReward: 70,
+          goldReward: 25,
         },
       ],
       unlocks: 'hunt3',
@@ -50,79 +49,21 @@ module.exports = {
     {
       id: 3,
       key: 'hunt3',
-      name: 'Rust Monster',
-      description:
-        `A nearby rust monster threatens an army's steel—destroy it before it's left defenseless.`,
+      name: 'Hobgoblin',
+      description: `Your final test. Use BRUTE strength to punch through these villains.`,
       energyCost: 1,
-      totalBattles: 8,
+      totalBattles: 5,
       battles: [
-        { type: 'normal', monsterIndex: 'drow', difficulty: 1, goldReward: 26 }, // 13
-        { type: 'normal', monsterIndex: 'orc', difficulty: 1, goldReward: 28 }, // 15
-        { type: 'normal', monsterIndex: 'camel', difficulty: 1, goldReward: 30 }, // 15
-        { type: 'normal', monsterIndex: 'lemure', difficulty: 1, goldReward: 32 }, // 13
-        { type: 'normal', monsterIndex: 'ape', difficulty: 1, goldReward: 34 }, // 19
-        { type: 'normal', monsterIndex: 'flying-sword', difficulty: 1, goldReward: 27 }, // 17
-        { type: 'normal', monsterIndex: 'deep-gnome-svirfneblin', difficulty: 1, goldReward: 29 }, // 16
+        { type: 'normal', monsterIndex: 'orc', difficulty: 0.5, goldReward: 31 }, // 7 (15)
+        { type: 'normal', monsterIndex: 'goblin', difficulty: 1, goldReward: 45 }, // 7
+        { type: 'normal', monsterIndex: 'kobold', difficulty: 1, goldReward: 48 }, // 5
+        { type: 'normal', monsterIndex: 'drow', difficulty: 0.7, goldReward: 51 }, // 8
         {
           type: 'mini-boss',
-          monsterIndex: 'rust-monster', // 27
-          difficulty: 1.5,
-          firstGoldReward: 80,
-          goldReward: 52,
-        },
-      ],
-      unlocks: 'hunt4',
-    },
-    {
-      id: 4,
-      key: 'hunt4',
-      name: 'Sea Hag',
-      description:
-        `End the sea hag’s curse before more fall victim to her drowned man curse.`,
-      energyCost: 1,
-      totalBattles: 10,
-      battles: [
-        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 1, goldReward: 31 }, // 33
-        { type: 'normal', monsterIndex: 'azer', difficulty: 1, goldReward: 33 }, // 39
-        { type: 'normal', monsterIndex: 'ettercap', difficulty: 1, goldReward: 70 }, // 44
-        { type: 'normal', monsterIndex: 'black-dragon-wyrmling', difficulty: '1', goldReward: 28 }, // 32
-        { type: 'normal', monsterIndex: 'dire-wolf', difficulty: 1, goldReward: 30 }, // 37
-        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 1.5, goldReward: 32 }, // 33
-        { type: 'normal', monsterIndex: 'dryad', difficulty: 1.5, goldReward: 34 }, // 33
-        { type: 'normal', monsterIndex: 'cockatrice', difficulty: 1, goldReward: 36 }, // 27
-        {
-          type: 'mini-boss',
-          monsterIndex: 'sea-hag', // 52
-          difficulty: 1.5,
-          firstGoldReward: 80,
-          goldReward: 52,
-        },
-      ],
-      unlocks: 'hunt5',
-    },
-    {
-      id: 5,
-      key: 'hunt5',
-      name: 'Red Dragon Wyrmling',
-      description: `The time has come to face Oryzinax—slay the wyrmling before Harvest Hill burns.`,
-      energyCost: 2,
-      totalBattles: 10,
-      battles: [
-        { type: 'normal', monsterIndex: 'bandit-captain', difficulty: 1, goldReward: 31 }, // 65
-        { type: 'normal', monsterIndex: 'satyr', difficulty: 1.5, goldReward: 45 }, // 45
-        { type: 'normal', monsterIndex: 'duergar', difficulty: 1, goldReward: 48 }, // 39
-        { type: 'normal', monsterIndex: 'knight', difficulty: 1, goldReward: 51 }, // 52
-        { type: 'normal', monsterIndex: 'green-hag', difficulty: 1, goldReward: 54 }, // 82
-        { type: 'normal', monsterIndex: 'werewolf-hybrid', difficulty: 1, goldReward: 57 }, // 58
-        { type: 'normal', monsterIndex: 'veteran', difficulty: 1, goldReward: 60 }, // 58
-        { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 1, goldReward: 63 }, // 67
-        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 1, goldReward: 58 }, // 66
-        {
-          type: 'mini-boss',
-          monsterIndex: 'red-dragon-wyrmling', // 93
-          difficulty: 1.25,
-          firstGoldReward: 300,
-          goldReward: 75,
+          monsterIndex: 'hobgoblin', // 11
+          difficulty: 1,
+          firstGoldReward: 249,
+          goldReward: 45,
         },
       ],
       unlocksPage: 'page2',

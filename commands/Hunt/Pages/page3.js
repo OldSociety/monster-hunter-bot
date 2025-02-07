@@ -1,33 +1,127 @@
 module.exports = {
   key: 'page3',
-  name: `Hunt Page 3 - A Dragon's Revenge`,
+  name: 'Hunt Page 3 - Curse of Maud',
   description:
-    'Oryzinax was only the beginning. His brood spread across the land. The young dragon mage Drokkenden continues the terror.',
-  finalBoss: 'young-red-dragon',
+    `The city of Dax is under a vampire's curse. Uncover the truth behind Maud, the cleric who hides her dark nature, and stop the bloodshed before it consumes the city.`,
+  finalBoss: 'vampire-vampire',
   hunts: [
+    {
+      id: 9,
+      key: 'hunt9',
+      name: 'Bandit Captain',
+      description: `Follow the bandits who may know Maud’s true identity—her reign of terror is only beginning.`,
+      energyCost: 1,
+      totalBattles: 6,
+      battles: [
+        { type: 'normal', monsterIndex: 'gelatinous-cube', difficulty: 1, goldReward: 43 }, // 84
+        { type: 'normal', monsterIndex: 'wereboar-hybrid', difficulty: 1, goldReward: 45 }, // 78
+        { type: 'normal', monsterIndex: 'minotaur', difficulty: 1, goldReward: 47 }, // 76
+        { type: 'normal', monsterIndex: 'lamia', difficulty: 1, goldReward: 49 }, // 97
+        { type: 'normal', monsterIndex: 'nightmare', difficulty: 1.5, goldReward: 51 }, // 102
+        {
+          type: 'mini-boss',
+          monsterIndex: 'bandit-captain',
+          difficulty: 1.5, // 97
+          firstGoldReward: 80,
+          goldReward: 55,
+        },
+      ],
+      unlocks: 'hunt10',
+    },
+    {
+      id: 10,
+      key: 'hunt10',
+      name: 'Gibbering Mouther',
+      description: `Due to your own foolishness, you fell into the bandit's trap.`,
+      energyCost: 1,
+      totalBattles: 6,
+      battles: [
+        { type: 'normal', monsterIndex: 'fire-elemental', difficulty: 1, goldReward: 44 }, // 102
+        { type: 'normal', monsterIndex: 'flesh-golem', difficulty: 1, goldReward: 46 }, // 93
+        { type: 'normal', monsterIndex: 'couatl', difficulty: 1, goldReward: 48 }, // 97
+        { type: 'normal', monsterIndex: 'chimera', difficulty: 1, goldReward: 50 }, // 114
+        { type: 'normal', monsterIndex: 'gladiator', difficulty: 1, goldReward: 52 }, // 112
+        {
+          type: 'mini-boss',
+          monsterIndex: 'gibbering-mouther', // 110
+          difficulty: 2,
+          firstGoldReward: 85,
+          goldReward: 57,
+        },
+      ],
+      unlocks: 'hunt11',
+    },
+    {
+      id: 11,
+      key: 'hunt11',
+      name: 'Vampire Spawn',
+      description: `Maud’s spawn lurks in the harbor, spreading her blood curse—unmask the Maud true identity.`,
+      energyCost: 1,
+      totalBattles: 6,
+      battles: [
+        { type: 'normal', monsterIndex: 'night-hag', difficulty: 1, goldReward: 45 }, // 112
+        { type: 'normal', monsterIndex: 'bone-devil', difficulty: 1, goldReward: 47 }, // 110
+        { type: 'normal', monsterIndex: 'lich', difficulty: 1, goldReward: 49 }, // 135
+        { type: 'normal', monsterIndex: 'medusa', difficulty: 1, goldReward: 51 }, // 127
+        { type: 'normal', monsterIndex: 'stone-giant', difficulty: 1, goldReward: 53 }, // 126
+        {
+          type: 'mini-boss',
+          monsterIndex: 'vampire-spawn', // 123
+          difficulty: 1.5,
+          firstGoldReward: 96,
+          goldReward: 59,
+        },
+      ],
+      unlocks: 'hunt12',
+    },
+    {
+      id: 12,
+      key: 'hunt12',
+      name: 'Deva',
+      description:
+        `Before he can speak, the spawn burns. Break Maud's influence to set the deva free.`,
+      energyCost: 2,
+      totalBattles: 8,
+      battles: [
+        { type: 'normal', monsterIndex: 'chuul', difficulty: 1.5, goldReward: 46 }, // 135
+        { type: 'normal', monsterIndex: 'mummy-lord', difficulty: 1.5, goldReward: 48 }, // 135
+        { type: 'normal', monsterIndex: 'vrock', difficulty: 1.5, goldReward: 50 }, // 152
+        { type: 'normal', monsterIndex: 'archmage', difficulty: 1.5, goldReward: 52 }, // 145
+        { type: 'normal', monsterIndex: 'bulette', difficulty: 1.5, goldReward: 47 }, // 140
+        { type: 'normal', monsterIndex: 'chain-devil', difficulty: 1.5, goldReward: 51 }, // 129
+        { type: 'normal', monsterIndex: 'invisible-stalker', difficulty: 1.5, goldReward: 53 }, // 156
+        {
+          type: 'mini-boss',
+          monsterIndex: 'deva', // 204
+          difficulty: 1.3,
+          firstGoldReward: 118,
+          goldReward: 55,
+        },
+      ],
+      unlocks: 'hunt13',
+    },
     {
       id: 13,
       key: 'hunt13',
-      name: 'Hobrich the Vexed',
-      description: `Drokkenden’s enchantment has turned Hobrich, the black dragon, into a puppet of terror.`,
-      energyCost: 2,
-      totalBattles: 10,
+      name: 'Chimera',
+      description:
+        `Maud's real name is Ezmerelda, the city cleric. Fight your way to her and end this madness.`,
+      energyCost: 1,
+      totalBattles: 8,
       battles: [
-        { type: 'normal', monsterIndex: 'remorhaz', difficulty: 1, goldReward: 63 }, // 195
-        { type: 'normal', monsterIndex: 'androsphinx', difficulty: 1, goldReward: 65 }, // 199
-        { type: 'normal', monsterIndex: 'planetar', difficulty: 1, goldReward: 67 }, // 200
-        { type: 'normal', monsterIndex: 'marilith', difficulty: 1, goldReward: 69 }, // 189
-        { type: 'normal', monsterIndex: 'lich', difficulty: 1.5, goldReward: 71 }, // 202
-        { type: 'normal', monsterIndex: 'young-blue-dragon', difficulty: 1.5, goldReward: 64 }, // 228
-        { type: 'normal', monsterIndex: 'werebear-hybrid', difficulty: 1.5, goldReward: 66 }, // 202
-        { type: 'normal', monsterIndex: 'wyvern', difficulty: 2, goldReward: 68 }, // 220
-        { type: 'normal', monsterIndex: 'behir', difficulty: 1, goldReward: 70 }, // 165
+        { type: 'normal', monsterIndex: 'ettin', difficulty: 1, goldReward: 48 }, // 85
+        { type: 'normal', monsterIndex: 'wyvern', difficulty: 1, goldReward: 50 }, // 110
+        { type: 'normal', monsterIndex: 'rakshasa', difficulty: 1, goldReward: 52 }, // 110
+        { type: 'normal', monsterIndex: 'mammoth', difficulty: 1, goldReward: 54 }, // 126
+        { type: 'normal', monsterIndex: 'aboleth', difficulty: 1, goldReward: 56 }, // 135 
+        { type: 'normal', monsterIndex: 'weretiger-hybrid', difficulty: 1, goldReward: 49 }, // 120
+        { type: 'normal', monsterIndex: 'bearded-devil', difficulty: 1, goldReward: 51 }, // 110
         {
           type: 'mini-boss',
-          monsterIndex: 'young-black-dragon', // 254
-          difficulty: 2,
-          firstGoldReward: 98,
-          goldReward: 72,
+          monsterIndex: 'chimera', // 172
+          difficulty: 1.5,
+          firstGoldReward: 106,
+          goldReward: 70,
         },
       ],
       unlocks: 'hunt14',
@@ -35,26 +129,25 @@ module.exports = {
     {
       id: 14,
       key: 'hunt14',
-      name: `Hydra`,
-      description: `A dragon wasn't enough, Drokkenden now summons a vicious hydra from the depths of the sea.`,
-      energyCost: 2,
-      totalBattles: 10,
+      name: 'Gorgon',
+      description:
+        `As Maud’s dark magic warps the city, she calls upon a Gorgon to stop your hunt.`,
+      energyCost: 1,
+      totalBattles: 8,
       battles: [
-        { type: 'normal', monsterIndex: 'ghost', difficulty: 5, goldReward: 65 }, // 225
-        { type: 'normal', monsterIndex: 'wight', difficulty: 5, goldReward: 67 }, // 225
-        { type: 'normal', monsterIndex: 'satyr', difficulty: 5, goldReward: 69 }, // 155
-        { type: 'normal', monsterIndex: 'hell-hound', difficulty: 5, goldReward: 71 }, // 225
-        { type: 'normal', monsterIndex: 'harpy', difficulty: 5, goldReward: 73 }, // 190
-        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 5, goldReward: 66 }, // 165
-        { type: 'normal', monsterIndex: 'centaur', difficulty: 5, goldReward: 68 }, // 225
-        { type: 'normal', monsterIndex: 'ettercap', difficulty: 5, goldReward: 70 }, // 220
-        { type: 'normal', monsterIndex: 'ghast', difficulty: 5, goldReward: 72 }, // 185
+        { type: 'normal', monsterIndex: 'tyrannosaurus-rex', difficulty: 1, goldReward: 63 }, // 136
+        { type: 'normal', monsterIndex: 'treant', difficulty: 1, goldReward: 65 }, // 138
+        { type: 'normal', monsterIndex: 'gynosphinx', difficulty: 1, goldReward: 67 }, // 136 
+        { type: 'normal', monsterIndex: 'shield-guardian', difficulty: 1, goldReward: 69 }, // 142
+        { type: 'normal', monsterIndex: 'young-green-dragon', difficulty: 1, goldReward: 71 }, // 136
+        { type: 'normal', monsterIndex: 'vampire-mist', difficulty: 1, goldReward: 64 }, // 144
+        { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 1, goldReward: 66 }, // 136
         {
           type: 'mini-boss',
-          monsterIndex: 'hydra', // 258
+          monsterIndex: 'gorgon', // 172
           difficulty: 1.5,
-          firstGoldReward: 102,
-          goldReward: 74,
+          firstGoldReward: 108,
+          goldReward: 68,
         },
       ],
       unlocks: 'hunt15',
@@ -62,137 +155,26 @@ module.exports = {
     {
       id: 15,
       key: 'hunt15',
-      name: 'Mummy',
-      description: `Drokkenden has noticed your work and sent an army of cursed souls to stop you.`,
+      name: 'Vampire Lord Maud',
+      description: `You fight your way to kneel on the steps of the Church of Light. It's time to end this.`,
       energyCost: 2,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'rhinoceros', difficulty: 5, goldReward: 67 }, // 225
-        { type: 'normal', monsterIndex: 'earth-elemental', difficulty: 1.5, goldReward: 79 }, // 189
-        { type: 'normal', monsterIndex: 'drider', difficulty: 1.5, goldReward: 71 }, // 184
-        { type: 'normal', monsterIndex: 'fire-giant', difficulty: 1.5, goldReward: 73 }, // 243
-        { type: 'normal', monsterIndex: 'balor', difficulty: 1, goldReward: 75 }, // 262
-        { type: 'normal', monsterIndex: 'vampire-bat', difficulty: 1.5, goldReward: 680 }, // 216
-        { type: 'normal', monsterIndex: 'giant-ape', difficulty: 1.5, goldReward: 70 }, // 186
-        { type: 'normal', monsterIndex: 'gladiator', difficulty: 2, goldReward: 72 }, // 224
-        { type: 'normal', monsterIndex: 'mammoth', difficulty: 2, goldReward: 74 }, // 252
-        {
-          type: 'mini-boss',
-          monsterIndex: 'mummy', // 290
-          difficulty: 5,
-          firstGoldReward: 146,
-          goldReward: 76,
-        },
-      ],
-      unlocks: 'hunt16',
-    },
-    {
-      id: 16,
-      key: 'hunt16',
-      name: 'Erinyes',
-      description:
-        'The deva fell and now serves Drokkenden—stop her before she opens the gates to hell.',
-      energyCost: 3,
-      totalBattles: 10,
-      battles: [
-        { type: 'normal', monsterIndex: 'shambling-mound', difficulty: 2, goldReward: 105 }, // 272
-        { type: 'normal', monsterIndex: 'otyugh', difficulty: 2, goldReward: 108 }, // 228
-        { type: 'normal', monsterIndex: 'shield-guardian', difficulty: 2, goldReward: 111 }, // 284
-        { type: 'normal', monsterIndex: 'stone-golem', difficulty: 1.5, goldReward: 114 }, // 267
-        { type: 'normal', monsterIndex: 'djinni', difficulty: 1.5, goldReward: 117 }, // 241
-        { type: 'normal', monsterIndex: 'gargoyle', difficulty: 5, goldReward: 120 }, // 260
-        { type: 'normal', monsterIndex: 'water-elemental', difficulty: 2, goldReward: 123 }, // 228
-        { type: 'normal', monsterIndex: 'young-gold-dragon', difficulty: 1.5, goldReward: 145 }, // 267
-        { type: 'normal', monsterIndex: 'lich', difficulty: 2, goldReward: 149 }, // 270
-        {
-          type: 'mini-boss',
-          monsterIndex: 'erinyes', // 306
-          difficulty: 2,
-          firstGoldReward: 294,
-          goldReward: 92,
-        },
-      ],
-      unlocks: 'hunt17',
-    },
-    {
-      id: 17,
-      key: 'hunt17',
-      name: 'Ice Devil',
-      description:
-        `You stopped her, but were too late. Devils crossed over and sew chaos at Drokkenden's hand.`,
-      energyCost: 2,
-      totalBattles: 10,
-      battles: [
-        { type: 'normal', monsterIndex: 'nalfeshnee', difficulty: 1.5, goldReward: 83 }, // 276
-        { type: 'normal', monsterIndex: 'storm-giant', difficulty: 1, goldReward: 85 }, // 230
-        { type: 'normal', monsterIndex: 'roc', difficulty: 1, goldReward: 87 }, // 248
-        { type: 'normal', monsterIndex: 'giant-boar', difficulty: 5, goldReward: 89 }, // 210
-        { type: 'normal', monsterIndex: 'knight', difficulty: 5, goldReward: 91 }, // 260 
-        { type: 'normal', monsterIndex: 'mage', difficulty: 5, goldReward: 84 }, // 200 
-        { type: 'normal', monsterIndex: 'giant-constrictor-snake', difficulty: 5, goldReward: 86 }, // 300
-        { type: 'normal', monsterIndex: 'triceratops', difficulty: 3, goldReward: 88 }, // 285
-        { type: 'normal', monsterIndex: 'basilisk', difficulty: 5, goldReward: 90 }, // 260
-        {
-          type: 'mini-boss',
-          monsterIndex: 'ice-devil', // 270
-          difficulty: 1.5,
-          firstGoldReward: 188,
-          goldReward: 60,
-        },
-      ],
-      unlocks: 'hunt18',
-    },
-    {
-      id: 18,
-      key: 'hunt18',
-      name: 'Glabrezu',
-      description:
-        `The last demon general is all that stands between you and your mortal enemy.`,
-      energyCost: 2,
-      totalBattles: 10,
-      battles: [
-        { type: 'normal', monsterIndex: 'doppelganger', difficulty: 5, goldReward: 85 }, // 260
-        { type: 'normal', monsterIndex: 'gargoyle', difficulty: 5, goldReward: 87 }, // 250
-        { type: 'normal', monsterIndex: 'archmage', difficulty: 3, goldReward: 89 }, // 300 
-        { type: 'normal', monsterIndex: 'griffon', difficulty: 5, goldReward: 91 }, // 295
-        { type: 'normal', monsterIndex: 'solar', difficulty: 1, goldReward: 93 }, // 243
-        { type: 'normal', monsterIndex: 'hydra', difficulty: 1.5, goldReward: 86 }, // 258
-        { type: 'normal', monsterIndex: 'mimic', difficulty: 5, goldReward: 88 }, // 290
-        { type: 'normal', monsterIndex: 'assassin', difficulty: 3, goldReward: 90 }, // 234
-        { type: 'normal', monsterIndex: 'balor', difficulty: 1, goldReward: 92 }, // 262 
-        {
-          type: 'mini-boss',
-          monsterIndex: 'glabrezu', // 314
-          difficulty: 2,
-          firstGoldReward: 188,
-          goldReward: 95,
-        },
-      ],
-      unlocks: 'hunt19',
-    },
-    {
-      id: 19,
-      key: 'hunt19',
-      name: 'Drokkenden the Dread',
-      description: `At the top of Mount Dread, you face Drokkenden the Dread, behind all this destruction.`,
-      energyCost: 3,
-      totalBattles: 10,
-      battles: [
-        { type: 'normal', monsterIndex: 'unicorn', difficulty: 5, goldReward: 135 }, // 335
-        { type: 'normal', monsterIndex: 'owlbear', difficulty: 5, goldReward: 138 }, // 295
-        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 5, goldReward: 141 }, // 330
-        { type: 'normal', monsterIndex: 'mummy-lord', difficulty: 3, goldReward: 144 }, // 285
-        { type: 'normal', monsterIndex: 'wraith', difficulty: 5, goldReward: 147 }, // 335
-        { type: 'normal', monsterIndex: 'cloud-giant', difficulty: 2, goldReward: 150 }, // 350
-        { type: 'normal', monsterIndex: 'hill-giant', difficulty: 3, goldReward: 153 }, // 315
-        { type: 'normal', monsterIndex: 'otyugh', difficulty: 3, goldReward: 106 }, // 342
-        { type: 'normal', monsterIndex: 'minotaur-skeleton', difficulty: 5, goldReward: 105 }, // 335
+        { type: 'normal', monsterIndex: 'vampire-spawn', difficulty: 2, goldReward: 75 }, // 164
+        { type: 'normal', monsterIndex: 'ettin', difficulty: 2, goldReward: 77 }, // 127
+        { type: 'normal', monsterIndex: 'ogre-zombie', difficulty: 2, goldReward: 79 }, // 170
+        { type: 'normal', monsterIndex: 'air-elemental', difficulty: 2, goldReward: 81 }, // 135
+        { type: 'normal', monsterIndex: 'spirit-naga', difficulty: 2, goldReward: 83 }, // 105
+        { type: 'normal', monsterIndex: 'troll', difficulty: 2, goldReward: 84 }, // 168
+        { type: 'normal', monsterIndex: 'green-hag', difficulty: 2, goldReward: 87 }, // 164
+        { type: 'normal', monsterIndex: 'lamia', difficulty: 2, goldReward: 89 }, // 194
+        { type: 'normal', monsterIndex: 'hill-giant', difficulty: 2, goldReward: 90 }, // 210
         {
           type: 'boss',
-          monsterIndex: 'young-red-dragon', // 356
-          difficulty: 3,
-          firstGoldReward: 256,
-          goldReward: 110,
+          monsterIndex: 'vampire-vampire', // 288
+          difficulty: 2,
+          firstGoldReward: 225,
+          goldReward: 93,
         },
       ],
       unlocksPage: 'page4',

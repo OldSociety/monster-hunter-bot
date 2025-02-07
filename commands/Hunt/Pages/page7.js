@@ -1,6 +1,6 @@
 module.exports = {
-  key: 'page7',
-  name: `Hunt Page 7 - `,
+  key: 'page6',
+  name: `Hunt Page 6 - `,
   description:
     '',
   finalBoss: '',
