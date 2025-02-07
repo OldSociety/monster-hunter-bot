@@ -107,7 +107,7 @@ async function runBattlePhases(
           `${healthBar}`
       )
       .setColor('#FF4500')
-      .setThumbnail(imageUrl)
+      .setImage(imageUrl)
 
     // Send or update interaction
     try {
