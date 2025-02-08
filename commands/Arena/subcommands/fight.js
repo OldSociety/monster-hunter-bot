@@ -17,6 +17,7 @@ const {
   calculateDamageWithAgility,
   getBoostMultiplier,
 } = require('../helpers/accountHelpers.js')
+const { collectors, stopUserCollector } = require('../../utils/collectors')
 
 const damageTypeEmojis = {
   physical: '⚔️',
@@ -30,12 +31,10 @@ const damageTypeEmojis = {
 module.exports = {
   async execute(interaction) {
     console.log(`[FIGHT] Command started by user ${interaction.user.id}`)
-    if (!PlayerProgressStat) {
-      console.error(
-        '[FIGHT] ERROR: PlayerProgressStat is not defined. Check your models export.'
-      )
-    }
     const userId = interaction.user.id
+    // Stop any existing collector for this user.
+    stopUserCollector(userId)
+
     const player = await getOrCreatePlayer(userId)
     const userRecord = await User.findOne({ where: { user_id: userId } })
     if (!userRecord) {
@@ -73,13 +72,13 @@ module.exports = {
       return
     }
 
-    // Preload progress records using correct field names.
+    // Preload progress records using proper field names.
     const progressRecords = PlayerProgressStat
       ? await PlayerProgressStat.findAll({ where: { playerId: player.id } })
       : []
     const progressMap = {}
     progressRecords.forEach((pr) => {
-      // For display, we use the easy victories
+      // For display, we use the easy victories (adjust as needed)
       progressMap[pr.monsterId] = pr.victories_easy || 0
     })
 
@@ -137,6 +136,7 @@ module.exports = {
       filter: (i) => i.user.id === userId,
       time: 60000,
     })
+    collectors.set(userId, collector)
 
     collector.on('collect', async (i) => {
       if (i.customId === 'fight_cancel') {
@@ -190,19 +190,19 @@ module.exports = {
           embeds: [],
           components: [],
         })
-        const startingHP = player.hp
+        // Do not reset player's HP—preserve the damage taken.
         startBattle(
           interaction,
           player,
           selectedMonster,
           userRecord,
-          difficulty,
-          startingHP
+          difficulty
         )
       }
     })
 
     collector.on('end', async (_, reason) => {
+      collectors.delete(userId)
       if (reason !== 'battle' && reason !== 'cancelled') {
         await interaction.editReply({ components: [] })
       }
@@ -213,8 +213,7 @@ module.exports = {
       player,
       monster,
       userRecord,
-      difficulty,
-      startingHP
+      difficulty
     ) {
       console.log(
         `[BATTLE] Starting battle against ${monster.name} (Difficulty: ${difficulty})`
@@ -225,10 +224,14 @@ module.exports = {
         player.defense + (4 + Math.floor(0.1 * userRecord.stealth_score))
       const effectiveAgility =
         player.agility + (4 + Math.floor(0.1 * userRecord.stealth_score))
+      console.log(
+        `[BATTLE] effectiveAgility: ${effectiveAgility}, enemy agility: ${monster.agility}`
+      )
       const firstTurn = determineFirstTurn(
         effectiveAgility,
         Number(monster.agility) || 1
       )
+      console.log(`[BATTLE] First turn determined as: ${firstTurn}`)
       const battleState = {
         playerHP: player.hp,
         monsterHP: monster.hp,
@@ -463,9 +466,9 @@ module.exports = {
 
       battleCollector.on('end', async (_, reason) => {
         console.log(`[BATTLE] Battle ended with reason: ${reason}`)
-        // Reset player's HP in the database.
-        await player.update({ hp: startingHP })
-        console.log(`[BATTLE] Player HP reset to: ${startingHP}`)
+        // Persist the player's HP as-is (do not reset it).
+        await player.update({ hp: battleState.playerHP })
+        console.log(`[BATTLE] Player HP updated to: ${battleState.playerHP}`)
         const resultEmbed = new EmbedBuilder()
         let pointsAwarded
         if (reason === 'victory') {
