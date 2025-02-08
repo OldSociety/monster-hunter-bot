@@ -1,97 +1,91 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js')
-const { User, Inventory, BaseItem } = require('../../../Models/model.js')
-const { getOrCreatePlayer } = require('../helpers/accountHelpers.js')
-
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path'); // Ensure this is imported here
+const { User, Inventory, BaseItem } = require('../../../Models/model.js');
+const { getOrCreatePlayer } = require('../helpers/accountHelpers.js');
 
 module.exports = {
   async execute(interaction) {
-    const userId = interaction.user.id
-    const player = await getOrCreatePlayer(userId)
-    const userRecord = await User.findOne({ where: { user_id: userId } })
+    const userId = interaction.user.id;
+    const player = await getOrCreatePlayer(userId);
+    const userRecord = await User.findOne({ where: { user_id: userId } });
     if (!userRecord) {
-        await interaction.reply({
-          content:
-            'You need to create an account first! Use /account to get started.',
-          ephemeral: true,
-        })
-        return
-      }
+      await interaction.reply({
+        content: 'You need to create an account first! Use /account to get started.',
+        ephemeral: true,
+      });
+      return;
+    }
+
     const equippedItems = await Inventory.findAll({
       where: { ArenaId: player.id, equipped: true },
       include: { model: BaseItem, as: 'item' },
       logging: console.log,
-    })
+    });
 
     const equippedWeapons = equippedItems
       .filter((item) => item.item.type === 'weapon')
-      .map((item) => item.item.name)
+      .map((item) => item.item.name);
 
     const equippedDefense = equippedItems
       .filter((item) => item.item.type === 'defense')
-      .map((item) => item.item.name)
+      .map((item) => item.item.name);
 
-    const generateStatEmbed = () => {
-      // Helper function to format attribute descriptions
-      const formatAttribute = (label, baseValue, score, scoreLabel) => {
-        const bonus = Math.floor(0.1 * score)
-        return `**${label}:** ${baseValue + bonus} (+ ${bonus} ${scoreLabel})\n`
-      }
+    // Helper to format attribute lines
+    const formatAttribute = (label, baseValue, score, scoreLabel) => {
+      const bonus = Math.floor(0.1 * score);
+      return `**${label}:** ${baseValue + bonus} (+${bonus} ${scoreLabel})\n`;
+    };
 
-      // Constructing the description using the helper function
+    // Build the embed with a revised welcome message and current stats
+    const generateOverviewEmbed = () => {
       let description =
-        `**HP:** ${player.hp}\n` +
-        formatAttribute(
-          'Strength',
-          player.strength,
-          userRecord.brute_score,
-          'Brute'
-        ) +
-        formatAttribute(
-          'Defense',
-          player.defense,
-          userRecord.stealth_score,
-          'Stealth'
-        ) +
-        formatAttribute(
-          'Intelligence',
-          player.intelligence,
-          userRecord.spellsword_score,
-          'Spellsword'
-        ) +
-        formatAttribute(
-          'Agility',
-          player.agility,
-          userRecord.stealth_score,
-          'Stealth'
-        ) +
-        `\n**Equipped Items:**\n` +
-        `- Weapons: ${equippedWeapons.join(', ') || 'None'}\n` +
-        `- Defense: ${equippedDefense.join(', ') || 'None'}\n`
+        `Welcome to the Arena—a turn-based battlefield where your /hunt results fuel your progression. Every encounter hones your abilities while your foes grow ever more formidable, unlocking rare rewards in the Armory. Select your next action below to manage your inventory, engage in combat, or explore other areas.`;
 
       if (player.statPoints > 0) {
-        description =
-          `Welcome to Arena! You have **${player.statPoints} points** to distribute among the following stats:\n\n` +
-          `**HP:** How much damage you can take before defeat.\n` +
-          `**Strength:** How much damage you deal to enemies.\n` +
-          `**Defense:** How much damage you can block.\n` +
-          `**Intelligence:** Unlocks new attacks and abilities.\n` +
-          `**Agility:** How fast you act and crit attacks.\n` +
-          `Use the buttons below to allocate your points!\n\n` +
-          description +
-          `\n**Unallocated Points:** ${player.statPoints}\n\n`
+        description += `\n\nYou have **${player.statPoints}** unallocated stat point${player.statPoints !== 1 ? 's' : ''}. Use the lower buttons to improve your abilities.`;
       }
+
+      description += `\n\n**Current Stats:**\n` +
+        `**HP:** ${player.hp}\n` +
+        formatAttribute('Strength', player.strength, userRecord.brute_score, 'Brute') +
+        formatAttribute('Defense', player.defense, userRecord.stealth_score, 'Stealth') +
+        formatAttribute('Intelligence', player.intelligence, userRecord.spellsword_score, 'Spellsword') +
+        formatAttribute('Agility', player.agility, userRecord.stealth_score, 'Stealth') +
+        `\n**Equipped Items:**\n` +
+        `- Weapons: ${equippedWeapons.join(', ') || 'None'}\n` +
+        `- Defense: ${equippedDefense.join(', ') || 'None'}\n`;
 
       return new EmbedBuilder()
         .setTitle(`${interaction.user.username}'s Arena Account`)
         .setDescription(description)
-        .setFooter({
-          text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
-        })
+        .setFooter({ text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0` })
         .setThumbnail(interaction.user.displayAvatarURL())
-        .setColor('Blue')
-    }
+        .setColor('Blue');
+    };
 
-    const actionRow = new ActionRowBuilder().addComponents(
+    // Navigation row: buttons to access pages
+    const navRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('nav_inventory')
+        .setLabel('Inventory')
+        .setStyle('Secondary'),
+      new ButtonBuilder()
+        .setCustomId('nav_fight')
+        .setLabel('Fight')
+        .setStyle('Secondary'),
+      new ButtonBuilder()
+        .setCustomId('nav_armory')
+        .setLabel('Armory')
+        .setStyle('Secondary'),
+      new ButtonBuilder()
+        .setCustomId('nav_temple')
+        .setLabel('Temple')
+        .setStyle('Secondary')
+    );
+
+    // Stat allocation row: only visible when unspent stat points exist
+    const statRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('hp')
         .setLabel('HP +1')
@@ -112,38 +106,76 @@ module.exports = {
         .setCustomId('agility')
         .setLabel('Agility +1')
         .setStyle('Primary')
-    )
+    );
 
     await interaction.reply({
-      embeds: [generateStatEmbed()],
-      components: player.statPoints > 0 ? [actionRow] : [],
+      embeds: [generateOverviewEmbed()],
+      components: player.statPoints > 0 ? [navRow, statRow] : [navRow],
       ephemeral: true,
-    })
+    });
 
-    // Stat allocation handling
+    // Set up a component collector to handle button interactions
     const collector = interaction.channel.createMessageComponentCollector({
       filter: (i) => i.user.id === userId,
       time: 60000,
-    })
+    });
 
     collector.on('collect', async (btnInteraction) => {
-      const stat = btnInteraction.customId
-      if (player.statPoints > 0) {
-        await player.increment(stat, { by: 1 })
-        await player.decrement('statPoints', { by: 1 })
-        await player.reload()
+      const customId = btnInteraction.customId;
+
+      // Navigation buttons
+      if (customId.startsWith('nav_')) {
+        if (customId === 'nav_inventory') {
+          // Since inventory.js is a sibling of overview.js, adjust the path accordingly:
+          const inventorySubcommandFile = path.join(__dirname, 'inventory.js');
+          if (fs.existsSync(inventorySubcommandFile)) {
+            const inventoryCommand = require(inventorySubcommandFile);
+            await inventoryCommand.execute(btnInteraction);
+            collector.stop();
+          } else {
+            await btnInteraction.reply({ content: 'Inventory subcommand not implemented yet.', ephemeral: true });
+          }
+          return;
+        } else if (customId === 'nav_fight') {
+          // Similar adjustment can be made for the fight command if needed:
+          const fightSubcommandFile = path.join(__dirname, 'fight.js');
+          if (fs.existsSync(fightSubcommandFile)) {
+            const fightCommand = require(fightSubcommandFile);
+            await fightCommand.execute(btnInteraction);
+            collector.stop();
+          } else {
+            await btnInteraction.reply({ content: 'Fight subcommand not implemented yet.', ephemeral: true });
+          }
+          return;
+        } else if (customId === 'nav_armory') {
+          await btnInteraction.reply({ content: 'Armory page coming soon!', ephemeral: true });
+          return;
+        } else if (customId === 'nav_temple') {
+          await btnInteraction.reply({ content: 'Temple page coming soon!', ephemeral: true });
+          return;
+        } else {
+          await btnInteraction.reply({ content: 'Unknown navigation option.', ephemeral: true });
+          return;
+        }
       }
 
-      await btnInteraction.update({
-        embeds: [embed],
-        components: player.statPoints > 0 ? [actionRow] : [],
-      })
-
-      if (player.statPoints === 0) collector.stop()
-    })
+      // Stat allocation buttons
+      if (['hp', 'strength', 'defense', 'intelligence', 'agility'].includes(customId)) {
+        if (player.statPoints > 0) {
+          await player.increment(customId, { by: 1 });
+          await player.decrement('statPoints', { by: 1 });
+          await player.reload();
+        }
+        await btnInteraction.update({
+          embeds: [generateOverviewEmbed()],
+          components: player.statPoints > 0 ? [navRow, statRow] : [navRow],
+        });
+        if (player.statPoints === 0) collector.stop();
+      }
+    });
 
     collector.on('end', async () => {
-      await interaction.editReply({ components: [] })
-    })
+      await interaction.editReply({ components: [] });
+    });
   },
-}
+};

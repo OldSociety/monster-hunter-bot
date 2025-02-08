@@ -15,7 +15,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      victories: {
+      victories_easy: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0, // Number of wins against the monster
+      },
+      victories_medium: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0, // Number of wins against the monster
+      },
+      victories_hard: {
         type: DataTypes.INTEGER,
         defaultValue: 0, // Number of wins against the monster
       },

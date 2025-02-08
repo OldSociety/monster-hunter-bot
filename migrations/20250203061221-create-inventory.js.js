@@ -33,7 +33,7 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
       },
-      count: {
+      quantity: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 1,

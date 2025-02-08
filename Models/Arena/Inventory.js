@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      count: {
+      quantity: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 1, // Default to 1 when a new item is added
