@@ -30,13 +30,13 @@ module.exports = {
 
     const rewards = [
       '🪙200 coins',
-      '🥚1 dragon egg',
-      '🧪2 demon ichor',
+      '🥚2 dragon egg',
+      '🧪3 demon ichor',
       '🪙600 coins',
-      '🥚1 dragon egg',
+      '🥚3 dragon egg',
       '🧪3 demon ichor',
       '🪙1000 coins',
-      '🥚1 dragon egg',
+      '🥚3 dragon egg',
       '🧪3 demon ichor',
       'Demon Card 🃏',
     ]

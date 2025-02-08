@@ -72,13 +72,13 @@ async function grantDailyReward(user, interaction) {
   } else {
     const rewards = [
       { type: 'gold', amount: 200, text: '🪙200 coins' },
-      { type: 'eggs', amount: 1, text: '🥚1 dragon egg' },
-      { type: 'ichor', amount: 2, text: '🧪2 demon ichor' },
+      { type: 'eggs', amount: 2, text: '🥚2 dragon egg' },
+      { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
       { type: 'gold', amount: 600, text: '🪙600 coins' },
-      { type: 'eggs', amount: 1, text: '🥚1 dragon egg' },
+      { type: 'eggs', amount: 3, text: '🥚3 dragon egg' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
       { type: 'gold', amount: 1000, text: '🪙1000 coins' },
-      { type: 'eggs', amount: 1, text: '🥚1 dragon egg' },
+      { type: 'eggs', amount: 3, text: '🥚3 dragon egg' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
     ]
 
