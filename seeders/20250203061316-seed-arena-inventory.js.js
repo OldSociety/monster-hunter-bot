@@ -40,19 +40,19 @@ module.exports = {
         description: 'A basic snowball, perfect for beginners.',
       },
       {
-        name: 'Winter Shield',
-        type: 'defense',
+        name: 'Impish Blade',
+        type: 'weapon',
         rarity: 'common',
-        theme: 'winter',
-        damageMin: 0,
-        damageMax: 0,
-        damageType: null,
+        theme: '',
+        damageMin: 2,
+        damageMax: 2,
+        damageType: 'fire',
         damage2Min: 0,
         damage2Max: 0,
         damageType2: null,
         defense: JSON.stringify([
           {
-            physical: 1,
+            physical: 0,
             acid: 0,
             cold: 0,
             fire: 0,
@@ -63,7 +63,7 @@ module.exports = {
           },
         ]),
         healing: 0,
-        durability: 1, //in turns, null for permanent weapons and shields
+        durability: null, //in turns, null for permanent weapons and shields
         effects: JSON.stringify([
           {
             type: null, //freeze, sap...
