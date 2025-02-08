@@ -4,6 +4,7 @@ const sequelize = require('../config/sequelize')
 // Hunt models
 const User = require('./User/User')(sequelize, DataTypes)
 const Collection = require('./Collection/Collection')(sequelize, DataTypes)
+const Monster = require('./MonsterList/Monster')(sequelize, DataTypes)
 
 // Arena models
 const Arena = require('./Arena/Arena')(sequelize, DataTypes)
@@ -77,6 +78,7 @@ PlayerProgressStat.belongsTo(ArenaMonster, {
 module.exports = {
   User,
   Collection,
+  Monster,
   Arena,
   ArenaMonster,
   BaseItem,
