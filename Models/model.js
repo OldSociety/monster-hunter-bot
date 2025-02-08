@@ -5,6 +5,7 @@ const sequelize = require('../config/sequelize')
 const User = require('./User/User')(sequelize, DataTypes)
 const Collection = require('./Collection/Collection')(sequelize, DataTypes)
 const Monster = require('./MonsterList/Monster')(sequelize, DataTypes)
+const MonsterItemUnlocks = require('./MonsterList/MonsterItemUnlocks')(sequelize, DataTypes)
 
 // Arena models
 const Arena = require('./Arena/Arena')(sequelize, DataTypes)
@@ -55,6 +56,19 @@ BaseItem.hasMany(Inventory, {
 Inventory.belongsTo(BaseItem, {
   foreignKey: 'itemId',
   as: 'item',
+})
+
+// Monster → BaseItem (Many-to-Many)
+Monster.belongsToMany(BaseItem, {
+  through: MonsterItemUnlocks,
+  foreignKey: 'monsterIndex',
+  as: 'unlockableItems',
+})
+
+BaseItem.belongsToMany(Monster, {
+  through: MonsterItemUnlocks,
+  foreignKey: 'baseItemId',
+  as: 'unlockedByMonsters',
 })
 
 Arena.hasMany(PlayerProgressStat, {

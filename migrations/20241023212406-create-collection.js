@@ -41,6 +41,10 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
+      evolved: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
       userId: {
         type: Sequelize.STRING,
         allowNull: false,

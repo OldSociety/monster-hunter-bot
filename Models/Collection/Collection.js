@@ -1,3 +1,5 @@
+const { BOOLEAN } = require("sequelize")
+
 module.exports = (sequelize, DataTypes) => {
   const Collection = sequelize.define('Collections', {
     id: {
@@ -37,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
     copies: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+    },
+    evolved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     userId: {
       type: DataTypes.STRING,
