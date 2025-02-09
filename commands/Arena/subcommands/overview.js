@@ -85,7 +85,7 @@ module.exports = {
         .setTitle(`${interaction.user.username}'s Arena Account`)
         .setDescription(description)
         .setFooter({
-          text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
+          text: `Arena Score: ${player.arenaScore} | Arena Ranking: #0`,
         })
         .setThumbnail(interaction.user.displayAvatarURL())
         .setColor('Blue')
@@ -102,7 +102,7 @@ module.exports = {
         .setLabel('Fight')
         .setStyle('Secondary'),
       new ButtonBuilder()
-        .setCustomId('nav_armory')
+        .setCustomId('nav_forge')
         .setLabel('Forge')
         .setStyle('Secondary'),
       new ButtonBuilder()
@@ -180,19 +180,33 @@ module.exports = {
             })
           }
           return
-        } else if (customId === 'nav_armory') {
-          await btnInteraction.reply({
-            content: 'Armory page coming soon!',
-            ephemeral: true,
-          })
-          return
-        } else if (customId === 'nav_temple') {
-          await btnInteraction.reply({
-            content: 'Temple page coming soon!',
-            ephemeral: true,
-          })
-          return
-        } else {
+        } else if (customId === 'nav_forge') {
+            const fightSubcommandFile = path.join(__dirname, 'forge.js')
+            if (fs.existsSync(fightSubcommandFile)) {
+              const fightCommand = require(fightSubcommandFile)
+              await fightCommand.execute(btnInteraction)
+              collector.stop()
+            } else {
+              await btnInteraction.reply({
+                content: 'Forge subcommand not implemented yet.',
+                ephemeral: true,
+              })
+            }
+            return
+         } else if (customId === 'nav_temple') {
+            const fightSubcommandFile = path.join(__dirname, 'temple.js')
+            if (fs.existsSync(fightSubcommandFile)) {
+              const fightCommand = require(fightSubcommandFile)
+              await fightCommand.execute(btnInteraction)
+              collector.stop()
+            } else {
+              await btnInteraction.reply({
+                content: 'Temple subcommand not implemented yet.',
+                ephemeral: true,
+              })
+            }
+            return
+         } else {
           await btnInteraction.reply({
             content: 'Unknown navigation option.',
             ephemeral: true,

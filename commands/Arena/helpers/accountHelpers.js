@@ -56,7 +56,6 @@ function calculateFinalDamage(
   damageType,
   monster
 ) {
-  // Step 1: Calculate base damage with agility effects
   let baseDamage = calculateDamageWithAgility(
     dMin,
     dMax,
@@ -66,43 +65,28 @@ function calculateFinalDamage(
 
   console.log(`[DAMAGE] Base damage before resistances: ${baseDamage}`)
 
-  // Step 2: Apply resistances
   let resistanceValue = 0
   if (monster.resistance) {
     const resistances = JSON.parse(monster.resistance)
-    resistanceValue = resistances[damageType] || 0 // Default to 0 if no resistance exists
+    resistanceValue = resistances[damageType] || 0
 
     if (resistanceValue === 100) {
-      console.log(
-        `[RESISTANCE] ${monster.name} is completely immune to ${damageType}!`
-      )
-      return {
-        damage: 0,
-        message: `${monster.name} is **immune** to ${damageType}!`,
-      }
+      console.log(`[RESISTANCE] ${monster.name} is completely immune to ${damageType}!`)
+      return { damage: 0, message: `${monster.name} is **immune** to ${damageType}!` }
     }
 
-    if (resistanceValue > 0) {
-      baseDamage -= baseDamage * (resistanceValue / 100) // Reduce damage by percentage
-    } else if (resistanceValue < 0) {
-      baseDamage += Math.abs(resistanceValue) // Add extra damage if negative resistance
-    }
+    baseDamage *= 1 - resistanceValue / 100 // Apply resistance as a multiplier
   }
 
-  console.log(
-    `[RESISTANCE] Adjusted damage after resistance (${resistanceValue}%): ${baseDamage}`
-  )
+  console.log(`[RESISTANCE] Adjusted damage: ${baseDamage}`)
 
-  // Step 3: Apply monster's defense
-  let finalDamage = Math.max(baseDamage - monster.defense, 0)
+  let finalDamage = Math.max(baseDamage - monster.defense * 0.5, 2) // Ensuring minimum damage is 2
 
-  console.log(
-    `[DAMAGE] Final damage after defense: ${finalDamage} (Monster Defense: ${monster.defense})`
-  )
+  console.log(`[DAMAGE] Final damage after defense: ${finalDamage}`)
 
-  // Step 4: Ensure minimum damage of 1 (unless fully immune)
-  return { damage: Math.max(finalDamage, 1), message: null }
+  return { damage: finalDamage, message: null }
 }
+
 
 function calculateDamageWithAgility(dMin, dMax, attackerAgi, defenderAgi) {
   const maxEffect = 0.9

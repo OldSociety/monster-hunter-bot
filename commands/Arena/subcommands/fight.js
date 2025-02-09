@@ -433,28 +433,39 @@ module.exports = {
         if (action.startsWith('weapon_')) {
           const weaponIndex = parseInt(action.split('_')[1], 10)
           const weapon = equippedWeapons[weaponIndex]?.item
-          let attackDamageType = 'physical'
-          if (weapon) attackDamageType = weapon.damageType || 'physical'
 
-          const damageResult = calculateFinalDamage(
-            weapon.item ? weapon.item.damageMin : weapon.damageMin,
-            weapon.item ? weapon.item.damageMax : weapon.damageMax,
+          if (!weapon) {
+            await btnInteraction.followUp({
+              content: 'Weapon not found.',
+              ephemeral: true,
+            })
+            return
+          }
+
+          let attackDamageType = weapon.damageType || 'physical'
+
+          // Ensure the damage is correctly calculated with strength and agility bonuses
+          const baseSwing = calculateDamageWithAgility(
+            weapon.damageMin,
+            weapon.damageMax,
             effectiveAgility,
-            monster.agility,
-            attackDamageType,
-            monster
+            monster.agility
           )
 
-          battleState.monsterHP = Math.max(
-            battleState.monsterHP - damageResult.damage,
-            0
+          // Adjusting final damage calculation
+          const damage = Math.max(
+            Math.floor(
+              baseSwing + effectiveStrength * 0.75 - monster.defense * 0.5
+            ),
+            2 // Minimum weapon damage should be at least 2
           )
+
+          battleState.monsterHP = Math.max(battleState.monsterHP - damage, 0)
+
           battleState.history.push(
-            damageResult.message
-              ? damageResult.message
-              : `You attack with ${weapon.name} for ${damageResult.damage} ${
-                  damageTypeEmojis[attackDamageType] || '⚔️'
-                } damage!`
+            `You attack with **${weapon.name}** and deal **${damage}** ${
+              damageTypeEmojis[attackDamageType] || '⚔️'
+            } damage to **${monster.name}**!`
           )
         } else if (action === 'fierce_attack') {
           const baseSwing = calculateDamageWithAgility(
@@ -484,6 +495,7 @@ module.exports = {
             where: { id: selectedInvId },
             include: { model: BaseItem, as: 'item' },
           })
+
           if (!consumableRecord) {
             await btnInteraction.followUp({
               content: 'Consumable not found.',
@@ -492,24 +504,36 @@ module.exports = {
             return
           }
 
+          // Extract attack data from the consumable
+          const consumableAttack = {
+            damageMin: consumableRecord.item.damageMin || 1,
+            damageMax: consumableRecord.item.damageMax || 2,
+            damageType: consumableRecord.item.damageType || 'physical',
+            name: consumableRecord.item.name,
+          }
+
           const damageResult = calculateFinalDamage(
-            chosenAttack.damageMin,
-            chosenAttack.damageMax,
+            consumableAttack.damageMin,
+            consumableAttack.damageMax,
             monster.agility,
             effectiveAgility,
-            chosenAttack.damageType,
+            consumableAttack.damageType,
             player
           )
+
           battleState.playerHP = Math.max(
             battleState.playerHP - damageResult.damage,
             0
           )
+
           battleState.history.push(
             damageResult.message
               ? damageResult.message
-              : `${monster.name} uses ${chosenAttack.name} and deals ${
-                  damageResult.damage
-                } ${damageTypeEmojis[chosenAttack.damageType] || '⚔️'} damage!`
+              : `${monster.name} uses **${
+                  consumableAttack.name
+                }** and deals **${damageResult.damage}** ${
+                  damageTypeEmojis[consumableAttack.damageType] || '⚔️'
+                } damage!`
           )
 
           await Inventory.decrement('quantity', {
@@ -517,6 +541,7 @@ module.exports = {
             where: { id: selectedInvId },
           })
         }
+
         if (battleState.monsterHP <= 0) {
           battleCollector.stop('victory')
           return
@@ -532,81 +557,119 @@ module.exports = {
       battleCollector.on('end', async (_, reason) => {
         console.log(`[BATTLE] Battle ended with reason: ${reason}`)
 
-        // Persist the player's HP as-is (do not reset it).
+        // Persist the player's HP
         await player.update({ current_hp: battleState.playerHP })
         console.log(`[BATTLE] Player HP updated to: ${battleState.playerHP}`)
 
-        const resultEmbed = new EmbedBuilder()
-
-        if (difficulty === 'easy') {
-          console.log('[BATTLE] Incrementing victories_easy')
-          await PlayerProgressStat.increment('victories_easy', {
-            by: 1,
-            where: { playerId: player.id, monsterId: monster.id },
-          })
-          progress = await PlayerProgressStat.findOne({
-            where: { playerId: player.id, monsterId: monster.id },
-          })
-          pointsAwarded = 10 + progress.victories_easy * 1
-        } else if (difficulty === 'medium') {
-          console.log('[BATTLE] Incrementing victories_medium')
-          await PlayerProgressStat.increment('victories_medium', {
-            by: 1,
-            where: { playerId: player.id, monsterId: monster.id },
-          })
-          progress = await PlayerProgressStat.findOne({
-            where: { playerId: player.id, monsterId: monster.id },
-          })
-          pointsAwarded = 10 + progress.victories_medium * 2
-        } else if (difficulty === 'hard') {
-          console.log('[BATTLE] Incrementing victories_hard')
-          await PlayerProgressStat.increment('victories_hard', {
-            by: 1,
-            where: { playerId: player.id, monsterId: monster.id },
-          })
-          progress = await PlayerProgressStat.findOne({
-            where: { playerId: player.id, monsterId: monster.id },
-          })
-          pointsAwarded = 10 + progress.victories_hard * 3
-        }
-        console.log(`[BATTLE] Points awarded: ${pointsAwarded}`)
-        await player.increment('arenaScore', { by: pointsAwarded })
+        let resultEmbed = new EmbedBuilder()
 
         if (reason === 'victory') {
           console.log(
-            `[BATTLE] Processing victory for player ${player.id} vs monster ${monster.name}`
+            `[BATTLE] Victory processing for ${player.id} vs ${monster.name}`
           )
 
+          // Handle Arena scoring
+          if (difficulty === 'easy') {
+            console.log('[BATTLE] Incrementing victories_easy')
+            await PlayerProgressStat.increment('victories_easy', {
+              by: 1,
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            progress = await PlayerProgressStat.findOne({
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            pointsAwarded = 10 + progress.victories_easy * 1
+          } else if (difficulty === 'medium') {
+            console.log('[BATTLE] Incrementing victories_medium')
+            await PlayerProgressStat.increment('victories_medium', {
+              by: 1,
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            progress = await PlayerProgressStat.findOne({
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            pointsAwarded = 10 + progress.victories_medium * 2
+          } else if (difficulty === 'hard') {
+            console.log('[BATTLE] Incrementing victories_hard')
+            await PlayerProgressStat.increment('victories_hard', {
+              by: 1,
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            progress = await PlayerProgressStat.findOne({
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            pointsAwarded = 10 + progress.victories_hard * 3
+          }
+
+          console.log(`[BATTLE] Points awarded: ${pointsAwarded}`)
+          await player.increment('arenaScore', { by: pointsAwarded })
+
           resultEmbed
-            .setTitle('Victory! - Battle Result')
+            .setTitle('🏆 Victory! - Battle Result')
             .setDescription(
-              `🎉 You defeated ${monster.name}!\nArena Score +${pointsAwarded}`
+              `🎉 You defeated **${monster.name}**!\nArena Score **+${pointsAwarded}**`
             )
             .setColor('Green')
-            .setImage(
+            .setThumbnail(
               `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.url}.png`
             )
-            .setFooter({
-              text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
-            })
-            .setThumbnail(interaction.user.displayAvatarURL())
+            .setFooter({ text: `Arena Score: ${player.arenaScore}` })
         } else if (reason === 'defeat') {
           console.log(
-            `[BATTLE] Processing defeat for player ${player.id} vs monster ${monster.name}`
+            `[BATTLE] Processing defeat for player ${player.id} vs ${monster.name}`
           )
 
+          // Handle Arena scoring
+          if (difficulty === 'easy') {
+            console.log('[BATTLE] Decrementing victories_easy')
+            await PlayerProgressStat.increment('victories_easy', {
+              by: -1,
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            progress = await PlayerProgressStat.findOne({
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            pointsAwarded = Math.max(0, 10 - progress.victories_easy * 1)
+          } else if (difficulty === 'medium') {
+            console.log('[BATTLE] Decrementing victories_medium')
+            await PlayerProgressStat.increment('victories_medium', {
+              by: -1,
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            progress = await PlayerProgressStat.findOne({
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            pointsAwarded = Math.max(0, 10 - progress.victories_medium * 2)
+          } else if (difficulty === 'hard') {
+            console.log('[BATTLE] Decrementing victories_hard')
+            await PlayerProgressStat.increment('victories_hard', {
+              by: -1,
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            progress = await PlayerProgressStat.findOne({
+              where: { playerId: player.id, monsterId: monster.id },
+            })
+            pointsAwarded = Math.max(0, 10 - progress.victories_hard * 3)
+          }
+
+          // Ensure player's score is updated first
+          await player.increment('arenaScore', { by: -Math.abs(pointsAwarded) })
+
+          // Fetch updated score
+          const updatedPlayer = await User.findOne({
+            where: { user_id: userId },
+          })
+
           resultEmbed
-            .setTitle('Defeat - Battle Result')
-            .setDescription(`💔 You were defeated by ${monster.name}.`)
+            .setTitle('☠️ Defeat - Battle Result')
+            .setDescription(`💔 You were defeated by **${monster.name}**.`)
             .setColor('Red')
             .setThumbnail(
               `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.url}.png`
             )
-            .setFooter({
-              text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
-            })
+            .setFooter({ text: `Arena Score: ${updatedPlayer.arenaScore}` })
 
-          await player.increment('arenaScore', { by: -10 })
+          await interaction.editReply({ embeds: [resultEmbed], components: [] })
         } else {
           resultEmbed
             .setDescription('⏳ The battle ended due to inactivity.')
@@ -615,44 +678,79 @@ module.exports = {
 
         console.log('[BATTLE] Sending battle result embed.')
 
-        // **Clear buttons and components after battle ends**
+        // **Ensure final embed is sent**
         await interaction.editReply({ embeds: [resultEmbed], components: [] })
 
-        await interaction.followUp({
-          content: 'Battle has concluded.',
-          ephemeral: true,
-        })
+        // await interaction.followUp({
+        //   content: 'Battle has concluded.',
+        //   ephemeral: true,
+        // })
       })
 
       async function handleEnemyTurn() {
         const monsterAttacks = monster.attacks || []
-        const chosenAttack = monsterAttacks[0]
+
+        // Ensure there is at least one attack available
+        if (!monsterAttacks.length) {
+          console.error(
+            `[ERROR] Monster ${monster.name} has no attacks defined!`
+          )
+          battleState.history.push(
+            `${monster.name} looks confused and doesn't attack!`
+          )
+          return
+        }
+
+        // Pick a random attack from available options
+        const chosenAttack =
+          monsterAttacks[Math.floor(Math.random() * monsterAttacks.length)]
+
+        // Ensure `chosenAttack` is valid before using its properties
+        if (
+          !chosenAttack ||
+          typeof chosenAttack.damageMin === 'undefined' ||
+          typeof chosenAttack.damageMax === 'undefined'
+        ) {
+          console.error(
+            `[ERROR] Invalid attack data for ${monster.name}:`,
+            chosenAttack
+          )
+          battleState.history.push(
+            `${monster.name} tries to attack but something goes wrong!`
+          )
+          return
+        }
+
+        console.log(
+          `[BATTLE] ${monster.name} is attacking with ${chosenAttack.name} (${chosenAttack.damageMin}-${chosenAttack.damageMax})`
+        )
+
+        // Calculate damage
         const baseDamage =
           Math.random() * (chosenAttack.damageMax - chosenAttack.damageMin) +
           chosenAttack.damageMin
+
         const finalMonsterDamage = Math.max(
           Math.floor(baseDamage * 0.75) - (player.defense * 0.5 || 0),
           1
         )
+
         battleState.playerHP = Math.max(
           battleState.playerHP - finalMonsterDamage,
           0
         )
+
         battleState.history.push(
-          `${monster.name} uses ${
+          `${monster.name} uses **${
             chosenAttack.name
-          } and deals ${finalMonsterDamage} ${
+          }** and deals **${finalMonsterDamage}** ${
             damageTypeEmojis[chosenAttack.damageType] || '⚔️'
           } damage!`
         )
+
         if (battleState.playerHP <= 0) {
-          await interaction.editReply({
-            embeds: [generateBattleEmbed()],
-            components: [],
-          })
-          return interaction.followUp({
-            content: `💀 You were defeated by ${monster.name}!`,
-          })
+          battleCollector.stop('defeat') // 🔴 This will trigger the defeat embed
+          return
         }
       }
     }
