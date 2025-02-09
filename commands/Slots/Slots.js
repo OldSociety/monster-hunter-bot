@@ -90,6 +90,116 @@ module.exports = {
 
 async function startGame(interaction, userData) {
   const userId = interaction.user.id
+  async function startGame(interaction, userData) {
+    const userId = interaction.user.id
+
+    // **ANTI-SPAM VARIABLES** (Move these here at the top level)
+    const lastClickTime = new Map()
+    const spamCount = new Map()
+    const bannedUsers = new Map()
+    const BAN_DURATION = 5 * 60 * 1000 // 5 min
+    const CLICK_COOLDOWN = 400 // 400ms
+    const MAX_WARNINGS = 2
+
+    // Existing game state setup
+    const gameState = {
+      currentColumn: 0,
+      totalGold: 0,
+      running: true,
+    }
+
+    const collector = interaction.channel.createMessageComponentCollector({
+      filter: async (btnInteraction) => {
+        const now = Date.now()
+
+        // **1️⃣ Check if user is banned**
+        if (bannedUsers.has(userId)) {
+          const banExpiration = bannedUsers.get(userId)
+          if (now > banExpiration) {
+            bannedUsers.delete(userId) // Unban after timeout
+          } else {
+            console.log(`[ANTI-SPAM] 🚨 User ${userId} is banned!`)
+            return false
+          }
+        }
+
+        // **2️⃣ Check for fast clicking**
+        if (lastClickTime.has(userId)) {
+          const lastTime = lastClickTime.get(userId)
+          if (now - lastTime < CLICK_COOLDOWN) {
+            spamCount.set(userId, (spamCount.get(userId) || 0) + 1)
+
+            console.log(
+              `[ANTI-SPAM] User ${userId} clicked too fast (${spamCount.get(
+                userId
+              )}/${MAX_WARNINGS})`
+            )
+
+            // **Temp Ban after MAX_WARNINGS**
+            if (spamCount.get(userId) >= MAX_WARNINGS) {
+              console.log(`[ANTI-SPAM] 🚨 TEMP BAN for user ${userId}`)
+              bannedUsers.set(userId, now + BAN_DURATION)
+
+              try {
+                await btnInteraction.reply({
+                  content: `⚠️ **You are temporarily banned for spamming!** Try again in 5 minutes.`,
+                  ephemeral: true,
+                })
+              } catch (err) {
+                console.log(
+                  `[ANTI-SPAM] Couldn't send ban message to ${userId}.`
+                )
+              }
+
+              return false
+            } else {
+              try {
+                await btnInteraction.reply({
+                  content: `⚠️ **Slow down!** Clicking too fast. (${spamCount.get(
+                    userId
+                  )}/${MAX_WARNINGS} warnings)`,
+                  ephemeral: true,
+                })
+              } catch (err) {
+                console.log(`[ANTI-SPAM] Couldn't send warning to ${userId}.`)
+              }
+
+              return false
+            }
+          }
+        }
+
+        // **Reset spam count if click is valid**
+        spamCount.set(userId, 0)
+        lastClickTime.set(userId, now)
+        return btnInteraction.user.id === userId
+      },
+      time: 60000,
+    })
+
+    collectors.set(userId, collector)
+
+    collector.on('collect', async (btnInteraction) => {
+      console.log(`[Collector] Button clicked: ${btnInteraction.customId}`)
+
+      if (btnInteraction.customId === `spin_again_${userId}`) {
+        await playRound(btnInteraction)
+      } else if (btnInteraction.customId === `stop_playing_${userId}`) {
+        userData.gold += gameState.totalGold
+        await userData.save()
+        collector.stop()
+
+        await btnInteraction.update({
+          content: `You won **🪙${gameState.totalGold} gold**!`,
+          components: [],
+        })
+      }
+    })
+
+    collector.on('end', () => {
+      activePlayers.delete(userId)
+    })
+  }
 
   // Deduct token cost
   userData.currency = {
@@ -364,13 +474,14 @@ async function startGame(interaction, userData) {
         .setStyle('Secondary')
     )
 
-    let collector
+  let collector
 
   // Function to handle each round of the game
   const playRound = async (interactionObject, isInitial = false) => {
-    const userId = interactionObject.user.id // Ensure correct user ID reference
+    const userId = interactionObject.user.id
     console.log(`[playRound] Started for user: ${userId}`)
 
+    gameState.spinCount++ // Increment the spin count
     let effects = columnData[gameState.currentColumn].effects
 
     if (isInitial) {
@@ -378,17 +489,16 @@ async function startGame(interaction, userData) {
         (effect) => effect.type !== 'advance' && effect.type !== 'game_over'
       )
     }
-    // Ensure interaction is valid before proceeding
+
     if (interactionObject.replied || interactionObject.deferred) {
       console.log(
         `[playRound] Skipping editReply because interaction was already handled.`
       )
       return
     }
-    // Perform the weighted random selection
+
     const roll = weightedRandom(effects)
     let message = roll.message
-
     console.log(`[playRound] Roll result: ${roll.type}, message: ${message}`)
 
     if (roll.type === 'gain') {
@@ -563,15 +673,35 @@ async function startGame(interaction, userData) {
       return
     }
 
-    await interactionObject.editReply({
-      embeds: [embed],
-      components: [createRow(gameState.totalGold)],
-    })
+    // **Disable buttons every 8 spins**
+    if (gameState.spinCount % 8 === 0) {
+      console.log(
+        `[playRound] Spin count ${gameState.spinCount}, disabling buttons for 2 seconds.`
+      )
+
+      await interactionObject.editReply({
+        embeds: [embed],
+        components: [createRow(gameState.totalGold, true)], // Disable buttons
+      })
+
+      setTimeout(async () => {
+        console.log(`[playRound] Re-enabling buttons after 2 seconds.`)
+        await interactionObject.editReply({
+          embeds: [embed],
+          components: [createRow(gameState.totalGold, false)], // Re-enable buttons
+        })
+      }, 2000)
+    } else {
+      await interactionObject.editReply({
+        embeds: [embed],
+        components: [createRow(gameState.totalGold, false)], // Keep buttons enabled
+      })
+    }
   }
 
   await playRound(interaction, true)
 
-   collector = interaction.channel.createMessageComponentCollector({
+  collector = interaction.channel.createMessageComponentCollector({
     filter: (btnInteraction) => btnInteraction.user.id === userId,
     time: 60000,
   })
