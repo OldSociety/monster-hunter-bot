@@ -15,20 +15,30 @@ module.exports = {
       subcommand.setName('fight').setDescription('Battle in the Arena')
     )
     .addSubcommand((subcommand) =>
-        subcommand
-          .setName('inventory')
-          .setDescription('View and manage your inventory.')
-          .addStringOption((option) =>
-            option
-              .setName('type')
-              .setDescription('Filter by item type.')
-              .addChoices(
-                { name: 'Weapons', value: 'weapon' },
-                { name: 'Defense', value: 'defense' },
-                { name: 'Consumables', value: 'consumable' }
-              )
-          )
-      ),
+      subcommand
+        .setName('inventory')
+        .setDescription('View and manage your inventory.')
+        .addStringOption((option) =>
+          option
+            .setName('type')
+            .setDescription('Filter by item type.')
+            .addChoices(
+              { name: 'Weapons', value: 'weapon' },
+              { name: 'Defense', value: 'defense' },
+              { name: 'Consumables', value: 'consumable' }
+            )
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('temple')
+        .setDescription('Soothe in these healing waters.')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('forge')
+        .setDescription('Bring out your card mastery.')
+    ),
 
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand()

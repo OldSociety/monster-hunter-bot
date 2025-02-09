@@ -23,9 +23,13 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
-      hp: {
+      max_hp: {
         type: Sequelize.INTEGER,
         defaultValue: 5,
+      },
+      current_hp: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
       },
       strength: {
         type: Sequelize.INTEGER,

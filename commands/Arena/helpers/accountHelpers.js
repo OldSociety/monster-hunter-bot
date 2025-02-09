@@ -25,10 +25,11 @@ const STAT_BOOSTS = [
 
 async function getOrCreatePlayer(userId, generateBattleEmbed) {
   let player = await Arena.findOne({ where: { userId } })
+
   if (!player) {
     player = await Arena.create({
       userId,
-      hp: 5,
+      max_hp: 5,
       strength: 4,
       defense: 4,
       intelligence: 4,
@@ -36,12 +37,71 @@ async function getOrCreatePlayer(userId, generateBattleEmbed) {
       statPoints: 10,
     })
   }
+
   return player
 }
 
-async function determineFirstTurn(playerAgi, monsterAgi) {
+function determineFirstTurn(playerAgi, monsterAgi) {
   const total = playerAgi + monsterAgi
-  return Math.random() < playerAgi / total ? 'player' : 'monster'
+  const result = Math.random() < playerAgi / total ? 'player' : 'monster'
+  console.log(`[TURN] First Turn Determined: ${result}`)
+  return result
+}
+
+function calculateFinalDamage(
+  dMin,
+  dMax,
+  attackerAgi,
+  defenderAgi,
+  damageType,
+  monster
+) {
+  // Step 1: Calculate base damage with agility effects
+  let baseDamage = calculateDamageWithAgility(
+    dMin,
+    dMax,
+    attackerAgi,
+    defenderAgi
+  )
+
+  console.log(`[DAMAGE] Base damage before resistances: ${baseDamage}`)
+
+  // Step 2: Apply resistances
+  let resistanceValue = 0
+  if (monster.resistance) {
+    const resistances = JSON.parse(monster.resistance)
+    resistanceValue = resistances[damageType] || 0 // Default to 0 if no resistance exists
+
+    if (resistanceValue === 100) {
+      console.log(
+        `[RESISTANCE] ${monster.name} is completely immune to ${damageType}!`
+      )
+      return {
+        damage: 0,
+        message: `${monster.name} is **immune** to ${damageType}!`,
+      }
+    }
+
+    if (resistanceValue > 0) {
+      baseDamage -= baseDamage * (resistanceValue / 100) // Reduce damage by percentage
+    } else if (resistanceValue < 0) {
+      baseDamage += Math.abs(resistanceValue) // Add extra damage if negative resistance
+    }
+  }
+
+  console.log(
+    `[RESISTANCE] Adjusted damage after resistance (${resistanceValue}%): ${baseDamage}`
+  )
+
+  // Step 3: Apply monster's defense
+  let finalDamage = Math.max(baseDamage - monster.defense, 0)
+
+  console.log(
+    `[DAMAGE] Final damage after defense: ${finalDamage} (Monster Defense: ${monster.defense})`
+  )
+
+  // Step 4: Ensure minimum damage of 1 (unless fully immune)
+  return { damage: Math.max(finalDamage, 1), message: null }
 }
 
 function calculateDamageWithAgility(dMin, dMax, attackerAgi, defenderAgi) {
@@ -61,4 +121,10 @@ function getBoostMultiplier(stat) {
   return 0.5
 }
 
-module.exports = { getOrCreatePlayer, calculateDamageWithAgility, getBoostMultiplier, determineFirstTurn }
+module.exports = {
+  getOrCreatePlayer,
+  calculateDamageWithAgility,
+  calculateFinalDamage,
+  getBoostMultiplier,
+  determineFirstTurn,
+}

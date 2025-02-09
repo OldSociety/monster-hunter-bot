@@ -15,9 +15,10 @@ const {
   getOrCreatePlayer,
   determineFirstTurn,
   calculateDamageWithAgility,
+  calculateFinalDamage,
   getBoostMultiplier,
 } = require('../helpers/accountHelpers.js')
-const { collectors, stopUserCollector } = require('../../utils/collectors')
+const { collectors, stopUserCollector } = require('../../../utils/collectors')
 
 const damageTypeEmojis = {
   physical: '⚔️',
@@ -27,15 +28,35 @@ const damageTypeEmojis = {
   acid: '☣️',
   earth: '🪨',
 }
+function createDynamicHealthBar(currentHealth, maxHealth) {
+  const totalSegments = 15
+  let filledSegments = Math.round((currentHealth / maxHealth) * totalSegments)
+
+  if (currentHealth > 0 && filledSegments < 1) filledSegments = 1
+
+  let unfilledSegments = totalSegments - filledSegments
+  return `\`\`\`『${'🟥'.repeat(filledSegments)}${'⬛'.repeat(
+    unfilledSegments
+  )}』\`\`\``
+}
 
 module.exports = {
   async execute(interaction) {
     console.log(`[FIGHT] Command started by user ${interaction.user.id}`)
     const userId = interaction.user.id
+    console.log('here')
     // Stop any existing collector for this user.
     stopUserCollector(userId)
+    if (collectors.has(userId)) {
+      await interaction.reply({
+        content: "You're already in a battle! Finish your current fight first.",
+        ephemeral: true,
+      })
+      return
+    }
 
     const player = await getOrCreatePlayer(userId)
+    console.log(player)
     const userRecord = await User.findOne({ where: { user_id: userId } })
     if (!userRecord) {
       await interaction.reply({
@@ -85,10 +106,23 @@ module.exports = {
     const generateFightEmbed = (difficulty, monsters) => {
       const m = multiplierFor(difficulty)
       let description = 'Challengers:\n'
+
       monsters.forEach((mon) => {
         const victories = progressMap[mon.id] || 0
-        description += `• **${mon.name}** - HP: ${mon.hp * m + victories}\n`
+        const hpValue = mon.dataValues.hp // Ensure we access the correct property
+        console.log(
+          `Monster: ${mon.name}, Raw HP: ${hpValue}, Type: ${typeof hpValue}`
+        )
+
+        // Ensure hpValue is converted to a number
+        const calculatedHP = Number(hpValue) * m + victories
+        console.log(`Monster: ${mon.name}, Calculated HP: ${calculatedHP}`)
+
+        description += `• **${mon.name}** - HP: ${calculatedHP}\n`
       })
+
+      console.log(description)
+
       description += `\nCurrent difficulty: **${difficulty.toUpperCase()}**`
       return new EmbedBuilder()
         .setTitle('Arena Fight')
@@ -134,7 +168,7 @@ module.exports = {
 
     const collector = interaction.channel.createMessageComponentCollector({
       filter: (i) => i.user.id === userId,
-      time: 60000,
+      time: 30000,
     })
     collectors.set(userId, collector)
 
@@ -205,6 +239,10 @@ module.exports = {
       collectors.delete(userId)
       if (reason !== 'battle' && reason !== 'cancelled') {
         await interaction.editReply({ components: [] })
+        await interaction.followUp({
+          content: "Your battle request expired. Try again when you're ready!",
+          ephemeral: true,
+        })
       }
     })
 
@@ -232,12 +270,14 @@ module.exports = {
         Number(monster.agility) || 1
       )
       console.log(`[BATTLE] First turn determined as: ${firstTurn}`)
+
       const battleState = {
-        playerHP: player.hp,
+        playerHP: player.current_hp,
         monsterHP: monster.hp,
         history: [],
         turn: firstTurn,
       }
+
       battleState.history.push(
         firstTurn === 'player'
           ? 'You get the first attack!'
@@ -248,10 +288,20 @@ module.exports = {
         return new EmbedBuilder()
           .setTitle(`Battle: ${monster.name}`)
           .setDescription(
-            `Your HP: ${battleState.playerHP}\nEnemy HP: ${battleState.monsterHP}\n\n` +
-              (battleState.history.slice(-5).join('\n') || 'No actions yet.')
+            `**Your HP:** ${battleState.playerHP}/${player.max_hp}\n` +
+              `${createDynamicHealthBar(
+                battleState.playerHP,
+                player.max_hp
+              )}\n` +
+              `${
+                battleState.history.slice(-5).join('\n') || 'No actions yet.'
+              }\n\n` +
+              `**Enemy HP:** ${battleState.monsterHP}/${monster.hp}\n` +
+              `${createDynamicHealthBar(battleState.monsterHP, monster.hp)}`
           )
           .setColor('Blue')
+          .addFields({ name: '\u200B', value: '\u200B' }) // **Forces expansion**
+          .setFooter({ text: 'Use the buttons below to attack or defend!' }) // Adds more content
           .setThumbnail(
             `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monster.url}.png`
           )
@@ -361,42 +411,50 @@ module.exports = {
           await handleEnemyTurn()
         }
         if (action === 'basic_attack') {
-          const baseSwing = calculateDamageWithAgility(
+          const damageResult = calculateFinalDamage(
             1,
             2,
             effectiveAgility,
-            monster.agility
-          )
-          const attackDamage = Math.floor(baseSwing * (effectiveStrength / 10))
-          const finalDamage = Math.max(
-            attackDamage -
-              monster.defense * getBoostMultiplier(monster.defense),
-            1
+            monster.agility,
+            'physical',
+            monster
           )
           battleState.monsterHP = Math.max(
-            battleState.monsterHP - finalDamage,
+            battleState.monsterHP - damageResult.damage,
             0
           )
           battleState.history.push(
-            `You deal ${finalDamage} ${damageTypeEmojis.physical} damage to ${monster.name}!`
+            damageResult.message
+              ? damageResult.message
+              : `You deal ${damageResult.damage} ${damageTypeEmojis.physical} damage to ${monster.name}!`
           )
-        } else if (action.startsWith('weapon_')) {
+        }
+
+        if (action.startsWith('weapon_')) {
           const weaponIndex = parseInt(action.split('_')[1], 10)
           const weapon = equippedWeapons[weaponIndex]?.item
           let attackDamageType = 'physical'
           if (weapon) attackDamageType = weapon.damageType || 'physical'
-          const baseSwing = calculateDamageWithAgility(
+
+          const damageResult = calculateFinalDamage(
             weapon.item ? weapon.item.damageMin : weapon.damageMin,
             weapon.item ? weapon.item.damageMax : weapon.damageMax,
             effectiveAgility,
-            monster.agility
+            monster.agility,
+            attackDamageType,
+            monster
           )
-          const damage = Math.floor(baseSwing * (effectiveStrength / 10))
-          battleState.monsterHP = Math.max(battleState.monsterHP - damage, 0)
+
+          battleState.monsterHP = Math.max(
+            battleState.monsterHP - damageResult.damage,
+            0
+          )
           battleState.history.push(
-            `You attack with ${weapon.name} for ${damage} ${
-              damageTypeEmojis[attackDamageType] || '⚔️'
-            } damage!`
+            damageResult.message
+              ? damageResult.message
+              : `You attack with ${weapon.name} for ${damageResult.damage} ${
+                  damageTypeEmojis[attackDamageType] || '⚔️'
+                } damage!`
           )
         } else if (action === 'fierce_attack') {
           const baseSwing = calculateDamageWithAgility(
@@ -433,20 +491,27 @@ module.exports = {
             })
             return
           }
-          const minD = consumableRecord.item.damageMin
-          const maxD = consumableRecord.item.damageMax
-          const baseDamage =
-            Math.floor(Math.random() * (maxD - minD + 1)) + minD
-          const finalDamage = Math.floor(baseDamage * (effectiveStrength / 10))
-          battleState.monsterHP = Math.max(
-            battleState.monsterHP - finalDamage,
+
+          const damageResult = calculateFinalDamage(
+            chosenAttack.damageMin,
+            chosenAttack.damageMax,
+            monster.agility,
+            effectiveAgility,
+            chosenAttack.damageType,
+            player
+          )
+          battleState.playerHP = Math.max(
+            battleState.playerHP - damageResult.damage,
             0
           )
           battleState.history.push(
-            `You use ${consumableRecord.item.name} for ${finalDamage} ${
-              damageTypeEmojis[consumableRecord.item.damageType] || '⚔️'
-            } damage!`
+            damageResult.message
+              ? damageResult.message
+              : `${monster.name} uses ${chosenAttack.name} and deals ${
+                  damageResult.damage
+                } ${damageTypeEmojis[chosenAttack.damageType] || '⚔️'} damage!`
           )
+
           await Inventory.decrement('quantity', {
             by: 1,
             where: { id: selectedInvId },
@@ -466,108 +531,52 @@ module.exports = {
 
       battleCollector.on('end', async (_, reason) => {
         console.log(`[BATTLE] Battle ended with reason: ${reason}`)
+
         // Persist the player's HP as-is (do not reset it).
-        await player.update({ hp: battleState.playerHP })
+        await player.update({ current_hp: battleState.playerHP })
         console.log(`[BATTLE] Player HP updated to: ${battleState.playerHP}`)
+
         const resultEmbed = new EmbedBuilder()
-        let pointsAwarded
+
+        if (difficulty === 'easy') {
+          console.log('[BATTLE] Incrementing victories_easy')
+          await PlayerProgressStat.increment('victories_easy', {
+            by: 1,
+            where: { playerId: player.id, monsterId: monster.id },
+          })
+          progress = await PlayerProgressStat.findOne({
+            where: { playerId: player.id, monsterId: monster.id },
+          })
+          pointsAwarded = 10 + progress.victories_easy * 1
+        } else if (difficulty === 'medium') {
+          console.log('[BATTLE] Incrementing victories_medium')
+          await PlayerProgressStat.increment('victories_medium', {
+            by: 1,
+            where: { playerId: player.id, monsterId: monster.id },
+          })
+          progress = await PlayerProgressStat.findOne({
+            where: { playerId: player.id, monsterId: monster.id },
+          })
+          pointsAwarded = 10 + progress.victories_medium * 2
+        } else if (difficulty === 'hard') {
+          console.log('[BATTLE] Incrementing victories_hard')
+          await PlayerProgressStat.increment('victories_hard', {
+            by: 1,
+            where: { playerId: player.id, monsterId: monster.id },
+          })
+          progress = await PlayerProgressStat.findOne({
+            where: { playerId: player.id, monsterId: monster.id },
+          })
+          pointsAwarded = 10 + progress.victories_hard * 3
+        }
+        console.log(`[BATTLE] Points awarded: ${pointsAwarded}`)
+        await player.increment('arenaScore', { by: pointsAwarded })
+
         if (reason === 'victory') {
           console.log(
             `[BATTLE] Processing victory for player ${player.id} vs monster ${monster.name}`
           )
-          if (PlayerProgressStat) {
-            let progress = await PlayerProgressStat.findOne({
-              where: { playerId: player.id, monsterId: monster.id },
-            })
-            if (!progress) {
-              console.log(
-                '[BATTLE] No progress record found, creating new entry.'
-              )
-              progress = await PlayerProgressStat.create({
-                playerId: player.id,
-                monsterId: monster.id,
-                victories_easy: 0,
-                victories_medium: 0,
-                victories_hard: 0,
-              })
-            }
-            if (difficulty === 'easy') {
-              console.log('[BATTLE] Incrementing victories_easy')
-              await PlayerProgressStat.increment('victories_easy', {
-                by: 1,
-                where: { playerId: player.id, monsterId: monster.id },
-              })
-              progress = await PlayerProgressStat.findOne({
-                where: { playerId: player.id, monsterId: monster.id },
-              })
-              pointsAwarded = 10 + progress.victories_easy * 1
-            } else if (difficulty === 'medium') {
-              console.log('[BATTLE] Incrementing victories_medium')
-              await PlayerProgressStat.increment('victories_medium', {
-                by: 1,
-                where: { playerId: player.id, monsterId: monster.id },
-              })
-              progress = await PlayerProgressStat.findOne({
-                where: { playerId: player.id, monsterId: monster.id },
-              })
-              pointsAwarded = 10 + progress.victories_medium * 2
-            } else if (difficulty === 'hard') {
-              console.log('[BATTLE] Incrementing victories_hard')
-              await PlayerProgressStat.increment('victories_hard', {
-                by: 1,
-                where: { playerId: player.id, monsterId: monster.id },
-              })
-              progress = await PlayerProgressStat.findOne({
-                where: { playerId: player.id, monsterId: monster.id },
-              })
-              pointsAwarded = 10 + progress.victories_hard * 3
-            }
-            console.log(`[BATTLE] Points awarded: ${pointsAwarded}`)
-            await player.increment('arenaScore', { by: pointsAwarded })
-          } else {
-            console.warn(
-              'PlayerProgressStat is not defined; skipping victory count update.'
-            )
-            pointsAwarded = 10
-            await player.increment('arenaScore', { by: 10 })
-          }
-          // Loot drop logic
-          if (monster.loot && Math.random() < monster.droprate) {
-            console.log(
-              `[LOOT] Attempting loot drop. Monster loot ID: ${monster.loot}`
-            )
-            try {
-              const lootItem = await BaseItem.findOne({
-                where: { id: monster.loot },
-              })
-              if (!lootItem) {
-                console.warn(
-                  `[LOOT] Loot item with ID ${monster.loot} not found.`
-                )
-              } else {
-                console.log(
-                  `[LOOT] Found loot item: ${lootItem.name} (ID: ${lootItem.id})`
-                )
-                await Inventory.create({
-                  ArenaId: player.id,
-                  itemId: lootItem.id,
-                  equipped: false,
-                  quantity: 1,
-                })
-                console.log(
-                  `[LOOT] Added ${lootItem.name} to player's inventory.`
-                )
-                resultEmbed.addFields({
-                  name: 'Loot Obtained!',
-                  value: `You received **${lootItem.name}**! 🎁`,
-                })
-              }
-            } catch (error) {
-              console.error(
-                `[LOOT ERROR] Failed to award loot: ${error.message}`
-              )
-            }
-          }
+
           resultEmbed
             .setTitle('Victory! - Battle Result')
             .setDescription(
@@ -585,46 +594,7 @@ module.exports = {
           console.log(
             `[BATTLE] Processing defeat for player ${player.id} vs monster ${monster.name}`
           )
-          if (PlayerProgressStat) {
-            let progress = await PlayerProgressStat.findOne({
-              where: { playerId: player.id, monsterId: monster.id },
-            })
-            if (!progress) {
-              console.log(
-                '[BATTLE] No progress record found on defeat, creating new entry.'
-              )
-              progress = await PlayerProgressStat.create({
-                playerId: player.id,
-                monsterId: monster.id,
-                victories_easy: 0,
-                victories_medium: 0,
-                victories_hard: 0,
-              })
-            } else {
-              if (difficulty === 'easy' && progress.victories_easy > 0) {
-                console.log('[BATTLE] Decrementing victories_easy')
-                await PlayerProgressStat.decrement('victories_easy', {
-                  by: 1,
-                  where: { playerId: player.id, monsterId: monster.id },
-                })
-              } else if (
-                difficulty === 'medium' &&
-                progress.victories_medium > 0
-              ) {
-                console.log('[BATTLE] Decrementing victories_medium')
-                await PlayerProgressStat.decrement('victories_medium', {
-                  by: 1,
-                  where: { playerId: player.id, monsterId: monster.id },
-                })
-              } else if (difficulty === 'hard' && progress.victories_hard > 0) {
-                console.log('[BATTLE] Decrementing victories_hard')
-                await PlayerProgressStat.decrement('victories_hard', {
-                  by: 1,
-                  where: { playerId: player.id, monsterId: monster.id },
-                })
-              }
-            }
-          }
+
           resultEmbed
             .setTitle('Defeat - Battle Result')
             .setDescription(`💔 You were defeated by ${monster.name}.`)
@@ -635,15 +605,23 @@ module.exports = {
             .setFooter({
               text: `Arena Score: ${player.arenaScore} | Arena Ranking: 0`,
             })
-            .setThumbnail(interaction.user.displayAvatarURL())
+
           await player.increment('arenaScore', { by: -10 })
         } else {
           resultEmbed
             .setDescription('⏳ The battle ended due to inactivity.')
             .setColor('Grey')
         }
+
         console.log('[BATTLE] Sending battle result embed.')
-        await interaction.followUp({ embeds: [resultEmbed] })
+
+        // **Clear buttons and components after battle ends**
+        await interaction.editReply({ embeds: [resultEmbed], components: [] })
+
+        await interaction.followUp({
+          content: 'Battle has concluded.',
+          ephemeral: true,
+        })
       })
 
       async function handleEnemyTurn() {

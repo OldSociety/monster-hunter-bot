@@ -67,7 +67,7 @@ module.exports = {
       filteredItems.forEach((item) => {
         const quantity = item.quantity || 1
         const key = item.item.id
-        if (!grouped[key]) grouped[key] = { ...item, count: quantity }
+        if (!grouped[key]) grouped[key] = { ...item, quantity: quantity }
         else grouped[key].quantity += quantity
       })
       filteredItems = Object.values(grouped).filter((item) => item.quantity > 0)
@@ -329,7 +329,7 @@ module.exports = {
           newFilteredItems.forEach((item) => {
             const quantity = item.quantity || 1
             const key = item.item.id
-            if (!grouped[key]) grouped[key] = { ...item, count: quantity }
+            if (!grouped[key]) grouped[key] = { ...item, quantity: quantity }
             else grouped[key].quantity += quantity
           })
           newFilteredItems = Object.values(grouped).filter(

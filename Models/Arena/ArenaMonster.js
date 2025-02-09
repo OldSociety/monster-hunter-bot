@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      hp: {
+      max_hp: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },

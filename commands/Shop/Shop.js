@@ -37,7 +37,7 @@ const PACK_COSTS = {
   common: 800,
   uncommon: 3500,
   rare: 10000,
-  elemental: 5000,
+  elemental: 6500,
   ichor: 650,
 }
 

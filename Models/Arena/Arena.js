@@ -19,9 +19,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
-      hp: {
+      max_hp: {
         type: DataTypes.INTEGER,
         defaultValue: 5,
+      },
+      current_hp: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
       },
       strength: {
         type: DataTypes.INTEGER,
