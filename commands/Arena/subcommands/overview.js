@@ -153,7 +153,6 @@ module.exports = {
       // Navigation buttons
       if (customId.startsWith('nav_')) {
         if (customId === 'nav_inventory') {
-          // Since inventory.js is a sibling of overview.js, adjust the path accordingly:
           const inventorySubcommandFile = path.join(__dirname, 'inventory.js')
           if (fs.existsSync(inventorySubcommandFile)) {
             const inventoryCommand = require(inventorySubcommandFile)
@@ -167,7 +166,6 @@ module.exports = {
           }
           return
         } else if (customId === 'nav_fight') {
-          // Similar adjustment can be made for the fight command if needed:
           const fightSubcommandFile = path.join(__dirname, 'fight.js')
           if (fs.existsSync(fightSubcommandFile)) {
             const fightCommand = require(fightSubcommandFile)

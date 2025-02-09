@@ -1,5 +1,3 @@
-const { BOOLEAN } = require("sequelize")
-
 module.exports = (sequelize, DataTypes) => {
   const Collection = sequelize.define('Collections', {
     id: {
