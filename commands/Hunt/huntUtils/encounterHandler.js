@@ -21,8 +21,10 @@ function selectMonster(huntData, currentBattle) {
 }
 
 function calculateMonsterHP(monster, difficulty) {
-  return Math.max(monster.hp * difficulty, 8)
+  const hpValue = Number(difficulty) || 1 // Ensure it's a number, fallback to 8 if invalid
+  return Math.max(hpValue, 1)
 }
+
 
 function createMonsterEmbed(monster, difficulty, ichorUsed, huntData) {
   const battleNumber = (huntData.currentBattleIndex ?? 0) + 1
