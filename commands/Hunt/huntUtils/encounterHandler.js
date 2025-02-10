@@ -9,7 +9,7 @@ const { checkAdvantage } = require('./huntHelpers.js')
 const { runBattlePhases } = require('./battleHandler.js')
 const { displayHuntSummary } = require('./rewardHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
-const { huntPages } = require('../huntPages.js')
+const { initializeMonsterStats, updateMonsterStats } = require('./statsHandler.js')
 
 function selectMonster(huntData, currentBattle) {
   const selectedMonster = pullSpecificMonster(currentBattle.monsterIndex)
@@ -181,140 +181,99 @@ async function offerRetry(interaction, user, huntData) {
 }
 
 async function startNewEncounter(interaction, user, huntData) {
-  stopUserCollector(interaction.user.id)
+  stopUserCollector(interaction.user.id);
 
-  if (!huntData.level || !huntData.level.page) {
-    return interaction.followUp({
-      content: 'Error: Invalid hunt data.',
-      ephemeral: true,
-    })
+  const currentBattle = huntData.level?.battles?.[huntData.currentBattleIndex];
+  if (!currentBattle || !currentBattle.monsterIndex) {
+    return interaction.followUp({ content: 'Error: No battle data available.', ephemeral: true });
   }
 
-  const pageKey = huntData.level.page
-  if (!huntPages[pageKey]) {
-    return interaction.followUp({
-      content: `Error: Invalid hunt page (${pageKey}).`,
-      ephemeral: true,
-    })
-  }
-
-  const currentHunt = huntPages[pageKey].hunts.find(
-    (hunt) => hunt.key === huntData.level.key
-  )
-  if (!currentHunt) {
-    return interaction.followUp({
-      content: 'Error: Hunt not found.',
-      ephemeral: true,
-    })
-  }
-
-  const currentBattle = currentHunt.battles[huntData.currentBattleIndex]
-  if (!currentBattle) {
-    return interaction.followUp({
-      content: 'Error: No battle data available.',
-      ephemeral: true,
-    })
-  }
-  if (!currentBattle.monsterIndex) {
-    return interaction.followUp({
-      content: 'Error: No valid monster assigned to this battle.',
-      ephemeral: true,
-    })
-  }
-
-  const monster = selectMonster(huntData, currentBattle)
+  const monster = selectMonster(huntData, currentBattle);
   if (!monster) {
-    return interaction.followUp({
-      content: 'Error: No monster available for battle.',
-      ephemeral: true,
-    })
+    return interaction.followUp({ content: 'Error: No monster available for battle.', ephemeral: true });
   }
 
-  huntData.lastMonster = monster
-  const monsterScore = calculateMonsterHP(monster, currentBattle.difficulty)
-  const monsterEmbed = createMonsterEmbed(
-    monster,
-    currentBattle.difficulty,
-    huntData.ichorUsed,
-    huntData
-  )
-  const styleRow = createStyleButtons(user)
+  huntData.lastMonster = monster;
+  await initializeMonsterStats(); // Ensure table exists
 
-  await interaction.followUp({
-    embeds: [monsterEmbed],
-    components: [styleRow],
-    ephemeral: true,
-  })
+  const monsterScore = calculateMonsterHP(monster, currentBattle.difficulty);
+  const monsterEmbed = createMonsterEmbed(monster, currentBattle.difficulty, huntData.ichorUsed, huntData);
+  const styleRow = createStyleButtons(user);
 
-  if (huntData.styleCollector) {
-    huntData.styleCollector.stop()
+  await interaction.followUp({ embeds: [monsterEmbed], components: [styleRow], ephemeral: true });
+
+  // **Extract page number safely**
+  const pageNumber = parseInt(huntData.level?.page?.match(/\d+/)?.[0]) || 1;
+
+  // **Ensure hunts exist before finding index**
+  let huntNumber = huntData.currentBattleIndex + 1;
+  if (Array.isArray(huntData.level.hunts)) {
+    const huntIndex = huntData.level.hunts.findIndex(h => h.key === huntData.level.key);
+    huntNumber = huntIndex !== -1 ? huntIndex + 1 : huntNumber;
   }
 
-  const filter = (i) => i.user.id === interaction.user.id
-  const styleCollector = interaction.channel.createMessageComponentCollector({
-    filter,
-    max: 1,
-    time: 60000,
-  })
-  huntData.styleCollector = styleCollector
-  collectors.set(interaction.user.id, styleCollector)
+  const battleNumber = (huntData.currentBattleIndex ?? 0) + 1;
+  const pageHuntBattle = `${pageNumber}-${huntNumber}-${battleNumber}`;
+
+  if (huntData.styleCollector) huntData.styleCollector.stop();
+
+  const filter = (i) => i.user.id === interaction.user.id;
+  const styleCollector = interaction.channel.createMessageComponentCollector({ filter, max: 1, time: 60000 });
+  huntData.styleCollector = styleCollector;
+  collectors.set(interaction.user.id, styleCollector);
 
   styleCollector.on('collect', async (styleInteraction) => {
-    if (huntData.styleInteractionHandled) return
-    huntData.styleInteractionHandled = true
+    if (huntData.styleInteractionHandled) return;
+    huntData.styleInteractionHandled = true;
 
     try {
       if (!styleInteraction.replied && !styleInteraction.deferred) {
-        await styleInteraction.deferUpdate()
+        await styleInteraction.deferUpdate();
       }
-      const selectedStyle = styleInteraction.customId.split('_')[1]
-      const playerScore = user[`${selectedStyle}_score`]
-      const advMultiplier = checkAdvantage(selectedStyle, monster.type)
 
-      await styleInteraction.editReply({
-        embeds: [monsterEmbed],
-        components: [],
-      })
+      const selectedStyle = styleInteraction.customId.split('_')[1];
+      const playerScore = user[`${selectedStyle}_score`];
+      const advMultiplier = checkAdvantage(selectedStyle, monster.type);
+
+      await styleInteraction.editReply({ embeds: [monsterEmbed], components: [] });
+
       const playerWins = await runBattlePhases(
-        styleInteraction,
-        user,
-        playerScore,
-        monsterScore,
-        monster,
-        advMultiplier,
-        huntData,
-        currentBattle.type
-      )
+        styleInteraction, user, playerScore, monsterScore, monster, advMultiplier, huntData, currentBattle.type
+      );
+
+      // **Update the win/loss count with `pageHuntBattle`**
+      await updateMonsterStats(monster.index, monster.name, playerWins, pageHuntBattle);
 
       if (playerWins) {
-        huntData.totalMonstersDefeated++
-        huntData.totalGoldEarned += currentBattle.goldReward || 0
-        huntData.currentBattleIndex++
-        huntData.retries = 0
-        huntData.lastMonster = null
+        huntData.totalMonstersDefeated++;
+        huntData.totalGoldEarned += currentBattle.goldReward || 0;
+        huntData.currentBattleIndex++;
+        huntData.retries = 0;
+        huntData.lastMonster = null;
+
         if (huntData.currentBattleIndex >= huntData.level.battles.length) {
-          await displayHuntSummary(styleInteraction, user, huntData, true)
+          await displayHuntSummary(styleInteraction, user, huntData, true);
         } else {
-          huntData.styleInteractionHandled = false
-          await startNewEncounter(styleInteraction, user, huntData)
+          huntData.styleInteractionHandled = false;
+          await startNewEncounter(styleInteraction, user, huntData);
         }
       } else {
-        huntData.retries++
+        huntData.retries++;
         if (huntData.retries < 3) {
-          huntData.styleInteractionHandled = false
-          await offerRetry(styleInteraction, user, huntData)
+          huntData.styleInteractionHandled = false;
+          await offerRetry(styleInteraction, user, huntData);
         } else {
-          await displayHuntSummary(styleInteraction, user, huntData, false)
+          await displayHuntSummary(styleInteraction, user, huntData, false);
         }
       }
     } catch (error) {
       if (error.code === 10062) {
-        console.error('Interaction expired before handling.')
+        console.error('Interaction expired before handling.');
       } else {
-        console.error('Error processing interaction:', error)
+        console.error('Error processing interaction:', error);
       }
     }
-  })
+  });
 
   styleCollector.on('end', async (_, reason) => {
     if (reason === 'time') {
@@ -323,12 +282,12 @@ async function startNewEncounter(interaction, user, huntData) {
           content: 'Session expired. Please start again.',
           components: [],
           ephemeral: true,
-        })
+        });
       } catch (error) {
-        console.error('Error sending timeout message:', error)
+        console.error('Error sending timeout message:', error);
       }
     }
-  })
+  });
 }
 
 module.exports = {

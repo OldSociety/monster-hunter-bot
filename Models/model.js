@@ -6,7 +6,8 @@ const sequelize = require('../config/sequelize')
 // =========================
 const User = require('./User/User')(sequelize, DataTypes)
 const Collection = require('./Collection/Collection')(sequelize, DataTypes)
-const Monster = require('./MonsterList/Monster')(sequelize, DataTypes) // Base Monster
+const Monster = require('./MonsterList/Monster')(sequelize, DataTypes) 
+const MonsterStats = require('./MonsterList/MonsterStats')(sequelize, DataTypes) 
 const MonsterItemUnlocks = require('./MonsterList/MonsterItemUnlocks')(sequelize, DataTypes)
 
 // =========================
@@ -125,6 +126,7 @@ module.exports = {
   User,
   Collection,
   Monster,
+  MonsterStats,
   MonsterItemUnlocks,
   Arena,
   ArenaMonster,
