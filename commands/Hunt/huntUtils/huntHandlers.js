@@ -23,8 +23,13 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     if (completedLevels >= totalHuntsBefore) {
       unlockedPages.push(pageKey)
     }
-    totalHuntsBefore += pageData.hunts.length
+    if (Array.isArray(pageData.hunts)) {
+      totalHuntsBefore += pageData.hunts.length
+    } else {
+      console.error(`❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`)
+    }
   }
+  
 
   const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
   console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)

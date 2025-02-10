@@ -1,5 +1,5 @@
 module.exports = {
-  key: 'page7',
+  key: 'page8',
   name: `Hunt Page 7 - `,
   description:
     '',
