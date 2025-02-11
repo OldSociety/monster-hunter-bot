@@ -22,17 +22,21 @@ function getUserFooter(user) {
 
 function createRaidBossEmbed(raidBoss, user) {
   const playerHealthBar = createHealthBar(user.current_raidHp, user.score)
-
+  const bossHealthBar = createHealthBar(raidBoss.hp, raidBoss.maxHP)
+  console.log(raidBoss.combatType)
   return new EmbedBuilder()
-    .setTitle(`${raidBoss.name} - Raid Boss`)
+    .setTitle(`RAID BOSS - ${raidBoss.name}`)
     .setDescription(
       `**Your HP:** ${user.current_raidHp} / ${user.score}  ${playerHealthBar}\n\n` +
-        `**CR:** ${raidBoss.hp / 1000}\n` +
-        `**Boss HP:** ${raidBoss.hp} / ${raidBoss.maxHP}\n` +
-        `**Combat Type:** ${raidBoss.combatType}`
+        `**Combat Type:** ${raidBoss.combatType}\n\n` +
+        `**Boss HP:** ${raidBoss.hp} / ${raidBoss.maxHP}  ${bossHealthBar}\n\n` +
+        `**Possible Loot Drops:**\n${raidBoss.lootDrops.join('\n')}`
     )
     .setColor('#FF4500')
-    .setThumbnail(raidBoss.imageUrl)
+    .setThumbnail(
+      `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${raidBoss.combatType}C.png`
+    )
+    .setImage(raidBoss.imageUrl)
     .setFooter({ text: getUserFooter(user) })
 }
 
@@ -131,6 +135,7 @@ async function startRaidEncounter(interaction, user) {
     maxHP: bossStartingHP,
     rollScore: selectedBoss.hp,
     imageUrl: selectedBoss.imageUrl,
+    lootDrops: selectedBoss.lootDrops || [],
   }
 
   const huntData = {
@@ -267,14 +272,14 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
     if (interaction.message) {
       await interaction.message.edit({ embeds: [updatedEmbed] })
     } else {
-      await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true }) // Send a new message if the original is gone
+      await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
     }
   } catch (error) {
     console.error(
       '❌ Failed to edit message, sending a new one instead.',
       error
     )
-    await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true }) // Send a fallback message
+    await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
   }
 }
 

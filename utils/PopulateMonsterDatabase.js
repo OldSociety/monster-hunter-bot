@@ -25,14 +25,16 @@ function classifyMonsterType(type) {
     dragon: 'brute',
     giant: 'brute',
     construct: 'brute',
-    undead: 'caster',
+    undead: 'stealth',
     celestial: 'caster',
     fiend: 'caster',
     aberration: 'caster',
     elemental: 'caster',
-    monstrosity: 'stealth',
+    monstrosity: 'brute',
     humanoid: 'stealth',
-    fey: 'stealth',
+    fey: 'caster',
+    plant: 'stealth',
+    ooze: 'stealth'
   }
   return typeMap[type.toLowerCase()] || 'brute'
 }
@@ -101,9 +103,6 @@ async function populateMonsterDatabase() {
     console.error('[DB] Failed to fetch monster data:', error.message)
   }
 }
-
-// Run the function
-populateMonsterDatabase()
 
 // Run the function
 populateMonsterDatabase()
