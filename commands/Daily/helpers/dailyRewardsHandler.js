@@ -1,7 +1,4 @@
-const {
-  fetchMonsterByName,
-  cacheMonstersByTier,
-} = require('../../../handlers/cacheHandler')
+const { Monster } = require('../../../Models/model.js')
 const {
   updateOrAddMonsterToCollection,
 } = require('../../../handlers/userMonsterHandler')
@@ -22,32 +19,29 @@ const rotatingMonsters = [
   'erinyes',
   'rakshasa',
   'marilith',
-]
-
-let cachePopulated = false
+  'pit fiend',
+] // 8 demon cards
 
 async function grantDailyReward(user, interaction) {
-  const currentDay = (user.daily_streak + 1) % 10 || 10
+  const currentDay = (user.daily_streak + 1) % 80 || 80 // 🛑 Full 80-day cycle before resetting
 
-  if (currentDay === 10) {
-    if (!cachePopulated) {
-      await interaction.editReply({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0xffcc00)
-            .setDescription('Loading daily reward, please wait...'),
-        ],
-      })
+  if (currentDay % 10 === 0) {
+    // Every 10th day, grant a demon card
+    await interaction.editReply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xffcc00)
+          .setDescription('Loading demon reward, please wait...'),
+      ],
+    })
 
-      await cacheMonstersByTier()
-      cachePopulated = true
-    }
-
-    const monsterIndex =
-      Math.floor(user.daily_streak / 10) % rotatingMonsters.length
+    // 🛑 Cycle through the 8 demon cards based on `daily_streak / 10`
+    const monsterIndex = Math.floor((user.daily_streak % 80) / 10) % rotatingMonsters.length
     const monsterName = rotatingMonsters[monsterIndex]
 
-    const monster = await fetchMonsterByName(monsterName)
+    // Fetch monster from database
+    const monster = await Monster.findOne({ where: { index: monsterName } })
+
     if (monster) {
       await updateOrAddMonsterToCollection(user.user_id, monster)
       await updateTop5AndUserScore(user.user_id)
@@ -64,25 +58,26 @@ async function grantDailyReward(user, interaction) {
             .setColor('#ff0000')
             .setTitle('Daily Reward Failed')
             .setDescription(
-              'An error occurred while retrieving your monster. Please try again later.'
+              'An error occurred while retrieving your demon card. Please try again later.'
             ),
         ],
       }
     }
   } else {
+    // 🛑 Normal daily rewards for non-10th day streaks
     const rewards = [
       { type: 'gold', amount: 200, text: '🪙200 coins' },
-      { type: 'eggs', amount: 2, text: '🥚2 dragon egg' },
+      { type: 'eggs', amount: 2, text: '🥚2 dragon eggs' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
       { type: 'gold', amount: 600, text: '🪙600 coins' },
-      { type: 'eggs', amount: 3, text: '🥚3 dragon egg' },
+      { type: 'eggs', amount: 3, text: '🥚3 dragon eggs' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
       { type: 'gold', amount: 1000, text: '🪙1000 coins' },
-      { type: 'eggs', amount: 3, text: '🥚3 dragon egg' },
+      { type: 'eggs', amount: 3, text: '🥚3 dragon eggs' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
     ]
 
-    const reward = rewards[currentDay - 1] || {
+    const reward = rewards[(currentDay - 1) % rewards.length] || {
       type: 'gold',
       amount: 200,
       text: '🪙200 coins',
@@ -94,12 +89,12 @@ async function grantDailyReward(user, interaction) {
     } else if (reward.type === 'eggs') {
       user.currency = {
         ...user.currency,
-        eggs: user.currency.eggs + reward.amount,
+        eggs: (user.currency.eggs || 0) + reward.amount,
       }
     } else if (reward.type === 'ichor') {
       user.currency = {
         ...user.currency,
-        ichor: user.currency.ichor + reward.amount,
+        ichor: (user.currency.ichor || 0) + reward.amount,
       }
     }
 
