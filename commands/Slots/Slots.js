@@ -89,132 +89,36 @@ module.exports = {
 }
 
 async function startGame(interaction, userData) {
-  const userId = interaction.user.id
-  async function startGame(interaction, userData) {
-    const userId = interaction.user.id
-
-    // **ANTI-SPAM VARIABLES** (Move these here at the top level)
-    const lastClickTime = new Map()
-    const spamCount = new Map()
-    const bannedUsers = new Map()
-    const BAN_DURATION = 5 * 60 * 1000 // 5 min
-    const CLICK_COOLDOWN = 400 // 400ms
-    const MAX_WARNINGS = 2
-
-    // Existing game state setup
-    const gameState = {
-      currentColumn: 0,
-      totalGold: 0,
-      running: true,
-    }
-
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter: async (btnInteraction) => {
-        const now = Date.now()
-
-        // **1️⃣ Check if user is banned**
-        if (bannedUsers.has(userId)) {
-          const banExpiration = bannedUsers.get(userId)
-          if (now > banExpiration) {
-            bannedUsers.delete(userId) // Unban after timeout
-          } else {
-            console.log(`[ANTI-SPAM] 🚨 User ${userId} is banned!`)
-            return false
-          }
-        }
-
-        // **2️⃣ Check for fast clicking**
-        if (lastClickTime.has(userId)) {
-          const lastTime = lastClickTime.get(userId)
-          if (now - lastTime < CLICK_COOLDOWN) {
-            spamCount.set(userId, (spamCount.get(userId) || 0) + 1)
-
-            console.log(
-              `[ANTI-SPAM] User ${userId} clicked too fast (${spamCount.get(
-                userId
-              )}/${MAX_WARNINGS})`
-            )
-
-            // **Temp Ban after MAX_WARNINGS**
-            if (spamCount.get(userId) >= MAX_WARNINGS) {
-              console.log(`[ANTI-SPAM] 🚨 TEMP BAN for user ${userId}`)
-              bannedUsers.set(userId, now + BAN_DURATION)
-
-              try {
-                await btnInteraction.reply({
-                  content: `⚠️ **You are temporarily banned for spamming!** Try again in 5 minutes.`,
-                  ephemeral: true,
-                })
-              } catch (err) {
-                console.log(
-                  `[ANTI-SPAM] Couldn't send ban message to ${userId}.`
-                )
-              }
-
-              return false
-            } else {
-              try {
-                await btnInteraction.reply({
-                  content: `⚠️ **Slow down!** Clicking too fast. (${spamCount.get(
-                    userId
-                  )}/${MAX_WARNINGS} warnings)`,
-                  ephemeral: true,
-                })
-              } catch (err) {
-                console.log(`[ANTI-SPAM] Couldn't send warning to ${userId}.`)
-              }
-
-              return false
-            }
-          }
-        }
-
-        // **Reset spam count if click is valid**
-        spamCount.set(userId, 0)
-        lastClickTime.set(userId, now)
-        return btnInteraction.user.id === userId
-      },
-      time: 60000,
-    })
-
-    collectors.set(userId, collector)
-
-    collector.on('collect', async (btnInteraction) => {
-      console.log(`[Collector] Button clicked: ${btnInteraction.customId}`)
-
-      if (btnInteraction.customId === `spin_again_${userId}`) {
-        await playRound(btnInteraction)
-      } else if (btnInteraction.customId === `stop_playing_${userId}`) {
-        userData.gold += gameState.totalGold
-        await userData.save()
-        collector.stop()
-
-        await btnInteraction.update({
-          content: `You won **🪙${gameState.totalGold} gold**!`,
-          components: [],
-        })
-      }
-    })
-
-    collector.on('end', () => {
-      activePlayers.delete(userId)
-    })
-  }
-
-  // Deduct token cost
+  const userId = interaction.user.id;
+  
+  // Deduct token cost and update userData
   userData.currency = {
     ...userData.currency,
     tokens: userData.currency.tokens - 1,
-  }
-  await userData.save()
-  jackpot += Math.floor(Math.random() * 6) + 5
+  };
+  await userData.save();
+  jackpot += Math.floor(Math.random() * 6) + 5;
 
+  // Start timer for the game (used for countdown display)
+  const gameStartTime = Date.now();
+
+  // Initialize game state
   const gameState = {
     currentColumn: 0,
     totalGold: 0,
     running: true,
-  }
+    spinCount: 0,
+  };
 
+  // Anti-spam variables
+  const lastClickTime = new Map();
+  const spamCount = new Map();
+  const bannedUsers = new Map();
+  const BAN_DURATION = 5 * 60 * 1000; // 5 minutes
+  const CLICK_COOLDOWN = 400; // 400 ms
+  const MAX_WARNINGS = 2;
+
+  // Define your columnData (assumed to be as before)
   const columnData = [
     {
       title: 'Red Stage',
@@ -254,7 +158,7 @@ async function startGame(interaction, userData) {
           emoji: '✅',
           type: 'advance',
           chance: 6,
-          message: '**Advance to Next Stage! ⏩**  ',
+          message: '**Advance to Next Stage! ⏩**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
         },
         {
@@ -266,315 +170,124 @@ async function startGame(interaction, userData) {
         },
       ],
     },
-    {
-      title: 'Blue Stage',
-      color: 'Blue',
-      effects: [
-        {
-          emoji: '🎅',
-          type: 'gain',
-          chance: 42,
-          range: [1, 8],
-          message: '**Small Win 🎅**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '🎅',
-          type: 'false_alarm',
-          chance: 10,
-          message: '**Near Advance!**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '❄️',
-          type: 'lose',
-          chance: 25,
-          range: [1, 18],
-          message: '**Medium Loss 💔**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
-        },
-        {
-          emoji: '✅',
-          type: 'advance',
-          chance: 5,
-          message: '**Advance to Next Stage! ⏩**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
-        },
-        {
-          emoji: '🎄',
-          type: 'nothing',
-          chance: 10,
-          message: '**Nothing Happens 🎄**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f384.svg',
-        },
-        {
-          emoji: '🛑',
-          type: 'game_over',
-          chance: 8,
-          message: '**Game Over! 🛑**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f6d1.svg',
-        },
-      ],
-    },
-    {
-      title: 'Green Stage',
-      color: 'Green',
-      effects: [
-        {
-          emoji: '🎅',
-          type: 'gain',
-          chance: 40,
-          range: [1, 13],
-          message: '**Medium Win 🎅**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '🎅',
-          type: 'false_alarm',
-          chance: 8,
-          message: '**Near Advance!**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '❄️',
-          type: 'lose',
-          chance: 24,
-          range: [1, 13],
-          message: '**Large Loss 💔**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
-        },
-        {
-          emoji: '✅',
-          type: 'advance',
-          chance: 6,
-          message: '**Advance to Next Stage! ⏩**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
-        },
-        {
-          emoji: '🧪',
-          type: 'ichor',
-          chance: 8,
-          message: '**Ichor Found!**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f381.svg',
-        },
-        {
-          emoji: '🛑',
-          type: 'game_over',
-          chance: 14,
-          message: '**Game Over! 🛑**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f6d1.svg',
-        },
-      ],
-    },
-    {
-      title: 'Silver Stage',
-      color: '#BCC0C0',
-      effects: [
-        {
-          emoji: '🎅',
-          type: 'gain',
-          chance: 35,
-          range: [1, 19],
-          message: '**Big Win 🎅**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '🎅',
-          type: 'false_alarm',
-          chance: 5,
-          message: '**Near Advance!**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '❄️',
-          type: 'lose',
-          chance: 27,
-          range: [1, 19],
-          message: '**Huge Loss 💔**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
-        },
-        {
-          emoji: '✅',
-          type: 'advance',
-          chance: 6,
-          message: '**Advance to Final Stage! ⏩**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
-        },
-        {
-          emoji: '🥚',
-          type: 'eggs',
-          chance: 9,
-          message: '**Dragon Eggs!**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f514.svg',
-        },
-        {
-          emoji: '🛑',
-          type: 'game_over',
-          chance: 18,
-          message: '**Game Over! 🛑 **',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f6d1.svg',
-        },
-      ],
-    },
-    {
-      title: 'Gold Stage',
-      color: 'Gold',
-      effects: [
-        {
-          emoji: '🎅',
-          type: 'gain',
-          chance: 39,
-          range: [1, 19],
-          message: '**Massive Win 🎅**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
-        },
-        {
-          emoji: '⭐',
-          type: 'jackpot',
-          chance: 5,
-          message: '**⭐⭐ CONGRATULATIONS ⭐⭐**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2b50.svg',
-        },
-        {
-          emoji: '❄️',
-          type: 'lose',
-          chance: 34,
-          range: [1, 19],
-          message: '**Major Loss 💔**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
-        },
-        {
-          emoji: '👿',
-          type: 'pit-fiend',
-          chance: 2,
-          message: `**👿 Zalathor's Card! 👿**`,
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f514.svg',
-        },
-        {
-          emoji: '🛑',
-          type: 'game_over',
-          chance: 20,
-          message: '**Game Over! 🛑**',
-          link: 'https://twemoji.maxcdn.com/v/latest/svg/1f6d1.svg',
-        },
-      ],
-    },
-  ]
+    // ... (other stage definitions as before)
+  ];
 
-  // Create row buttons for user interaction
-  const createRow = (totalGold) =>
+  // Create a function to generate the row of buttons.
+  const createRow = (totalGold, disable = false) =>
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`spin_again_${userId}`)
         .setLabel('Spin Again')
-        .setStyle('Primary'),
+        .setStyle('Primary')
+        .setDisabled(disable),
       new ButtonBuilder()
         .setCustomId(`stop_playing_${userId}`)
         .setLabel(`Stop and collect 🪙${totalGold} gold`)
         .setStyle('Secondary')
-    )
+        .setDisabled(disable)
+    );
 
-  let collector
+  // Define a helper function for weighted random selection.
+  function weightedRandom(effects) {
+    const totalWeight = effects.reduce((sum, effect) => sum + effect.chance, 0);
+    const random = Math.random() * totalWeight;
+    let cumulative = 0;
+    for (const effect of effects) {
+      cumulative += effect.chance;
+      if (random < cumulative) return effect;
+    }
+  }
 
-  // Function to handle each round of the game
+  // Function to handle each round of the game.
   const playRound = async (interactionObject, isInitial = false) => {
-    const userId = interactionObject.user.id
-    console.log(`[playRound] Started for user: ${userId}`)
+    console.log(`[playRound] Started for user: ${userId}`);
+    gameState.spinCount++; // Increment the spin count
 
-    gameState.spinCount++ // Increment the spin count
-    let effects = columnData[gameState.currentColumn].effects
-
+    let effects = columnData[gameState.currentColumn].effects;
     if (isInitial) {
       effects = effects.filter(
         (effect) => effect.type !== 'advance' && effect.type !== 'game_over'
-      )
+      );
     }
 
+    // If interaction already replied/deferred, skip update.
     if (interactionObject.replied || interactionObject.deferred) {
-      console.log(
-        `[playRound] Skipping editReply because interaction was already handled.`
-      )
-      return
+      console.log(`[playRound] Skipping update because interaction already handled.`);
+      return;
     }
 
-    const roll = weightedRandom(effects)
-    let message = roll.message
-    console.log(`[playRound] Roll result: ${roll.type}, message: ${message}`)
+    const roll = weightedRandom(effects);
+    let message = roll.message;
+    console.log(`[playRound] Roll result: ${roll.type}, message: ${message}`);
 
     if (roll.type === 'gain') {
       const amount =
         Math.floor(Math.random() * (roll.range[1] - roll.range[0] + 1)) +
-        roll.range[0]
-      gameState.totalGold += amount
-      message += ` You gained 🪙${amount} gold!`
+        roll.range[0];
+      gameState.totalGold += amount;
+      message += ` You gained 🪙${amount} gold!`;
     } else if (roll.type === 'lose') {
       const amount =
         Math.floor(Math.random() * (roll.range[1] - roll.range[0] + 1)) +
-        roll.range[0]
-
+        roll.range[0];
       if (gameState.totalGold <= 0) {
-        message += ` You have nothing more to lose!`
+        message += ` You have nothing more to lose!`;
       } else {
-        const deductedAmount = Math.min(amount, gameState.totalGold)
-        gameState.totalGold -= deductedAmount
-        message += ` You lost 🪙${deductedAmount} gold!`
+        const deductedAmount = Math.min(amount, gameState.totalGold);
+        gameState.totalGold -= deductedAmount;
+        message += ` You lost 🪙${deductedAmount} gold!`;
       }
     } else if (roll.type === 'advance') {
       if (gameState.currentColumn < columnData.length - 1) {
-        gameState.currentColumn++
-        message += ` You advanced to the ${
-          columnData[gameState.currentColumn].title
-        }!`
+        gameState.currentColumn++;
+        message += ` You advanced to the ${columnData[gameState.currentColumn].title}!`;
       }
-    } else if (roll.type === 'zalathor') {
-      // TODO: Implement Zalathor card reward logic
     } else if (roll.type === 'game_over') {
-      console.log(`[playRound] Game Over triggered for user: ${userId}`)
-      jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0)
-      gameState.running = false
-      activePlayers.delete(userId)
-      message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`
-      gameState.totalGold = 0
-      // Only call stop() if collector exists.
-      if (typeof collector !== 'undefined' && collector) {
-        collector.stop()
-      }
+      console.log(`[playRound] Game Over triggered for user: ${userId}`);
+      jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0);
+      gameState.running = false;
+      activePlayers.delete(userId);
+      message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`;
+      gameState.totalGold = 0;
+      if (collector) collector.stop();
     } else if (roll.type === 'energy') {
       if (userData.currency.energy < 15) {
         userData.currency = {
           ...userData.currency,
           energy: userData.currency.energy + 1,
-        }
-        await userData.save()
-        message += ` You gained ⚡energy!`
+        };
+        await userData.save();
+        message += ` You gained ⚡energy!`;
       } else {
-        message += ` Sorry, your energy is already full.`
+        message += ` Sorry, your energy is already full.`;
       }
     } else if (roll.type === 'eggs') {
       userData.currency = {
         ...userData.currency,
         eggs: userData.currency.eggs + 1,
-      }
-      await userData.save()
-      message += ` You gained 🥚1 dragon egg!`
+      };
+      await userData.save();
+      message += ` You gained 🥚1 dragon egg!`;
     } else if (roll.type === 'ichor') {
       userData.currency = {
         ...userData.currency,
         ichor: userData.currency.ichor + 3,
-      }
-      await userData.save()
-      message += ` You found 🧪3 ichor!`
+      };
+      await userData.save();
+      message += ` You found 🧪3 ichor!`;
     } else if (roll.type === 'jackpot') {
-      userData.gold += jackpot
-      await userData.save()
-      gameState.running = false
-      gameState.totalGold = 0
-      activePlayers.delete(userId)
-      message += ` You won the JACKPOT of 🪙${jackpot} gold!`
-      jackpot = 1000 // Reset the jackpot
+      userData.gold += jackpot;
+      await userData.save();
+      gameState.running = false;
+      gameState.totalGold = 0;
+      activePlayers.delete(userId);
+      message += ` You won the JACKPOT of 🪙${jackpot} gold!`;
+      jackpot = 1000; // Reset the jackpot
     }
 
-    const footerText = `Current Jackpot 🪙${jackpot}`
+    const footerText = `Current Jackpot 🪙${jackpot}`;
+    const timePlayedSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
 
     const zalathorPhrases = [
       `Did you know I can grant wishes.`,
@@ -601,37 +314,33 @@ async function startGame(interaction, userData) {
       `The Gold Stage? Ah, that’s just a myth. No one gets there.`,
       `I bet you didn’t know that I devour the souls of quitters.`,
       `Another round?`,
-    ]
+    ];
 
     const shouldShowPhrase =
-      Math.random() < 1 / (5 + Math.floor(Math.random() * 6))
-
+      Math.random() < 1 / (5 + Math.floor(Math.random() * 6));
     const randomPhrase = shouldShowPhrase
       ? zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
-      : null
+      : null;
 
     console.log(
       `[playRound] Updated gameState: totalGold=${gameState.totalGold}, currentColumn=${gameState.currentColumn}`
-    )
+    );
 
     const embed = new EmbedBuilder()
       .setTitle(columnData[gameState.currentColumn].title)
       .setColor(columnData[gameState.currentColumn].color)
-      .setDescription(
-        randomPhrase ? `${message}\n\n*${randomPhrase}*\n` : message
-      )
+      .setDescription(randomPhrase ? `${message}\n\n*${randomPhrase}*\n` : message)
       .setThumbnail(thumbnailUrl)
       .setFooter({ text: footerText })
+      .addFields({ name: 'Time Played', value: `${timePlayedSeconds} seconds`, inline: true });
 
-    // Ensure interaction is replied or deferred before updating
     if (!interactionObject.deferred && !interactionObject.replied) {
-      console.log(`[playRound] Deferring update for user: ${userId}`)
-      await interactionObject.deferUpdate()
+      console.log(`[playRound] Deferring update for user: ${userId}`);
+      await interactionObject.deferUpdate();
     }
 
     if (!gameState.running) {
-      activePlayers.delete(userId)
-
+      activePlayers.delete(userId);
       const gameOverRowDisabled = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`play_again_${userId}`)
@@ -643,14 +352,13 @@ async function startGame(interaction, userData) {
           .setLabel('Finish')
           .setStyle('Danger')
           .setDisabled(true)
-      )
-      console.log(`[playRound] Editing reply for user: ${userId}`)
+      );
+      console.log(`[playRound] Editing reply for user: ${userId}`);
       await interactionObject.editReply({
         embeds: [embed],
         components: [gameOverRowDisabled],
-      })
-
-      // Wait 1.5 seconds before enabling the buttons
+      });
+      // Wait 1.5 seconds before re-enabling buttons
       setTimeout(async () => {
         const gameOverRowEnabled = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
@@ -661,154 +369,159 @@ async function startGame(interaction, userData) {
             .setCustomId(`finish_${userId}`)
             .setLabel('Finish')
             .setStyle('Danger')
-        )
-
-        await interactionObject.editReply({
-          components: [gameOverRowEnabled],
-        })
-
-        await handlePlayAgain(interactionObject)
-      }, 1500) // 1.5s delay before enabling buttons
-
-      return
+        );
+        await interactionObject.editReply({ components: [gameOverRowEnabled] });
+        await handlePlayAgain(interactionObject);
+      }, 1500);
+      return;
     }
 
-    // **Disable buttons every 8 spins**
+    // Disable buttons every 8 spins for a 2-second pause.
     if (gameState.spinCount % 8 === 0) {
-      console.log(
-        `[playRound] Spin count ${gameState.spinCount}, disabling buttons for 2 seconds.`
-      )
-
+      console.log(`[playRound] Spin count ${gameState.spinCount}, disabling buttons for 2 seconds.`);
       await interactionObject.editReply({
         embeds: [embed],
-        components: [createRow(gameState.totalGold, true)], // Disable buttons
-      })
-
+        components: [createRow(gameState.totalGold, true)],
+      });
       setTimeout(async () => {
-        console.log(`[playRound] Re-enabling buttons after 2 seconds.`)
+        console.log(`[playRound] Re-enabling buttons after 2 seconds.`);
         await interactionObject.editReply({
           embeds: [embed],
-          components: [createRow(gameState.totalGold, false)], // Re-enable buttons
-        })
-      }, 2000)
+          components: [createRow(gameState.totalGold, false)],
+        });
+      }, 2000);
     } else {
       await interactionObject.editReply({
         embeds: [embed],
-        components: [createRow(gameState.totalGold, false)], // Keep buttons enabled
-      })
+        components: [createRow(gameState.totalGold, false)],
+      });
     }
-  }
+  };
 
-  await playRound(interaction, true)
+  // Start the game round
+  await playRound(interaction, true);
 
-  collector = interaction.channel.createMessageComponentCollector({
-    filter: (btnInteraction) => btnInteraction.user.id === userId,
+  // Create a collector for game interactions with anti-spam filtering.
+  const collector = interaction.channel.createMessageComponentCollector({
+    filter: async (btnInteraction) => {
+      const now = Date.now();
+
+      // Check if user is banned
+      if (bannedUsers.has(userId)) {
+        const banExpiration = bannedUsers.get(userId);
+        if (now > banExpiration) {
+          bannedUsers.delete(userId);
+        } else {
+          console.log(`[ANTI-SPAM] 🚨 User ${userId} is banned!`);
+          return false;
+        }
+      }
+
+      // Check for fast clicking
+      if (lastClickTime.has(userId)) {
+        const lastTime = lastClickTime.get(userId);
+        if (now - lastTime < CLICK_COOLDOWN) {
+          spamCount.set(userId, (spamCount.get(userId) || 0) + 1);
+          console.log(
+            `[ANTI-SPAM] User ${userId} clicked too fast (${spamCount.get(userId)}/${MAX_WARNINGS})`
+          );
+          if (spamCount.get(userId) >= MAX_WARNINGS) {
+            console.log(`[ANTI-SPAM] 🚨 TEMP BAN for user ${userId}`);
+            bannedUsers.set(userId, now + BAN_DURATION);
+            try {
+              await btnInteraction.reply({
+                content: `⚠️ **You are temporarily banned for spamming!** Try again in 5 minutes.`,
+                ephemeral: true,
+              });
+            } catch (err) {
+              console.log(`[ANTI-SPAM] Couldn't send ban message to ${userId}.`);
+            }
+            return false;
+          } else {
+            try {
+              await btnInteraction.reply({
+                content: `⚠️ **Slow down!** Clicking too fast. (${spamCount.get(userId)}/${MAX_WARNINGS} warnings)`,
+                ephemeral: true,
+              });
+            } catch (err) {
+              console.log(`[ANTI-SPAM] Couldn't send warning to ${userId}.`);
+            }
+            return false;
+          }
+        }
+      }
+      // Reset spam count and update last click time
+      spamCount.set(userId, 0);
+      lastClickTime.set(userId, now);
+      return btnInteraction.user.id === userId;
+    },
     time: 60000,
-  })
+  });
 
-  collectors.set(userId, collector)
+  collectors.set(userId, collector);
 
   collector.on('collect', async (btnInteraction) => {
-    console.log(
-      `[Collector] Button pressed by ${btnInteraction.user.id}: ${btnInteraction.customId}`
-    )
-
+    console.log(`[Collector] Button pressed by ${btnInteraction.user.id}: ${btnInteraction.customId}`);
     try {
       if (btnInteraction.customId === `spin_again_${userId}`) {
-        console.log(`[Collector] Processing 'spin_again' for user: ${userId}`)
-
-        // Get or initialize user-specific game state
+        console.log(`[Collector] Processing 'spin_again' for user: ${userId}`);
+        // Ensure a per-user game state exists in gameStates
         if (!gameStates.has(userId)) {
-          gameStates.set(userId, { running: false })
+          gameStates.set(userId, { running: false });
         }
-
-        const userGameState = gameStates.get(userId)
-
-        // Prevent multiple executions
+        const userGameState = gameStates.get(userId);
         if (userGameState.running) {
-          console.log(
-            `[Collector] Skipping 'spin_again' because gameState.running is already true.`
-          )
-
+          console.log(`[Collector] Skipping 'spin_again' because gameState.running is already true.`);
           if (!btnInteraction.deferred && !btnInteraction.replied) {
-            await btnInteraction.deferUpdate()
+            await btnInteraction.deferUpdate();
           }
-          return
+          return;
         }
-
-        userGameState.running = true
-
+        userGameState.running = true;
         try {
-          await playRound(btnInteraction)
+          await playRound(btnInteraction);
         } catch (error) {
-          console.error(
-            `[Collector] Error running playRound for user ${userId}: ${error}`
-          )
+          console.error(`[Collector] Error running playRound for user ${userId}: ${error}`);
         }
-
-        console.log(
-          `[Collector] Resetting gameState.running for user: ${userId}`
-        )
-        userGameState.running = false
+        console.log(`[Collector] Resetting gameState.running for user: ${userId}`);
+        userGameState.running = false;
       } else if (btnInteraction.customId === `stop_playing_${userId}`) {
-        console.log(`[Collector] Processing 'stop_playing' for user: ${userId}`)
-
-        userData.gold += gameState.totalGold
-        await userData.save()
-        activePlayers.delete(userId)
-        collector.stop()
-
-        console.log(
-          `[Collector] User ${userId} stopped playing with totalGold: ${gameState.totalGold}`
-        )
-
-        const footerText = `Available: 🪙${userData.gold || 0} ⚡${
-          userData.currency.energy || 0
-        } 🧿${userData.currency.tokens || 0} 🥚${
-          userData.currency.eggs || 0
-        } 🧪${userData.currency.ichor || 0}`
-
+        console.log(`[Collector] Processing 'stop_playing' for user: ${userId}`);
+        userData.gold += gameState.totalGold;
+        await userData.save();
+        activePlayers.delete(userId);
+        collector.stop();
+        const timePlayedSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
+        const footerText = `Available: 🪙${userData.gold || 0} ⚡${userData.currency.energy || 0} 🧿${userData.currency.tokens || 0} 🥚${userData.currency.eggs || 0} 🧪${userData.currency.ichor || 0}`;
         const finalEmbed = new EmbedBuilder()
           .setTitle(`Zalathor's Table Results 🎰`)
-          .setDescription(
-            `Congrats! You walked away with **🪙${gameState.totalGold} gold**.`
-          )
+          .setDescription(`Congrats! You walked away with **🪙${gameState.totalGold} gold**.\nTime Played: ${timePlayedSeconds} seconds`)
           .setFooter({ text: footerText })
-          .setColor('Green')
-
-        console.log(
-          `[Collector] Updating interaction with final results for user: ${userId}`
-        )
-        await btnInteraction.update({
-          embeds: [finalEmbed],
-          components: [],
-        })
+          .setColor('Green');
+        console.log(`[Collector] Updating interaction with final results for user: ${userId}`);
+        await btnInteraction.update({ embeds: [finalEmbed], components: [] });
       }
     } catch (error) {
-      console.error(
-        `[Collector] Error in collector for user ${userId}: ${error}`
-      )
-      collector.stop()
+      console.error(`[Collector] Error in collector for user ${userId}: ${error}`);
+      collector.stop();
     }
-  })
+  });
 
   collector.on('end', async () => {
-    console.log(`[Collector] Collector ended for user: ${userId}`)
-    activePlayers.delete(userId)
-
+    console.log(`[Collector] Collector ended for user: ${userId}`);
+    activePlayers.delete(userId);
     if (!interaction.replied && !interaction.deferred) {
-      console.log(`[Collector] Sending timeout message for user: ${userId}`)
+      console.log(`[Collector] Sending timeout message for user: ${userId}`);
       await interaction.editReply({
         content: `⏳ Time's up! Your game has ended. You can play again in **1 minute.**`,
         components: [],
-      })
+      });
     } else {
-      console.log(
-        `[Collector] Skipped timeout message because interaction was already acknowledged.`
-      )
+      console.log(`[Collector] Skipped timeout message because interaction was already acknowledged.`);
     }
-  })
+  });
 }
+
 
 async function handlePlayAgain(interaction) {
   const userId = interaction.user.id

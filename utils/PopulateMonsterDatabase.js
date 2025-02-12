@@ -18,28 +18,24 @@ function getRarityByCR(cr) {
   return 'Common'
 }
 
-// Function to classify combat type
 function classifyMonsterType(type) {
-  const typeMap = {
-    beast: 'brute',
-    dragon: 'brute',
-    giant: 'brute',
-    construct: 'brute',
-    undead: 'stealth',
-    celestial: 'caster',
-    fiend: 'caster',
-    aberration: 'caster',
-    elemental: 'caster',
-    monstrosity: 'brute',
-    humanoid: 'stealth',
-    fey: 'caster',
-    plant: 'stealth',
-    ooze: 'stealth'
-  }
-  return typeMap[type.toLowerCase()] || 'brute'
+  const bruteTypes = ['beast', 'construct', 'dragon', 'giant', 'monstrosity']
+  const spellswordTypes = [
+    'aberration',
+    'celestial',
+    'elemental',
+    'fey',
+    'fiend',
+  ]
+  const stealthTypes = ['humanoid', 'plant', 'ooze', 'undead']
+
+  if (bruteTypes.includes(type.toLowerCase())) return 'brute'
+  if (spellswordTypes.includes(type.toLowerCase())) return 'spellsword'
+  if (stealthTypes.includes(type.toLowerCase())) return 'stealth'
+  return 'brute' // Default if type is unclassified
 }
 
-console.log(Monster);
+console.log(Monster)
 
 async function populateMonsterDatabase() {
   console.log('[DB] Fetching monster list from API...')

@@ -9,7 +9,7 @@ const {
 } = require('discord.js')
 const { Op } = require('sequelize')
 
-const { Inventory, Collection } = require('../../Models/model.js')
+const { Monster, Inventory, Collection } = require('../../Models/model.js')
 
 const {
   populateMonsterCache,
@@ -531,7 +531,9 @@ module.exports = {
               assignedRarity,
               nextRank
             )
+           
 
+         
             const promotionEmbed = new EmbedBuilder()
               .setTitle(`Promote: ${selectedMonster.name}`)
               .setDescription(
@@ -541,7 +543,8 @@ module.exports = {
               .setFooter({
                 text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
               })
-              .setThumbnail(imageUrl)
+              .setImage(imageUrl)
+              .setThumbnail(thumbnailUrl)
 
             const confirmRow = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
