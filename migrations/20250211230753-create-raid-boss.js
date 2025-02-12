@@ -49,6 +49,18 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      loot1: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      loot2: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      loot3: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
     })
   },
 

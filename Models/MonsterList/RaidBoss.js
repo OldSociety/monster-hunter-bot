@@ -48,6 +48,18 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.INTEGER,
           allowNull: false,
         },
+        loot1: {
+            type: DataTypes.STRING,
+            allowNull: true,
+          },
+          loot2: {
+            type: DataTypes.STRING,
+            allowNull: true,
+          },
+          loot3: {
+            type: DataTypes.STRING,
+            allowNull: true,
+          },
       },
       {
         timestamps: false,
