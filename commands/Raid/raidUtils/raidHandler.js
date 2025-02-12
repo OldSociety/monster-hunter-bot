@@ -1,3 +1,5 @@
+//raidHandler.js
+
 const {
   EmbedBuilder,
   ActionRowBuilder,
@@ -10,6 +12,7 @@ const { displayHuntSummary } = require('../../Hunt/huntUtils/rewardHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const cron = require('node-cron')
 const { RaidBoss } = require('../../../Models/model.js')
+const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js') // Import shared raid rotation state
 
 // Helper to format milliseconds to days, hours, minutes, seconds.
 function formatTime(ms) {
@@ -123,7 +126,7 @@ async function runBattlePhases(
 async function startRaidEncounter(interaction, user) {
   stopUserCollector(interaction.user.id)
 
-  // Use RaidBoss model and select the current boss from our rotation.
+  // Use the Raid Boss model and select the current boss from our rotation.
   const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
   if (!raidBosses || raidBosses.length === 0) {
     return interaction.followUp({
@@ -132,7 +135,7 @@ async function startRaidEncounter(interaction, user) {
     })
   }
 
-  // Select the current raid boss from the rotation.
+  // Select the current Raid Boss from `raidBossRotation`
   const selectedBoss = raidBosses[raidBossRotation.currentIndex]
   const bossStartingHP = Math.max(1, selectedBoss.cr * 1000)
 
@@ -151,9 +154,16 @@ async function startRaidEncounter(interaction, user) {
     rollScore: selectedBoss.hp,
     imageUrl: selectedBoss.imageUrl,
     lootDrops: selectedBoss.lootDrops || [],
-    activePhase: raidBossRotation.phase === 'active',
+    activePhase: raidBossRotation.phase === 'active', // Use the shared phase state
   }
 
+  // 📌 Notify players if the raid is on cooldown
+  if (!raidBoss.activePhase) {
+    return interaction.followUp({
+      content: '⚠️ Raids are currently on cooldown! Try again later.',
+      ephemeral: true,
+    })
+  }
   const huntData = {
     totalGoldEarned: 0,
     ichorUsed: false,
@@ -324,68 +334,5 @@ function createStyleButtons(user) {
   })
   return styleRow
 }
-
-// Global rotation state for RaidBosses.
-let raidBossRotation = {
-  currentIndex: 0,
-  phase: 'active', // 'active' means players do 10% damage; 'cooldown' means no raid encounter.
-  lastSwitch: Date.now(),
-}
-
-// Cron job to rotate the current RaidBoss.
-// For testing, each minute simulates a cycle: active phase = 1 minute, cooldown = 1 minute.
-cron.schedule('* * * * *', async () => {
-  const now = Date.now()
-  if (raidBossRotation.phase === 'active') {
-    if (now - raidBossRotation.lastSwitch >= 60000) {
-      // 1 minute for active phase
-      console.log('Active phase expired. Entering cooldown phase.')
-      // Reset current boss health to max.
-      try {
-        const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
-        if (raidBosses.length > 0) {
-          const currentBoss = raidBosses[raidBossRotation.currentIndex]
-          currentBoss.current_hp = currentBoss.hp
-          await currentBoss.save()
-        }
-      } catch (error) {
-        console.error('Error resetting raid boss health on cooldown:', error)
-      }
-      raidBossRotation.phase = 'cooldown'
-      raidBossRotation.lastSwitch = now
-
-      // Send cooldown embed.
-      const cooldownDuration = 60000 // 1 minute test duration; in production, use 2 days.
-      const cooldownEmbed = new EmbedBuilder()
-        .setTitle('Raids are in cooldown')
-        .setDescription(
-          `Raids will begin again in ${formatTime(cooldownDuration)}.`
-        )
-        .setColor('Gold')
-    }
-  } else if (raidBossRotation.phase === 'cooldown') {
-    if (now - raidBossRotation.lastSwitch >= 60000) {
-      // 1 minute for cooldown phase
-      console.log('Cooldown phase expired. Rotating to next RaidBoss.')
-      try {
-        const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
-        if (raidBosses.length > 0) {
-          raidBossRotation.currentIndex =
-            (raidBossRotation.currentIndex + 1) % raidBosses.length
-          const newBoss = raidBosses[raidBossRotation.currentIndex]
-          newBoss.current_hp = newBoss.hp // Reset health for the new boss.
-          await newBoss.save()
-          console.log(`Switched to new RaidBoss: ${newBoss.name}`)
-        } else {
-          console.log('No RaidBosses found in the database.')
-        }
-      } catch (error) {
-        console.error('Error rotating RaidBoss:', error)
-      }
-      raidBossRotation.phase = 'active'
-      raidBossRotation.lastSwitch = now
-    }
-  }
-})
 
 module.exports = { startRaidEncounter }

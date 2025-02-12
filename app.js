@@ -14,6 +14,7 @@ const cron = require('node-cron')
 
 const { Client, Collection, GatewayIntentBits } = require('discord.js')
 const { User } = require('./Models/model')
+const { initializeRaidTimer } = require('./handlers/raidTimerHandler') // ✅ Import properly
 
 // Import event handler
 const eventHandler = require('./handlers/eventHandler')
@@ -31,6 +32,7 @@ const client = new Client({
   ],
 })
 
+// Attach the client globally (if needed elsewhere)
 global.client = client
 
 // Dynamically read and create commands
@@ -57,86 +59,24 @@ for (const entry of commandEntries) {
         )
       }
     }
-  } else if (entry.isFile() && entry.name.endsWith('.js')) {
-    const filePath = path.join(foldersPath, entry.name)
-    const command = require(filePath)
-    if ('data' in command && 'execute' in command) {
-      client.commands.set(command.data.name, command)
-    } else {
-      console.log(
-        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
-      )
-    }
   }
 }
 
 // Load events dynamically
 eventHandler(client)
 
-// Import the message handler and booster handler
+// Import message handler
 const messageHandler = require('./handlers/messageHandler')
 messageHandler(client, User)
 
-if (process.env.NODE_ENV === 'production') {
-  cron.schedule('*/10 * * * *', async () => {
-    try {
-      const users = await User.findAll()
+client.once('ready', async () => {
+  console.log(`✅ Bot is online as ${client.user.tag}`)
 
-      for (const user of users) {
-        let currency = user.currency || {
-          energy: 10,
-          tokens: 0,
-          eggs: 0,
-          ichor: 0,
-          dice: 0,
-        }
+  // ✅ Start Raid Timer only after bot is ready
+  initializeRaidTimer(client)
+})
 
-        if (typeof currency !== 'object') {
-          currency = { energy: 10, gems: 0, eggs: 0, ichor: 0, dice: 0 }
-        }
-
-        const currentEnergy = currency.energy || 0
-
-        if (currentEnergy < 15) {
-          currency.energy = Math.min(currentEnergy + 1, 15)
-
-          user.set('currency', currency)
-          user.changed('currency', true)
-
-          await user.save()
-
-          console.log(
-            `User ID: ${user.user_id} - Energy increased to ${currency.energy}`
-          )
-        }
-      }
-    } catch (error) {
-      console.error('Error refilling energy:', error)
-    }
-  })
-}
-
-// // Auto-reconnect with retry logic
-// async function connectBot(retries = 5) {
-//   try {
-//     console.log('Connecting to Discord...')
-//     await client.login(process.env.TOKEN)
-//     console.log('Bot connected successfully!')
-//   } catch (error) {
-//     if (error.status === 503 && retries > 0) {
-//       console.error(
-//         `Service Unavailable (503). Retrying in 10 seconds... [${retries} attempts left]`
-//       )
-//       setTimeout(() => connectBot(retries - 1), 10000)
-//     } else {
-//       console.error('Failed to connect:', error)
-//       process.exit(1) // Exit if retries are exhausted
-//     }
-//   }
-// }
-
-// connectBot()
-
+// Login
 client.login(process.env.TOKEN)
 
 module.exports = { sequelize }
