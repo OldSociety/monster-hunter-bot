@@ -70,9 +70,7 @@ const messageHandler = require('./handlers/messageHandler')
 messageHandler(client, User)
 
 client.once('ready', async () => {
-  console.log(`✅ Bot is online as ${client.user.tag}`)
-
-  // ✅ Start Raid Timer only after bot is ready
+  // Start Raid Timer only after bot is ready
   initializeRaidTimer(client)
 })
 

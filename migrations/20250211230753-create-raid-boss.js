@@ -30,9 +30,13 @@ module.exports = {
         allowNull: false,
       },
       current_hp: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-        },
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      boss_score: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
       combatType: {
         type: Sequelize.STRING,
         allowNull: false,

@@ -1,28 +1,18 @@
-//raidHandler.js
-
 const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const { checkAdvantage } = require('../../Hunt/huntUtils/huntHelpers.js')
+const {
+  checkAdvantage,
+  calculateWinChance,
+} = require('../../Hunt/huntUtils/huntHelpers.js')
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
-const { displayHuntSummary } = require('../../Hunt/huntUtils/rewardHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const cron = require('node-cron')
 const { RaidBoss } = require('../../../Models/model.js')
-const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js') // Import shared raid rotation state
-
-// Helper to format milliseconds to days, hours, minutes, seconds.
-function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000)
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`
-}
+const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js')
 
 function getUserFooter(user) {
   const gold = user.gold || 0
@@ -35,15 +25,15 @@ function getUserFooter(user) {
 }
 
 function createRaidBossEmbed(raidBoss, user) {
+  console.log('[Embed] Creating Raid Boss Embed for:', raidBoss.name)
   const playerHealthBar = createHealthBar(user.current_raidHp, user.score)
   const bossHealthBar = createHealthBar(raidBoss.hp, raidBoss.maxHP)
-  console.log(raidBoss.combatType)
   return new EmbedBuilder()
     .setTitle(`RAID BOSS - ${raidBoss.name}`)
     .setDescription(
-      `**Your HP:** ${user.current_raidHp} / ${user.score} \n${playerHealthBar}\n\n` +
+      `**Your HP:** ${user.current_raidHp} / ${user.score}\n${playerHealthBar}\n\n` +
         `**Combat Type:** ${raidBoss.combatType}\n\n` +
-        `**Boss HP:** ${raidBoss.hp} / ${raidBoss.maxHP} \n${bossHealthBar}\n\n` +
+        `**Boss HP:** ${raidBoss.hp} / ${raidBoss.maxHP}\n${bossHealthBar}\n\n` +
         `**Possible Loot Drops:**\n${raidBoss.lootDrops.join('\n')}`
     )
     .setColor('#FF4500')
@@ -54,262 +44,34 @@ function createRaidBossEmbed(raidBoss, user) {
     .setFooter({ text: getUserFooter(user) })
 }
 
-async function runBattlePhases(
-  interaction,
-  user,
-  playerScore,
-  raidBoss,
-  advMultiplier,
-  huntData
-) {
-  if (!user.current_raidHp) {
-    user.current_raidHp = user.score
-    await user.save()
-  }
-
-  let playerHP = user.current_raidHp
-  let bossHP = raidBoss.hp
-  const maxBossHP = raidBoss.maxHP
-  const maxPlayerHP = user.score
-  const imageUrl = raidBoss.imageUrl
-
-  for (let phase = 1; bossHP > 0 && playerHP > 0; phase++) {
-    let playerRoll = Math.round(Math.random() * playerScore * advMultiplier)
-    let monsterRoll = Math.round(Math.random() * raidBoss.rollScore) // Using monster.hp as roll power
-
-    let phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
-
-    if (phaseResult === 'Hit!') {
-      // During active phase, players do 10% damage instead of full.
-      if (raidBossRotation.phase === 'active') {
-        bossHP -= Math.round(playerRoll * 0.1)
-      } else {
-        bossHP -= playerRoll
-      }
-    } else {
-      playerHP -= monsterRoll // Player takes damage from boss
-    }
-
-    if (bossHP <= 0) bossHP = 0
-    if (playerHP <= 0) playerHP = 0
-
-    user.current_raidHp = playerHP
-    await user.save() // 🛑 Ensure HP is saved after each phase
-
-    const playerHealthBar = createHealthBar(playerHP, maxPlayerHP)
-    const bossHealthBar = createHealthBar(bossHP, maxBossHP)
-
-    const phaseEmbed = new EmbedBuilder()
-      .setTitle(`Phase ${phase} - Fighting ${raidBoss.name}`)
-      .setDescription(
-        `**Your HP:** ${playerHP} / ${maxPlayerHP}  ${playerHealthBar}\n` +
-          `**Boss HP:** ${bossHP} / ${maxBossHP}  ${bossHealthBar}\n\n` +
-          `**Player Roll:** ${playerRoll}\n` +
-          `**Boss Roll:** ${monsterRoll}\n\n` +
-          `**Phase ${phase} Result:** ${phaseResult}\n`
-      )
-      .setColor('#FF4500')
-      .setImage(imageUrl)
-      .setFooter({ text: getUserFooter(user) })
-
-    await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
-
-    if (bossHP <= 0) return true // Boss is defeated
-    if (playerHP <= 0) return false // Player is defeated
-
-    await new Promise((resolve) => setTimeout(resolve, 3000)) // 🛑 Delay for 3 seconds between phases
-  }
-
-  return false
-}
-
-async function startRaidEncounter(interaction, user) {
-  stopUserCollector(interaction.user.id)
-
-  // Use the Raid Boss model and select the current boss from our rotation.
-  const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
-  if (!raidBosses || raidBosses.length === 0) {
-    return interaction.followUp({
-      content: 'Error: No valid raid bosses found.',
-      ephemeral: true,
-    })
-  }
-
-  // Select the current Raid Boss from `raidBossRotation`
-  const selectedBoss = raidBosses[raidBossRotation.currentIndex]
-  const bossStartingHP = Math.max(1, selectedBoss.cr * 1000)
-
-  if (!user.current_raidHp) {
-    user.current_raidHp = user.score
-    await user.save()
-  }
-
-  const raidBoss = {
-    name: selectedBoss.name,
-    index: selectedBoss.index,
-    type: selectedBoss.type,
-    combatType: selectedBoss.combatType,
-    hp: bossStartingHP,
-    maxHP: bossStartingHP,
-    rollScore: selectedBoss.hp,
-    imageUrl: selectedBoss.imageUrl,
-    lootDrops: selectedBoss.lootDrops || [],
-    activePhase: raidBossRotation.phase === 'active', // Use the shared phase state
-  }
-
-  // 📌 Notify players if the raid is on cooldown
-  if (!raidBoss.activePhase) {
-    return interaction.followUp({
-      content: '⚠️ Raids are currently on cooldown! Try again later.',
-      ephemeral: true,
-    })
-  }
-  const huntData = {
-    totalGoldEarned: 0,
-    ichorUsed: false,
-    level: raidBoss,
-    lastMonster: raidBoss,
-    inProgress: true,
-  }
-
-  const monsterEmbed = createRaidBossEmbed(raidBoss, user)
-  const styleRow = createStyleButtons(user)
-  const healRow = createHealButtons(user)
-
-  await interaction.followUp({
-    embeds: [monsterEmbed],
-    components: [styleRow, healRow],
-    ephemeral: true,
-  })
-
-  const filter = (i) => i.user.id === interaction.user.id
-  const collector = interaction.channel.createMessageComponentCollector({
-    filter,
-    time: 60000,
-  })
-  collectors.set(interaction.user.id, collector)
-
-  collector.on('collect', async (i) => {
-    if (i.customId === 'heal') {
-      await handleHealAction(i, user, raidBoss, 'one')
-      return
-    }
-
-    if (i.customId === 'heal_max') {
-      await handleHealAction(i, user, raidBoss, 'max')
-      return
-    }
-
-    if (i.customId === 'cancel_raid') {
-      await handleCancelRaid(i, user)
-      return
-    }
-
-    if (huntData.styleInteractionHandled) return
-    huntData.styleInteractionHandled = true
-
-    const selectedStyle = i.customId.split('_')[1]
-    const playerScore = user[`${selectedStyle}_score`]
-    const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType)
-
-    await i.deferUpdate()
-    const playerWins = await runBattlePhases(
-      i,
-      user,
-      playerScore,
-      raidBoss,
-      advMultiplier,
-      huntData
-    )
-
-    if (playerWins) {
-      huntData.totalGoldEarned += 0
-      await displayHuntSummary(i, user, huntData, true)
-    } else {
-      await displayHuntSummary(i, user, huntData, false)
-    }
-
-    huntData.styleInteractionHandled = false
-  })
-}
-
-function createHealButtons(user) {
+// --- NEW: Create initial action row with Raid, Heal, and Cancel buttons
+function createInitialActionRow(user) {
+  console.log(
+    '[UI] Creating initial action row with Raid, Heal, and Cancel buttons.'
+  )
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId('heal')
-      .setLabel(`Heal (10 HP per token)`)
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(user.currency.tokens < 1),
+      .setCustomId('initiate_raid')
+      .setLabel('Begin Raid!')
+      .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId('heal_max')
-      .setLabel(`Heal to Max`)
-      .setStyle(ButtonStyle.Secondary)
+      .setCustomId('heal')
+      .setLabel('Heal (100 HP/🧿token)')
+      .setStyle(ButtonStyle.Success)
       .setDisabled(user.currency.tokens < 1),
     new ButtonBuilder()
       .setCustomId('cancel_raid')
-      .setLabel(`Cancel Raid`)
-      .setStyle(ButtonStyle.Secondary)
+      .setLabel('Cancel Raid')
+      .setStyle(ButtonStyle.Danger)
   )
 }
 
-async function handleCancelRaid(interaction, user) {
-  await interaction.deferUpdate() // Defer the interaction before updating
-
-  // Reset the user's raid HP
-  user.current_raidHp = user.score
-  await user.save()
-
-  await interaction.message.edit({
-    content: 'You have canceled the raid.',
-    embeds: [],
-    components: [],
-  })
-}
-
-async function handleHealAction(interaction, user, raidBoss, healType) {
-  await interaction.deferUpdate() // Defer the interaction before updating
-
-  if (user.currency.tokens < 1) {
-    return interaction.followUp({
-      content: "You don't have enough tokens to heal.",
-      ephemeral: true,
-    })
-  }
-
-  let tokensSpent = 0
-  if (healType === 'max') {
-    // Heal to full, spending as many tokens as needed
-    const neededHealing = user.score - user.current_raidHp
-    tokensSpent = Math.min(Math.ceil(neededHealing / 10), user.currency.tokens)
-    user.current_raidHp = user.score
-  } else {
-    // Heal 10 HP per token
-    user.current_raidHp = Math.min(user.current_raidHp + 10, user.score)
-    tokensSpent = 1
-  }
-
-  user.currency.tokens -= tokensSpent
-  await user.save() // 🛑 Ensure tokens are removed and saved properly
-
-  // Create updated embed with new player health
-  const updatedEmbed = createRaidBossEmbed(raidBoss, user)
-
-  try {
-    if (interaction.message) {
-      await interaction.message.edit({ embeds: [updatedEmbed] })
-    } else {
-      await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
-    }
-  } catch (error) {
-    console.error(
-      '❌ Failed to edit message, sending a new one instead.',
-      error
-    )
-    await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
-  }
-}
-
-function createStyleButtons(user) {
+// --- NEW: Create updated action row with style buttons plus Heal and Cancel buttons.
+function createUpdatedActionRow(user) {
+  console.log(
+    '[UI] Creating updated action row with style buttons and Heal/Cancel buttons.'
+  )
+  const styleButtons = []
   const styles = ['brute', 'spellsword', 'stealth']
   const styleColors = {
     brute: ButtonStyle.Danger,
@@ -317,10 +79,10 @@ function createStyleButtons(user) {
     stealth: ButtonStyle.Success,
   }
 
-  const styleRow = new ActionRowBuilder()
   styles.forEach((style) => {
     if (user[`${style}_score`] > 0) {
-      styleRow.addComponents(
+      console.log(`[UI] Adding style button for: ${style}`)
+      styleButtons.push(
         new ButtonBuilder()
           .setCustomId(`style_${style}`)
           .setLabel(
@@ -332,7 +94,357 @@ function createStyleButtons(user) {
       )
     }
   })
-  return styleRow
+
+  // Create Heal and Cancel buttons (same as before)
+  const cancelButton = new ButtonBuilder()
+    .setCustomId('cancel_raid')
+    .setLabel('Cancel Raid')
+    .setStyle(ButtonStyle.Secondary)
+
+  // Combine all buttons into one row. Maximum 5 buttons per row.
+  const updatedRow = new ActionRowBuilder()
+  // Add style buttons first.
+  styleButtons.forEach((btn) => updatedRow.addComponents(btn))
+  // Add Heal and Cancel buttons.
+  updatedRow.addComponents(cancelButton)
+
+  console.log(
+    '[UI] Updated action row created with',
+    updatedRow.components.length,
+    'buttons.'
+  )
+  return updatedRow
+}
+
+async function runBattlePhases(
+  interaction,
+  user,
+  playerScore,
+  raidBoss,
+  advMultiplier,
+  selectedStyle  // Optional: for display purposes
+) {
+  console.log('[Battle] Starting Battle Phases')
+  let playerHP = user.current_raidHp;
+  let bossHP = raidBoss.hp;
+  const maxBossHP = raidBoss.maxHP;
+  const maxPlayerHP = user.score;
+  const imageUrl = raidBoss.imageUrl;
+
+  let phase = 0;
+  while (bossHP > 0 && playerHP > 0) {
+    phase++;
+    console.log(`[Battle] Phase ${phase} started.`);
+
+    // Use a random multiplier between 0.1 and 1 for the player's roll.
+    let multiplier = Math.random() * 0.9 + 0.1;
+    let playerRoll = Math.round(multiplier * playerScore * advMultiplier);
+
+    // Monster roll with a floor at 50% of boss_score.
+    let monsterRoll = Math.round(
+      Math.random() * (raidBoss.boss_score * 0.5) + raidBoss.boss_score * 0.5
+    );
+    console.log(
+      `[Battle] Phase ${phase} rolls - Player: ${playerRoll}, Monster: ${monsterRoll}`
+    );
+
+    let phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!';
+    console.log(`[Battle] Phase ${phase} result: ${phaseResult}`);
+
+    if (phaseResult === 'Hit!') {
+      let damage = Math.round(playerRoll * 0.1);
+      bossHP -= damage;
+      console.log(`[Battle] Phase ${phase} - Boss HP reduced by ${damage}`);
+    } else {
+      let damage = Math.round(monsterRoll * 0.1);
+      playerHP -= damage;
+      console.log(`[Battle] Phase ${phase} - Player HP reduced by ${damage}`);
+    }
+
+    if (bossHP < 0) bossHP = 0;
+    if (playerHP < 0) playerHP = 0;
+
+    const isAdvantaged = advMultiplier > 1;
+    const isDisadvantaged = advMultiplier < 1;
+    const effects =
+      [
+        isAdvantaged ? '⏫Advantage' : '',
+        isDisadvantaged ? '⏬Disadvantage' : '',
+      ]
+        .filter(Boolean)
+        .join(', ') || 'None';
+
+    const playerHealthBar = createHealthBar(playerHP, maxPlayerHP);
+    const bossHealthBar = createHealthBar(bossHP, maxBossHP);
+
+    const phaseEmbed = new EmbedBuilder()
+      .setTitle(`Phase ${phase} - Fighting ${raidBoss.name}`)
+      .setDescription(
+        `**Your HP:** ${playerHP} / ${maxPlayerHP}\n${playerHealthBar}\n` +
+        `**Boss HP:** ${bossHP} / ${maxBossHP}\n${bossHealthBar}\n\n` +
+        `**Effects:** ${effects}\n` +
+        `**Player Roll:** ${playerRoll}\n` +
+        `**Boss Roll:** ${monsterRoll}\n\n` +
+        `**Phase ${phase} Result:** ${phaseResult}\n` +
+        (selectedStyle ? `**Style:** ${selectedStyle}\n` : '')
+      )
+      .setColor('#FF4500')
+      .setImage(imageUrl)
+      .setFooter({ text: getUserFooter(user) });
+
+    console.log(`[Battle] Phase ${phase} - Sending phase embed.`);
+    await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true });
+
+    if (bossHP <= 0 || playerHP <= 0) break;
+    console.log(`[Battle] Phase ${phase} complete. Waiting 3 seconds for next phase.`);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  console.log(`[Battle] Battle ended. Final Player HP: ${playerHP}, Final Boss HP: ${bossHP}`);
+  // Write the final damage values to the database at the end of the battle.
+  user.current_raidHp = playerHP;
+  await user.save();
+  if (raidBoss.instance) {
+    raidBoss.instance.current_hp = bossHP;
+    await raidBoss.instance.save();
+    console.log('[Battle] Raid boss current_hp updated in database.');
+  } else {
+    console.log('[Battle] No raid boss instance available for database update.');
+  }
+
+  // Return true if the boss was defeated.
+  return bossHP <= 0;
+}
+
+
+async function startRaidEncounter(interaction, user) {
+  console.log('[Raid] Starting raid encounter')
+  stopUserCollector(interaction.user.id)
+
+  const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
+  console.log(`[Raid] Retrieved ${raidBosses.length} raid bosses.`)
+  if (!raidBosses || raidBosses.length === 0) {
+    console.log('[Raid] No valid raid bosses found.')
+    return interaction.followUp({
+      content: 'Error: No valid raid bosses found.',
+      ephemeral: true,
+    })
+  }
+
+  const selectedBoss = raidBosses[raidBossRotation.currentIndex]
+  console.log('[Raid] Selected raid boss:', selectedBoss.name)
+  const bossStartingHP = selectedBoss.hp
+
+  const raidBoss = {
+    name: selectedBoss.name,
+    index: selectedBoss.index,
+    type: selectedBoss.type,
+    combatType: selectedBoss.combatType,
+    hp: bossStartingHP,
+    maxHP: bossStartingHP,
+    boss_score: selectedBoss.boss_score, // Make sure this field is correct
+    imageUrl: selectedBoss.imageUrl,
+    lootDrops: selectedBoss.lootDrops || [],
+    activePhase: raidBossRotation.phase === 'active',
+    instance: selectedBoss, // Attach the model instance here
+  }
+
+  console.log('[Raid] Raid boss object created:', raidBoss)
+
+  if (!raidBoss.activePhase) {
+    console.log('[Raid] Raid currently on cooldown.')
+    return interaction.followUp({
+      content: '⚠️ Raids are currently on cooldown! Try again later.',
+      ephemeral: true,
+    })
+  }
+
+  const monsterEmbed = createRaidBossEmbed(raidBoss, user)
+  console.log('[Raid] Overview embed created.')
+
+  // Use the initial action row: Raid, Heal, Cancel.
+  const initialRow = createInitialActionRow(user)
+  console.log('[Raid] Initial action row created.')
+
+  await interaction.followUp({
+    embeds: [monsterEmbed],
+    components: [initialRow],
+    ephemeral: true,
+  })
+  console.log('[Raid] Sent overview embed with initial action row.')
+
+  const filter = (i) => i.user.id === interaction.user.id
+  const collector = interaction.channel.createMessageComponentCollector({
+    filter,
+    time: 60000,
+  })
+  collectors.set(interaction.user.id, collector)
+  console.log('[Raid] Collector set up for button interactions.')
+
+  collector.on('collect', async (i) => {
+    console.log('[Collector] Button pressed:', i.customId)
+    if (i.customId === 'initiate_raid') {
+      console.log(
+        '[Collector] Raid button clicked - updating message with style buttons and retaining Heal/Cancel buttons.'
+      )
+      const updatedRow = createUpdatedActionRow(user)
+      const updatedEmbed = createRaidBossEmbed(raidBoss, user)
+      await i.update({
+        embeds: [updatedEmbed],
+        components: [updatedRow],
+      })
+      console.log('[Collector] Message updated with new action row.')
+      return
+    }
+
+    if (i.customId === 'heal') {
+      console.log('[Collector] Heal button clicked.')
+      await handleHealAction(i, user, raidBoss, 'one')
+      return
+    }
+
+    if (i.customId === 'cancel_raid') {
+      console.log('[Collector] Cancel raid button clicked.')
+      await handleCancelRaid(i, user)
+      return
+    }
+
+    if (i.customId.startsWith('style_')) {
+      const selectedStyle = i.customId.split('_')[1]
+      console.log('[Collector] Style selected:', selectedStyle)
+      const playerScore = user[`${selectedStyle}_score`]
+      const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType)
+      await i.deferUpdate()
+      console.log('[Collector] Starting battle phases.')
+      const playerWins = await runBattlePhases(
+        i,
+        user,
+        playerScore,
+        raidBoss,
+        advMultiplier,
+        selectedStyle
+      )
+      console.log(
+        '[Collector] Battle phases complete. Outcome:',
+        playerWins ? 'Victory' : 'Defeat'
+      )
+      if (playerWins) {
+        await i.followUp({
+          content: '🎉 You have defeated the raid boss!',
+          ephemeral: true,
+        })
+      } else {
+        await i.followUp({
+          content: '💀 You have been defeated by the raid boss!',
+          ephemeral: true,
+        })
+      }
+      // Wait a few seconds then delete the original reply to prevent double clicking.
+      setTimeout(async () => {
+        try {
+          await i.deleteReply()
+          console.log('[Outcome] Raid message deleted after battle.')
+        } catch (error) {
+          console.error('[Outcome] Error deleting raid message:', error)
+        }
+      }, 3000)
+    }
+  })
+}
+
+async function handleCancelRaid(interaction, user) {
+  console.log('[Cancel] Handling raid cancellation.')
+  try {
+    // Use update() to immediately update the message for a component interaction.
+    await interaction.update({
+      content: 'You have canceled the raid.',
+      embeds: [],
+      components: [],
+    })
+    console.log('[Cancel] Raid cancelled and message updated.')
+    // Optionally, delete the reply after a short delay.
+    setTimeout(async () => {
+      try {
+        await interaction.deleteReply()
+        console.log('[Cancel] Raid message deleted.')
+      } catch (error) {
+        console.error('[Cancel] Error deleting raid message:', error)
+      }
+    }, 3000)
+  } catch (error) {
+    console.error('[Cancel] Failed to update message on cancel:', error)
+    try {
+      await interaction.followUp({
+        content: 'You have canceled the raid.',
+        ephemeral: true,
+      })
+    } catch (err) {
+      console.error('[Cancel] Failed to follow up on cancel:', err)
+    }
+  }
+}
+
+async function handleHealAction(interaction, user, raidBoss, healType) {
+  console.log(`[Heal] Handling heal action: ${healType}`)
+  await interaction.deferUpdate()
+
+  if (user.currency.tokens < 1) {
+    console.log('[Heal] Insufficient tokens to heal.')
+    return interaction.followUp({
+      content: "You don't have enough tokens to heal.",
+
+      ephemeral: true,
+    })
+  }
+
+  let tokensSpent = 0
+  const missingHP = user.score - user.current_raidHp
+
+  if (missingHP <= 0) {
+    console.log('[Heal] Already at max health. No tokens spent.')
+    // Optionally, you can return early here if no healing is needed.
+  } else if (healType === 'max') {
+    // Calculate tokens based on missing HP (10 HP per token).
+    tokensSpent = Math.min(Math.ceil(missingHP / 10), user.currency.tokens)
+    user.current_raidHp = user.score
+    console.log(
+      `[Heal] Healing to max. Healing ${missingHP} HP. Tokens spent: ${tokensSpent}`
+    )
+  } else {
+    // For non-max heal, define a fixed heal amount, but don't exceed max HP.
+    const desiredHeal = 100
+    const healingAmount = Math.min(desiredHeal, missingHP)
+    tokensSpent = Math.ceil(healingAmount / 10)
+    user.current_raidHp += healingAmount
+    console.log(
+      `[Heal] Healing by ${healingAmount} HP. Tokens spent: ${tokensSpent}`
+    )
+  }
+
+  // Subtract only the tokens needed.
+  user.currency.tokens -= tokensSpent
+  await user.save()
+
+  const updatedEmbed = createRaidBossEmbed(raidBoss, user)
+  console.log('[Heal] Updated embed after healing created.')
+
+  try {
+    try {
+      await interaction.editReply({ embeds: [updatedEmbed] })
+    } catch (error) {
+      console.error(
+        '[Heal] Failed to edit ephemeral message, sending a new one instead.',
+        error
+      )
+      await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
+    }
+  } catch (error) {
+    console.error(
+      '[Heal] Failed to edit message, sending a new one instead.',
+      error
+    )
+    await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
+  }
 }
 
 module.exports = { startRaidEncounter }

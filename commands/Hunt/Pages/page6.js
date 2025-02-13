@@ -173,7 +173,7 @@ module.exports = {
     {
       id: 26,
       key: 'hunt26',
-      name: '',
+      name: 'Adult Red Dragon',
       description: ``,
       energyCost: 3,
       totalBattles: 10,
@@ -189,8 +189,8 @@ module.exports = {
         { type: 'normal', monsterIndex: '', difficulty: '', goldReward: 105 }, // 335
         {
           type: 'boss',
-          monsterIndex: '', // 356
-          difficulty: 'boss-',
+          monsterIndex: 'adult-red-dragon', // 356
+          difficulty: '800',
           firstGoldReward: 294,
           goldReward: 110,
         },
