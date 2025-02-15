@@ -1,115 +1,80 @@
-const cron = require('node-cron')
-const { EmbedBuilder } = require('discord.js')
-const { RaidBoss } = require('../Models/model.js')
+const cron = require('node-cron');
+const { RaidBoss } = require('../Models/model.js');
 
-let clientInstance // Placeholder for client instance
+let clientInstance;
 
-// Global rotation state for Raid Bosses
+// Define durations: 1 hour (active) and 1 hour (cooldown)
+const ACTIVE_DURATION = 360000;    // 1 hour in ms
+const COOLDOWN_DURATION = 300000;  // 1 hour in ms
+
 const raidBossRotation = {
   currentIndex: 0,
   phase: 'active',
   lastSwitch: Date.now(),
-}
+};
 
-// Helper function to format time into minutes and seconds
-function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}m ${seconds}s`
-}
-
-// 📌 Function to rotate Raid Boss
 async function rotateRaidBoss() {
   if (!clientInstance) {
-    console.error('🚨 Client not initialized in raidTimerHandler.')
-    return
+    console.error('🚨 Client not initialized in raidTimerHandler.');
+    return;
   }
 
-  const now = Date.now()
+  const now = Date.now();
+
   if (raidBossRotation.phase === 'active') {
-    if (now - raidBossRotation.lastSwitch >= 60000) {
-      console.log('⚔️ Active phase expired. Entering cooldown phase.')
+    if (now - raidBossRotation.lastSwitch >= ACTIVE_DURATION) {
+      console.log('⚔️ Active phase expired. Transitioning to cooldown.');
 
       try {
-        const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
-        if (raidBosses.length > 0) {
-          const currentBoss = raidBosses[raidBossRotation.currentIndex]
-          currentBoss.current_hp = currentBoss.hp
-          await currentBoss.save()
-        }
+        const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] });
+        // Reset each boss's health
+        await Promise.all(
+          raidBosses.map(async (boss) => {
+            boss.current_hp = boss.hp;
+            return boss.save();
+          })
+        );
       } catch (error) {
-        console.error('❌ Error resetting Raid Boss health on cooldown:', error)
+        console.error('❌ Error resetting raid boss health on cooldown:', error);
       }
 
-      raidBossRotation.phase = 'cooldown'
-      raidBossRotation.lastSwitch = now
-
-      // Send cooldown embed
-      const cooldownDuration = 60000 // 1-minute cooldown (Set to 2 days in production)
-      const cooldownEmbed = new EmbedBuilder()
-        .setTitle('🔒 Raids are in Cooldown')
-        .setDescription(
-          `Raids will restart in ${formatTime(cooldownDuration)}.`
-        )
-        .setColor('Gold')
-
-      const raidChannel = clientInstance.channels.cache.get(
-        process.env.RAID_CHANNEL_ID
-      )
-      if (raidChannel) {
-        await raidChannel.send({ embeds: [cooldownEmbed] })
-      }
+      // Update state to cooldown
+      raidBossRotation.phase = 'cooldown';
+      raidBossRotation.lastSwitch = now;
     }
   } else if (raidBossRotation.phase === 'cooldown') {
-    if (now - raidBossRotation.lastSwitch >= 60000) {
-      console.log('🔄 Cooldown phase expired. Rotating to next Raid Boss.')
+    if (now - raidBossRotation.lastSwitch >= COOLDOWN_DURATION) {
+      console.log('🔄 Cooldown expired. Rotating to next raid boss.');
 
       try {
-        const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
+        const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] });
         if (raidBosses.length > 0) {
+          // Rotate to the next boss
           raidBossRotation.currentIndex =
-            (raidBossRotation.currentIndex + 1) % raidBosses.length
-
-          const newBoss = raidBosses[raidBossRotation.currentIndex]
-          newBoss.current_hp = newBoss.hp
-          await newBoss.save()
-
-          console.log(`🆕 New Raid Boss: ${newBoss.name}`)
-
-          // Announce the new Raid Boss
-          const newBossEmbed = new EmbedBuilder()
-            .setTitle(`⚔️ New Raid Boss Appears!`)
-            .setDescription(
-              `**${newBoss.name}** has entered the battlefield! Prepare for combat!`
-            )
-            .setColor('Red')
-            .setImage(newBoss.imageUrl)
-
-          const raidChannel = clientInstance.channels.cache.get(
-            process.env.RAID_CHANNEL_ID
-          )
-          if (raidChannel) {
-            await raidChannel.send({ embeds: [newBossEmbed] })
-          }
+            (raidBossRotation.currentIndex + 1) % raidBosses.length;
+          const newBoss = raidBosses[raidBossRotation.currentIndex];
+          newBoss.current_hp = newBoss.hp;
+          await newBoss.save();
+          console.log(`🆕 New Raid Boss: ${newBoss.name}`);
         } else {
-          console.log('No Raid Bosses found in the database.')
+          console.log('No raid bosses found in the database.');
         }
       } catch (error) {
-        console.error('❌ Error rotating Raid Boss:', error)
+        console.error('❌ Error rotating raid boss:', error);
       }
 
-      raidBossRotation.phase = 'active'
-      raidBossRotation.lastSwitch = now
+      // Transition back to active phase
+      raidBossRotation.phase = 'active';
+      raidBossRotation.lastSwitch = now;
     }
   }
 }
 
-// 📌 Function to initialize the Raid Timer with the bot client
 function initializeRaidTimer(client) {
-  clientInstance = client // Store client instance
-  console.log('🛠 Raid Timer Initialized.')
-  cron.schedule('* * * * *', rotateRaidBoss)
+  clientInstance = client; // Store client instance
+  console.log('🛠 Raid Timer Initialized.');
+  // Run the rotateRaidBoss function every minute
+  cron.schedule('* * * * *', rotateRaidBoss);
 }
 
-module.exports = { raidBossRotation, initializeRaidTimer }
+module.exports = { raidBossRotation, initializeRaidTimer };

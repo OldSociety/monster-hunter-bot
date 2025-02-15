@@ -10,9 +10,25 @@ const {
 } = require('../../Hunt/huntUtils/huntHelpers.js')
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
-const cron = require('node-cron')
 const { RaidBoss } = require('../../../Models/model.js')
 const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js')
+
+const cooldownDuration = 300000 // e.g., 1-minute cooldown
+function formatTimeRemaining(ms) {
+  let totalSeconds = Math.floor(ms / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  let minutes = Math.floor((totalSeconds % 3600) / 60)
+  let seconds = totalSeconds % 60
+  // If there's still time left but it's less than a minute, show 1 minute.
+  // if (totalSeconds > 0 && minutes === 0) {
+  //   minutes = 1
+  //   seconds = 0
+  // }
+  return `${days}d:${hours}h:${minutes}m:${seconds}`
+}
+
+// ... Continue with active raid handling if not in cooldown.
 
 function getUserFooter(user) {
   const gold = user.gold || 0
@@ -26,15 +42,34 @@ function getUserFooter(user) {
 
 function createRaidBossEmbed(raidBoss, user) {
   console.log('[Embed] Creating Raid Boss Embed for:', raidBoss.name)
+  const lootDrops = [raidBoss.loot1, raidBoss.loot2, raidBoss.loot3].filter(
+    Boolean
+  )
+  const rarityEmojis = ['🟢', '🔵', '🟣']
+
+  const formattedLootDrops = lootDrops
+    .map((loot, index) => {
+      // Replace dashes with spaces and capitalize each word
+      const formattedLoot = loot
+        .split('-')
+        .map((word) => {
+          return word.charAt(0).toUpperCase() + word.slice(1)
+        })
+        .join(' ')
+      const emoji = rarityEmojis[index] || ''
+      return `${emoji} ${formattedLoot}`
+    })
+    .join('\n')
+
   const playerHealthBar = createHealthBar(user.current_raidHp, user.score)
-  const bossHealthBar = createHealthBar(raidBoss.hp, raidBoss.maxHP)
+  const bossHealthBar = createHealthBar(raidBoss.current_hp, raidBoss.hp)
+
   return new EmbedBuilder()
-    .setTitle(`RAID BOSS - ${raidBoss.name}`)
+    .setTitle(`${raidBoss.name} [RAID BOSS]`)
     .setDescription(
       `**Your HP:** ${user.current_raidHp} / ${user.score}\n${playerHealthBar}\n\n` +
-        `**Combat Type:** ${raidBoss.combatType}\n\n` +
-        `**Boss HP:** ${raidBoss.hp} / ${raidBoss.maxHP}\n${bossHealthBar}\n\n` +
-        `**Possible Loot Drops:**\n${raidBoss.lootDrops.join('\n')}`
+        `**Boss HP:** ${raidBoss.current_hp} / ${raidBoss.hp}\n${bossHealthBar}\n\n` +
+        `**Possible Loot Drops:**\n${formattedLootDrops}`
     )
     .setColor('#FF4500')
     .setThumbnail(
@@ -44,7 +79,6 @@ function createRaidBossEmbed(raidBoss, user) {
     .setFooter({ text: getUserFooter(user) })
 }
 
-// --- NEW: Create initial action row with Raid, Heal, and Cancel buttons
 function createInitialActionRow(user) {
   console.log(
     '[UI] Creating initial action row with Raid, Heal, and Cancel buttons.'
@@ -65,8 +99,6 @@ function createInitialActionRow(user) {
       .setStyle(ButtonStyle.Danger)
   )
 }
-
-// --- NEW: Create updated action row with style buttons plus Heal and Cancel buttons.
 function createUpdatedActionRow(user) {
   console.log(
     '[UI] Creating updated action row with style buttons and Heal/Cancel buttons.'
@@ -122,104 +154,108 @@ async function runBattlePhases(
   playerScore,
   raidBoss,
   advMultiplier,
-  selectedStyle  // Optional: for display purposes
+  selectedStyle
 ) {
   console.log('[Battle] Starting Battle Phases')
-  let playerHP = user.current_raidHp;
-  let bossHP = raidBoss.hp;
-  const maxBossHP = raidBoss.maxHP;
-  const maxPlayerHP = user.score;
-  const imageUrl = raidBoss.imageUrl;
+  let playerHP = user.current_raidHp
+  let bossHP = raidBoss.current_hp
+  const maxBossHP = raidBoss.hp
+  const maxPlayerHP = user.score
+  const imageUrl = raidBoss.imageUrl
 
-  let phase = 0;
+  let phase = 0
   while (bossHP > 0 && playerHP > 0) {
-    phase++;
-    console.log(`[Battle] Phase ${phase} started.`);
+    phase++
+    console.log(`[Battle] Phase ${phase} started.`)
 
     // Use a random multiplier between 0.1 and 1 for the player's roll.
-    let multiplier = Math.random() * 0.9 + 0.1;
-    let playerRoll = Math.round(multiplier * playerScore * advMultiplier);
+    let multiplier = Math.random() * 0.9 + 0.1
+    let playerRoll = Math.round(multiplier * playerScore * advMultiplier)
 
     // Monster roll with a floor at 50% of boss_score.
     let monsterRoll = Math.round(
       Math.random() * (raidBoss.boss_score * 0.5) + raidBoss.boss_score * 0.5
-    );
+    )
     console.log(
       `[Battle] Phase ${phase} rolls - Player: ${playerRoll}, Monster: ${monsterRoll}`
-    );
+    )
 
-    let phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!';
-    console.log(`[Battle] Phase ${phase} result: ${phaseResult}`);
+    let phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
+    console.log(`[Battle] Phase ${phase} result: ${phaseResult}`)
 
     if (phaseResult === 'Hit!') {
-      let damage = Math.round(playerRoll * 0.1);
-      bossHP -= damage;
-      console.log(`[Battle] Phase ${phase} - Boss HP reduced by ${damage}`);
+      let damage = Math.round(playerRoll * 0.1)
+      bossHP -= damage
+      console.log(`[Battle] Phase ${phase} - Boss HP reduced by ${damage}`)
     } else {
-      let damage = Math.round(monsterRoll * 0.1);
-      playerHP -= damage;
-      console.log(`[Battle] Phase ${phase} - Player HP reduced by ${damage}`);
+      let damage = Math.round(monsterRoll * 0.1)
+      playerHP -= damage
+      console.log(`[Battle] Phase ${phase} - Player HP reduced by ${damage}`)
     }
 
-    if (bossHP < 0) bossHP = 0;
-    if (playerHP < 0) playerHP = 0;
+    if (bossHP < 0) bossHP = 0
+    if (playerHP < 0) playerHP = 0
 
-    const isAdvantaged = advMultiplier > 1;
-    const isDisadvantaged = advMultiplier < 1;
+    const isAdvantaged = advMultiplier > 1
+    const isDisadvantaged = advMultiplier < 1
     const effects =
       [
         isAdvantaged ? '⏫Advantage' : '',
         isDisadvantaged ? '⏬Disadvantage' : '',
       ]
         .filter(Boolean)
-        .join(', ') || 'None';
+        .join(', ') || 'None'
 
-    const playerHealthBar = createHealthBar(playerHP, maxPlayerHP);
-    const bossHealthBar = createHealthBar(bossHP, maxBossHP);
+    const playerHealthBar = createHealthBar(playerHP, maxPlayerHP)
+    const bossHealthBar = createHealthBar(bossHP, maxBossHP)
 
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Fighting ${raidBoss.name}`)
       .setDescription(
         `**Your HP:** ${playerHP} / ${maxPlayerHP}\n${playerHealthBar}\n` +
-        `**Boss HP:** ${bossHP} / ${maxBossHP}\n${bossHealthBar}\n\n` +
-        `**Effects:** ${effects}\n` +
-        `**Player Roll:** ${playerRoll}\n` +
-        `**Boss Roll:** ${monsterRoll}\n\n` +
-        `**Phase ${phase} Result:** ${phaseResult}\n` +
-        (selectedStyle ? `**Style:** ${selectedStyle}\n` : '')
+          `**Boss HP:** ${bossHP} / ${maxBossHP}\n${bossHealthBar}\n\n` +
+          `**Effects:** ${effects}\n` +
+          `**Player Roll:** ${playerRoll}\n` +
+          `**Boss Roll:** ${monsterRoll}\n\n` +
+          `**Phase ${phase} Result:** ${phaseResult}\n` +
+          (selectedStyle ? `**Style:** ${selectedStyle}\n` : '')
       )
       .setColor('#FF4500')
       .setImage(imageUrl)
-      .setFooter({ text: getUserFooter(user) });
+      .setFooter({ text: getUserFooter(user) })
 
-    console.log(`[Battle] Phase ${phase} - Sending phase embed.`);
-    await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true });
+    console.log(`[Battle] Phase ${phase} - Sending phase embed.`)
+    await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
 
-    if (bossHP <= 0 || playerHP <= 0) break;
-    console.log(`[Battle] Phase ${phase} complete. Waiting 3 seconds for next phase.`);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (bossHP <= 0 || playerHP <= 0) break
+    console.log(
+      `[Battle] Phase ${phase} complete. Waiting 3 seconds for next phase.`
+    )
+    await new Promise((resolve) => setTimeout(resolve, 2000))
   }
 
-  console.log(`[Battle] Battle ended. Final Player HP: ${playerHP}, Final Boss HP: ${bossHP}`);
+  console.log(
+    `[Battle] Battle ended. Final Player HP: ${playerHP}, Final Boss HP: ${bossHP}`
+  )
   // Write the final damage values to the database at the end of the battle.
-  user.current_raidHp = playerHP;
-  await user.save();
+  user.current_raidHp = playerHP
+  await user.save()
   if (raidBoss.instance) {
-    raidBoss.instance.current_hp = bossHP;
-    await raidBoss.instance.save();
-    console.log('[Battle] Raid boss current_hp updated in database.');
+    raidBoss.instance.current_hp = bossHP
+    await raidBoss.instance.save()
+    console.log('[Battle] Raid boss current_hp updated in database.')
   } else {
-    console.log('[Battle] No raid boss instance available for database update.');
+    console.log('[Battle] No raid boss instance available for database update.')
   }
 
   // Return true if the boss was defeated.
-  return bossHP <= 0;
+  return bossHP <= 0
 }
-
 
 async function startRaidEncounter(interaction, user) {
   console.log('[Raid] Starting raid encounter')
   stopUserCollector(interaction.user.id)
+  const now = Date.now()
 
   const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
   console.log(`[Raid] Retrieved ${raidBosses.length} raid bosses.`)
@@ -233,15 +269,17 @@ async function startRaidEncounter(interaction, user) {
 
   const selectedBoss = raidBosses[raidBossRotation.currentIndex]
   console.log('[Raid] Selected raid boss:', selectedBoss.name)
-  const bossStartingHP = selectedBoss.hp
 
   const raidBoss = {
     name: selectedBoss.name,
     index: selectedBoss.index,
     type: selectedBoss.type,
     combatType: selectedBoss.combatType,
-    hp: bossStartingHP,
-    maxHP: bossStartingHP,
+    hp: selectedBoss.hp,
+    current_hp: selectedBoss.current_hp,
+    loot1: selectedBoss.loot1,
+    loot2: selectedBoss.loot2,
+    loot3: selectedBoss.loot3,
     boss_score: selectedBoss.boss_score, // Make sure this field is correct
     imageUrl: selectedBoss.imageUrl,
     lootDrops: selectedBoss.lootDrops || [],
@@ -249,14 +287,24 @@ async function startRaidEncounter(interaction, user) {
     instance: selectedBoss, // Attach the model instance here
   }
 
-  console.log('[Raid] Raid boss object created:', raidBoss)
-
   if (!raidBoss.activePhase) {
-    console.log('[Raid] Raid currently on cooldown.')
-    return interaction.followUp({
-      content: '⚠️ Raids are currently on cooldown! Try again later.',
-      ephemeral: true,
-    })
+    const elapsed = now - raidBossRotation.lastSwitch
+    const timeRemaining = Math.max(0, cooldownDuration - elapsed);
+
+
+    // Option A: Using custom formatted string:
+    const embed = new EmbedBuilder()
+      .setTitle('🔒 Raids are on Cooldown')
+      .setDescription(
+        `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`
+      )
+      .setColor('Gold')
+
+    if (interaction.deferred || interaction.replied) {
+      return interaction.followUp({ embeds: [embed], ephemeral: true })
+    } else {
+      return interaction.reply({ embeds: [embed], ephemeral: true })
+    }
   }
 
   const monsterEmbed = createRaidBossEmbed(raidBoss, user)
@@ -422,9 +470,11 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
   }
 
   // Subtract only the tokens needed.
-  user.currency.tokens -= tokensSpent
+  user.currency = {
+    ...user.currency,
+    tokens: user.currency.tokens - tokensSpent,
+  }
   await user.save()
-
   const updatedEmbed = createRaidBossEmbed(raidBoss, user)
   console.log('[Heal] Updated embed after healing created.')
 
