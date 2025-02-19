@@ -1,152 +1,42 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require('discord.js')
+
 const {
   checkAdvantage,
   calculateWinChance,
 } = require('../../Hunt/huntUtils/huntHelpers.js')
+
+const { fetchMonsterByName } = require('../../../handlers/cacheHandler')
+const {
+  updateOrAddMonsterToCollection,
+} = require('../../../handlers/userMonsterHandler')
+const { updateTop5AndUserScore } = require('../../../handlers/topCardsManager')
+const {
+  generateMonsterRewardEmbed,
+} = require('../../../utils/embeds/monsterRewardEmbed')
+const { getStarsBasedOnColor } = require('../../../utils/starRating')
+const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
+
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { RaidBoss } = require('../../../Models/model.js')
 const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js')
+const {
+  formatTimeRemaining,
+  getUserFooter,
+  createRaidBossEmbed,
+  createInitialActionRow,
+  createUpdatedActionRow,
+  processGlobalRaidRewards,
+} = require('./raidHelpers.js')
+
+const {
+  getUniformBaseRewards,
+  getUniformGearReward,
+  getUniformCardRewards,
+} = require('./raidRewards')
 
 const cooldownDuration = 300000 // e.g., 1-minute cooldown
-function formatTimeRemaining(ms) {
-  let totalSeconds = Math.floor(ms / 1000)
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  let minutes = Math.floor((totalSeconds % 3600) / 60)
-  let seconds = totalSeconds % 60
-  // If there's still time left but it's less than a minute, show 1 minute.
-  // if (totalSeconds > 0 && minutes === 0) {
-  //   minutes = 1
-  //   seconds = 0
-  // }
-  return `${days}d:${hours}h:${minutes}m:${seconds}`
-}
-
-// ... Continue with active raid handling if not in cooldown.
-
-function getUserFooter(user) {
-  const gold = user.gold || 0
-  const currency = user.currency || {}
-  const energy = currency.energy || 0
-  const tokens = currency.tokens || 0
-  const eggs = currency.eggs || 0
-  const ichor = currency.ichor || 0
-  return `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
-}
-
-function createRaidBossEmbed(raidBoss, user) {
-  console.log('[Embed] Creating Raid Boss Embed for:', raidBoss.name)
-  const lootDrops = [raidBoss.loot1, raidBoss.loot2, raidBoss.loot3].filter(
-    Boolean
-  )
-  const rarityEmojis = ['🟢', '🔵', '🟣']
-
-  const formattedLootDrops = lootDrops
-    .map((loot, index) => {
-      // Replace dashes with spaces and capitalize each word
-      const formattedLoot = loot
-        .split('-')
-        .map((word) => {
-          return word.charAt(0).toUpperCase() + word.slice(1)
-        })
-        .join(' ')
-      const emoji = rarityEmojis[index] || ''
-      return `${emoji} ${formattedLoot}`
-    })
-    .join('\n')
-
-  const playerHealthBar = createHealthBar(user.current_raidHp, user.score)
-  const bossHealthBar = createHealthBar(raidBoss.current_hp, raidBoss.hp)
-
-  return new EmbedBuilder()
-    .setTitle(`${raidBoss.name} [RAID BOSS]`)
-    .setDescription(
-      `**Your HP:** ${user.current_raidHp} / ${user.score}\n${playerHealthBar}\n\n` +
-        `**Boss HP:** ${raidBoss.current_hp} / ${raidBoss.hp}\n${bossHealthBar}\n\n` +
-        `**Possible Loot Drops:**\n${formattedLootDrops}`
-    )
-    .setColor('#FF4500')
-    .setThumbnail(
-      `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${raidBoss.combatType}C.png`
-    )
-    .setImage(raidBoss.imageUrl)
-    .setFooter({ text: getUserFooter(user) })
-}
-
-function createInitialActionRow(user) {
-  console.log(
-    '[UI] Creating initial action row with Raid, Heal, and Cancel buttons.'
-  )
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('initiate_raid')
-      .setLabel('Begin Raid!')
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId('heal')
-      .setLabel('Heal (100 HP/🧿token)')
-      .setStyle(ButtonStyle.Success)
-      .setDisabled(user.currency.tokens < 1),
-    new ButtonBuilder()
-      .setCustomId('cancel_raid')
-      .setLabel('Cancel Raid')
-      .setStyle(ButtonStyle.Danger)
-  )
-}
-function createUpdatedActionRow(user) {
-  console.log(
-    '[UI] Creating updated action row with style buttons and Heal/Cancel buttons.'
-  )
-  const styleButtons = []
-  const styles = ['brute', 'spellsword', 'stealth']
-  const styleColors = {
-    brute: ButtonStyle.Danger,
-    spellsword: ButtonStyle.Primary,
-    stealth: ButtonStyle.Success,
-  }
-
-  styles.forEach((style) => {
-    if (user[`${style}_score`] > 0) {
-      console.log(`[UI] Adding style button for: ${style}`)
-      styleButtons.push(
-        new ButtonBuilder()
-          .setCustomId(`style_${style}`)
-          .setLabel(
-            `${style.charAt(0).toUpperCase() + style.slice(1)}: ${
-              user[`${style}_score`]
-            }`
-          )
-          .setStyle(styleColors[style])
-      )
-    }
-  })
-
-  // Create Heal and Cancel buttons (same as before)
-  const cancelButton = new ButtonBuilder()
-    .setCustomId('cancel_raid')
-    .setLabel('Cancel Raid')
-    .setStyle(ButtonStyle.Secondary)
-
-  // Combine all buttons into one row. Maximum 5 buttons per row.
-  const updatedRow = new ActionRowBuilder()
-  // Add style buttons first.
-  styleButtons.forEach((btn) => updatedRow.addComponents(btn))
-  // Add Heal and Cancel buttons.
-  updatedRow.addComponents(cancelButton)
-
-  console.log(
-    '[UI] Updated action row created with',
-    updatedRow.components.length,
-    'buttons.'
-  )
-  return updatedRow
-}
+// Global set to track user_ids of all raid participants for reward processing
+const globalRaidParticipants = new Set()
 
 async function runBattlePhases(
   interaction,
@@ -255,6 +145,8 @@ async function runBattlePhases(
 async function startRaidEncounter(interaction, user) {
   console.log('[Raid] Starting raid encounter')
   stopUserCollector(interaction.user.id)
+  globalRaidParticipants.add(interaction.user_id)
+
   const now = Date.now()
 
   const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
@@ -289,12 +181,11 @@ async function startRaidEncounter(interaction, user) {
 
   if (!raidBoss.activePhase) {
     const elapsed = now - raidBossRotation.lastSwitch
-    const timeRemaining = Math.max(0, cooldownDuration - elapsed);
-
+    const timeRemaining = Math.max(0, cooldownDuration - elapsed)
 
     // Option A: Using custom formatted string:
     const embed = new EmbedBuilder()
-      .setTitle('🔒 Raids are on Cooldown')
+      .setTitle('🏆 Raid Complete.')
       .setDescription(
         `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`
       )
@@ -372,11 +263,83 @@ async function startRaidEncounter(interaction, user) {
         advMultiplier,
         selectedStyle
       )
+
       console.log(
         '[Collector] Battle phases complete. Outcome:',
         playerWins ? 'Victory' : 'Defeat'
       )
+
+      // Only process rewards if the boss was defeated.
       if (playerWins) {
+        if (!rewardsDistributed) {
+          rewardsDistributed = true // Mark rewards as processed for this raid session.
+          const bossDefeated = true
+          const raidProgressPercentage = 1 // Full progress since boss was defeated
+
+          // Calculate uniform rewards.
+          const baseRewards = getUniformBaseRewards(
+            bossDefeated,
+            raidProgressPercentage
+          )
+          const gearReward = getUniformGearReward(
+            bossDefeated,
+            raidProgressPercentage
+          )
+          const cardRewards = getUniformCardRewards(
+            bossDefeated,
+            raidProgressPercentage,
+            raidBoss
+          )
+
+          // Update the user's resources.
+          user.gold += baseRewards.gold
+          user.currency.gear = (user.currency.gear || 0) + gearReward
+          await user.save()
+
+          // --- Process Card Rewards ---
+          // Prepare an array to hold monster reward embeds.
+          const monsterRewardEmbeds = []
+          for (const cardName of cardRewards) {
+            const monster = await fetchMonsterByName(cardName)
+            if (monster) {
+              await updateOrAddMonsterToCollection(user.user_id, monster)
+              const stars = getStarsBasedOnColor(monster.color)
+              const category = classifyMonsterType(monster.type)
+              const monsterEmbed = generateMonsterRewardEmbed(
+                monster,
+                category,
+                stars
+              )
+              monsterRewardEmbeds.push(monsterEmbed)
+            } else {
+              console.warn(
+                `Card "${cardName}" not found via fetchMonsterByName.`
+              )
+            }
+          }
+        } else {
+          console.log(
+            'Rewards have already been distributed for this raid session.'
+          )
+        }
+
+        const rewardEmbed = new EmbedBuilder()
+          .setTitle('🏆 Raid Rewards')
+          .setDescription(
+            `You received:\n\n` +
+              `**Gold:** ${baseRewards.gold}\n` +
+              `**Legendary Card:** ${
+                baseRewards.legendaryCard ? 'Yes' : 'No'
+              }\n` +
+              `**⚙️ Gear:** ${gearReward}\n` +
+              `**Cards:** ${
+                cardRewards.length ? cardRewards.join(', ') : 'None'
+              }`
+          )
+          .setColor('Green')
+
+        const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
+        await i.followUp({ embeds: embedsToSend, ephemeral: true })
         await i.followUp({
           content: '🎉 You have defeated the raid boss!',
           ephemeral: true,
@@ -387,7 +350,6 @@ async function startRaidEncounter(interaction, user) {
           ephemeral: true,
         })
       }
-      // Wait a few seconds then delete the original reply to prevent double clicking.
       setTimeout(async () => {
         try {
           await i.deleteReply()
