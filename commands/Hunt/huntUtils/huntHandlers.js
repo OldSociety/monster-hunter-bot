@@ -15,40 +15,38 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     `showLevelSelection() called for user: ${interaction.user.tag} (ID: ${interaction.user.id})`
   )
 
-  let completedLevels = user.completedLevels || 0;
-
-// If the user has completed 29 or more levels, force loading page5
-if (completedLevels >= 29) {
-  currentPage = 'page5';
-  console.log(`User has completed ${completedLevels} levels – forcing page5.`);
-} else {
-  // Otherwise, use your normal logic:
-  // Determine unlockedPages, highestUnlockedPage, etc.
-  // currentPage = newPage if provided or highestUnlockedPage
+  let completedLevels = user.completedLevels || 0
+  let currentPage = 'page1' // Default to page1
   let totalHuntsBefore = 0
   let unlockedPages = []
 
-  for (const [pageKey, pageData] of Object.entries(huntPages)) {
-    if (completedLevels >= totalHuntsBefore) {
-      unlockedPages.push(pageKey)
+  // If the user has completed 29 or more levels, force loading page5
+  if (completedLevels >= 29) {
+    currentPage = 'page5'
+    console.log(`User has completed ${completedLevels} levels – forcing page5.`)
+  } else {
+    for (const [pageKey, pageData] of Object.entries(huntPages)) {
+      if (completedLevels >= totalHuntsBefore) {
+        unlockedPages.push(pageKey)
+      }
+      if (Array.isArray(pageData.hunts)) {
+        totalHuntsBefore += pageData.hunts.length
+      } else {
+        console.error(
+          `❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`
+        )
+      }
     }
-    if (Array.isArray(pageData.hunts)) {
-      totalHuntsBefore += pageData.hunts.length
-    } else {
-      console.error(`❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`)
-    }
+
+    const highestUnlockedPage =
+      unlockedPages[unlockedPages.length - 1] || 'page1'
+    console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
+
+    currentPage = typeof newPage === 'string' ? newPage : highestUnlockedPage
+    console.log(`📖 Current Page after button press: ${currentPage}`)
   }
-  
 
-  const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
-  console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
-
-  const currentPage =
-    typeof newPage === 'string' ? newPage : highestUnlockedPage
-  console.log(`📖 Current Page after button press: ${currentPage}`)
-}
-let totalHuntsBefore = 0
-let unlockedPages = []
+  // Ensure `currentPage` is always valid
   const pageData = huntPages[currentPage]
 
   if (!pageData) {
@@ -59,28 +57,26 @@ let unlockedPages = []
     })
   }
 
-  totalHuntsBefore = Object.keys(huntPages)
-    .slice(0, Object.keys(huntPages).indexOf(currentPage))
-    .reduce((sum, key) => sum + huntPages[key].hunts.length, 0)
-
   let completedLevelsOnPage = completedLevels - totalHuntsBefore
   console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`)
 
-// Calculate total hunts on current page:
-const totalHuntsOnPage = pageData.hunts.length;
+  // Check if this page is marked as finished AND it's not the final page overall
+  const isLastPage =
+    Object.keys(huntPages).indexOf(currentPage) ===
+    Object.keys(huntPages).length - 1
 
-// Check if this page is marked as finished AND it's not the final page overall
-const isLastPage = Object.keys(huntPages).indexOf(currentPage) === Object.keys(huntPages).length - 1;
-
-if (pageData.unlocksPage === 'finished' && !isLastPage &&
-    completedLevels >= totalHuntsBefore + totalHuntsOnPage) {
-  return interaction.editReply({
-    content: 'Congratulations! You have completed all available hunts on this page.',
-    components: [],
-    ephemeral: true,
-  });
-}
-
+  if (
+    pageData.unlocksPage === 'finished' &&
+    !isLastPage &&
+    completedLevels >= totalHuntsBefore + pageData.hunts.length
+  ) {
+    return interaction.editReply({
+      content:
+        'Congratulations! You have completed all available hunts on this page.',
+      components: [],
+      ephemeral: true,
+    })
+  }
 
   const unlockedHunts = pageData.hunts.filter(
     (hunt) => hunt.id <= completedLevels + 1
@@ -175,7 +171,5 @@ if (pageData.unlocksPage === 'finished' && !isLastPage &&
 
   console.log('Setting up interaction collector for hunt selection...')
 }
-
-
 
 module.exports = { showLevelSelection }
