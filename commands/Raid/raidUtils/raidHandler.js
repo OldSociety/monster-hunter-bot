@@ -147,6 +147,7 @@ async function startRaidEncounter(interaction, user) {
   stopUserCollector(interaction.user.id)
   globalRaidParticipants.add(interaction.user_id)
 
+  await interaction.deferReply({ ephemeral: true })
   rewardsDistributed = false
   const now = Date.now()
 
