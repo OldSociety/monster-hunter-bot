@@ -77,7 +77,7 @@ module.exports = {
               .setTitle('Welcome to Blood Hunter!')
               .setDescription(`You have joined the hunt! Use \`/shop\` to get your first card.`)
               .setFooter({
-                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
               .setThumbnail(interaction.user.displayAvatarURL()),
           ],
@@ -106,7 +106,7 @@ module.exports = {
             )
             .setThumbnail(interaction.user.displayAvatarURL())
             .setFooter({
-              text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+              text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
             })
         }
 
@@ -143,7 +143,7 @@ module.exports = {
           .setTitle(`Top ${category.charAt(0).toUpperCase() + category.slice(1)} Cards`)
           .setDescription(formattedCards || `You have no ${category} cards.`)
           .setFooter({
-            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
           })
           .setThumbnail(interaction.user.displayAvatarURL())
       }

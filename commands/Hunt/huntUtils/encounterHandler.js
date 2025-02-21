@@ -90,7 +90,7 @@ async function offerRetry(interaction, user, huntData) {
         `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
       )
       .setFooter({
-        text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+        text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
       })
     await interaction.followUp({
       embeds: [noEnergyRetryEmbed],
@@ -111,7 +111,7 @@ async function offerRetry(interaction, user, huntData) {
     )
     .setColor('#FF0000')
     .setFooter({
-      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
     })
 
   const retryButton = new ButtonBuilder()

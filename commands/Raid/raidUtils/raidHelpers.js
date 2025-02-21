@@ -29,7 +29,9 @@ function getUserFooter(user) {
   const tokens = currency.tokens || 0
   const eggs = currency.eggs || 0
   const ichor = currency.ichor || 0
-  return `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+  const gear = currency.gear || 0
+
+  return `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 }
 
 function createWelcomeEmbed(raidBoss, user) {

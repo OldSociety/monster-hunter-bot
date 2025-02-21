@@ -151,8 +151,9 @@ module.exports = {
       const tokens = currency.tokens || 0
       const eggs = currency.eggs || 0
       const ichor = currency.ichor || 0
+      const gear = currency.gear || 0
 
-      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 
       const shopEmbed = new EmbedBuilder()
         .setColor(0x00ff00)
@@ -540,7 +541,7 @@ module.exports = {
               )
               .setColor('Gold')
               .setFooter({
-                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
               .setImage(imageUrl)
             // .setThumbnail(thumbnailUrl)
@@ -627,7 +628,7 @@ module.exports = {
               )
               .setColor('Green')
               .setFooter({
-                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
               .setImage(imageUrl)
 

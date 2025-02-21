@@ -92,7 +92,7 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
     )
     .setColor('#FFD700')
     .setFooter({
-      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
+      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
     })
 
   if (huntData.ichorUsed) {

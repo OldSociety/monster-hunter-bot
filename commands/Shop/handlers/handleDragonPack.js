@@ -65,6 +65,8 @@ async function handleDragonPack(interaction) {
     const tokens = currency.tokens || 0
     const eggs = currency.eggs || 0
     const ichor = currency.ichor || 0
+    const gear = currency.gear || 0
+
     console.log(`User has ${eggs} eggs.`)
 
     // Placeholder logic: No inventory system in place, assume nothing is owned
@@ -91,7 +93,7 @@ async function handleDragonPack(interaction) {
       })
     }
 
-    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+    const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 
     const dragonPackEmbed = new EmbedBuilder()
       .setColor(0xff6600)
