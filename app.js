@@ -14,7 +14,6 @@ const cron = require('node-cron')
 
 const { Client, Collection, GatewayIntentBits } = require('discord.js')
 const { User } = require('./Models/model')
-const { initializeRaidTimer } = require('./handlers/raidTimerHandler') // ✅ Import properly
 
 // Import event handler
 const eventHandler = require('./handlers/eventHandler')
@@ -67,11 +66,15 @@ eventHandler(client)
 
 // Import message handler
 const messageHandler = require('./handlers/messageHandler')
+const { initializeRaidTimer } = require('./handlers/raidTimerHandler') 
+const { initializeRaidHealing } = require('./handlers/raidHealingHandler')
+
 messageHandler(client, User)
 
 client.once('ready', async () => {
   // Start Raid Timer only after bot is ready
   initializeRaidTimer(client)
+  initializeRaidHealing(client)
 })
 
 // Login

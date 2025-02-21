@@ -2,7 +2,6 @@ const { EmbedBuilder } = require('discord.js')
 
 const {
   checkAdvantage,
-  calculateWinChance,
 } = require('../../Hunt/huntUtils/huntHelpers.js')
 
 const { fetchMonsterByName } = require('../../../handlers/cacheHandler')
@@ -23,10 +22,11 @@ const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js')
 const {
   formatTimeRemaining,
   getUserFooter,
+  createWelcomeEmbed,
   createRaidBossEmbed,
   createInitialActionRow,
   createUpdatedActionRow,
-  processGlobalRaidRewards
+  processGlobalRaidRewards,
 } = require('./raidHelpers.js')
 
 const {
@@ -215,7 +215,7 @@ async function startRaidEncounter(interaction, user) {
     }
   }
 
-  const monsterEmbed = createRaidBossEmbed(raidBoss, user)
+  const welcomeEmbed = createWelcomeEmbed(raidBoss, user)
   console.log('[Raid] Overview embed created.')
 
   // Use the initial action row: Raid, Heal, Cancel.
@@ -223,7 +223,7 @@ async function startRaidEncounter(interaction, user) {
   console.log('[Raid] Initial action row created.')
 
   await interaction.followUp({
-    embeds: [monsterEmbed],
+    embeds: [welcomeEmbed],
     components: [initialRow],
     ephemeral: true,
   })
@@ -358,15 +358,14 @@ async function startRaidEncounter(interaction, user) {
 
         const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
         await i.followUp({ embeds: embedsToSend, ephemeral: true })
-        await i.followUp({
-          content: '🎉 You have defeated the raid boss!',
-          ephemeral: true,
-        })
       } else {
-        await i.followUp({
-          content: '💀 You have been defeated by the raid boss!',
-          ephemeral: true,
-        })
+        const defeatEmbed = new EmbedBuilder()
+          .setTitle('💀 Defeat!')
+          .setDescription(
+            `Uh oh. Don't worry, you can heal by spending tokens or waiting for you health to recharge. The more you damage the Raid boss, the greater the rewards!`
+          )
+          .setColor('Red').setFooter({ text: getUserFooter(user) })
+        await i.followUp({ embeds: [defeatEmbed], ephemeral: true })
       }
       setTimeout(async () => {
         try {

@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         eggs: 0,
         ichor: 0,
         dice: 0,
+        gear: 0
       },
     },
     score: {

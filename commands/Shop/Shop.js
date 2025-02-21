@@ -16,7 +16,8 @@ const {
   pullValidMonster,
 } = require('../../handlers/cacheHandler')
 const {
-  updateOrAddMonsterToCollection, updateUserScores
+  updateOrAddMonsterToCollection,
+  updateUserScores,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
 const { calculateMScore } = require('../../handlers/userMonsterHandler.js')
@@ -531,9 +532,7 @@ module.exports = {
               assignedRarity,
               nextRank
             )
-           
 
-         
             const promotionEmbed = new EmbedBuilder()
               .setTitle(`Promote: ${selectedMonster.name}`)
               .setDescription(
@@ -544,7 +543,7 @@ module.exports = {
                 text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
               })
               .setImage(imageUrl)
-              // .setThumbnail(thumbnailUrl)
+            // .setThumbnail(thumbnailUrl)
 
             const confirmRow = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
@@ -615,8 +614,11 @@ module.exports = {
             await user.save()
             await monster.save()
 
-            await updateUserScores(user.user_id, classifyMonsterType(monster.type), monster);
-
+            await updateUserScores(
+              user.user_id,
+              classifyMonsterType(monster.type),
+              monster
+            )
 
             const successEmbed = new EmbedBuilder()
               .setTitle('✅ Promotion Successful!')

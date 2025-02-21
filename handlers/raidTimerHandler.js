@@ -3,8 +3,7 @@ const { RaidBoss } = require('../Models/model.js')
 
 let clientInstance
 // Global flag to indicate if rewards for the current raid session have been distributed.
-let rewardsDistributed = false;
-
+let rewardsDistributed = false
 
 // Define durations: 1 hour (active) and 1 hour (cooldown)
 const ACTIVE_DURATION = 360000 // 1 hour in ms
