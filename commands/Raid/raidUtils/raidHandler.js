@@ -1,8 +1,6 @@
 const { EmbedBuilder } = require('discord.js')
 
-const {
-  checkAdvantage,
-} = require('../../Hunt/huntUtils/huntHelpers.js')
+const { checkAdvantage } = require('../../Hunt/huntUtils/huntHelpers.js')
 
 const { fetchMonsterByName } = require('../../../handlers/cacheHandler')
 const {
@@ -18,7 +16,7 @@ const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { RaidBoss } = require('../../../Models/model.js')
-const { raidBossRotation } = require('../../../handlers/raidTimerHandler.js')
+const { raidBossRotation, enterCooldownEarly } = require('../../../handlers/raidTimerHandler.js')
 const {
   formatTimeRemaining,
   getUserFooter,
@@ -38,6 +36,7 @@ const {
 const cooldownDuration = 300000 // e.g., 1-minute cooldown
 // Global set to track user_ids of all raid participants for reward processing
 const globalRaidParticipants = new Set()
+let rewardsDistributed = false
 
 async function runBattlePhases(
   interaction,
@@ -148,6 +147,7 @@ async function startRaidEncounter(interaction, user) {
   stopUserCollector(interaction.user.id)
   globalRaidParticipants.add(interaction.user_id)
 
+  rewardsDistributed = false
   const now = Date.now()
 
   const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
@@ -288,39 +288,43 @@ async function startRaidEncounter(interaction, user) {
 
       // Only process rewards if the boss was defeated.
       if (playerWins) {
+        console.log('[Raid] Processing rewards...')
+      
         if (!rewardsDistributed) {
-          rewardsDistributed = true // Mark rewards as processed for this raid session.
-          const bossDefeated = true
-          const raidProgressPercentage = 1 // Full progress since boss was defeated
-
-          // Calculate uniform rewards.
-          const baseRewards = getUniformBaseRewards(
-            bossDefeated,
-            raidProgressPercentage
-          )
-          const gearReward = getUniformGearReward(
-            bossDefeated,
-            raidProgressPercentage
-          )
-          const cardRewards = getUniformCardRewards(
-            bossDefeated,
-            raidProgressPercentage,
-            raidBoss
-          )
-
-          // Update the user's resources.
+          rewardsDistributed = true
+      
+          // ✅ If the boss is defeated, instantly enter cooldown
+          const bossDefeated = raidBoss.current_hp <= 0
+          if (bossDefeated) {
+            await enterCooldownEarly()
+          }
+      
+          // ✅ Calculate progress
+          const raidProgressPercentage = 1 - raidBoss.current_hp / raidBoss.hp
+          console.log(`[DEBUG] Raid Progress: ${raidProgressPercentage * 100}%`)
+      
+          // ✅ Fetch Rewards
+          let baseRewards = getUniformBaseRewards(bossDefeated, raidProgressPercentage)
+          let gearReward = getUniformGearReward(bossDefeated, raidProgressPercentage)
+          let cardRewards = getUniformCardRewards(bossDefeated, raidProgressPercentage, raidBoss)
+      
+          // ✅ Process rewards
+          user.gold = Number(user.gold) || 0
+          user.currency = { ...user.currency, gear: Number(user.currency.gear) || 0 }
+      
           user.gold += baseRewards.gold
-          user.currency.gear = (user.currency.gear || 0) + gearReward
+          user.currency.gear += gearReward
+          await user.setDataValue('currency', user.currency)
           await user.save()
 
-          // --- Process Card Rewards ---
-          // Prepare an array to hold monster reward embeds.
-          const monsterRewardEmbeds = []
+          // Process Card Rewards
+          let monsterRewardEmbeds = []
           for (const cardName of cardRewards) {
             const monster = await fetchMonsterByName(cardName)
             if (monster) {
               await updateOrAddMonsterToCollection(user.user_id, monster)
-              await updateTop5AndUserScore(userId)
+              await updateTop5AndUserScore(user.user_id)
+
               const stars = getStarsBasedOnColor(monster.color)
               const category = classifyMonsterType(monster.type)
               const monsterEmbed = generateMonsterRewardEmbed(
@@ -328,43 +332,50 @@ async function startRaidEncounter(interaction, user) {
                 category,
                 stars
               )
+
               monsterRewardEmbeds.push(monsterEmbed)
             } else {
-              console.warn(
-                `Card "${cardName}" not found via fetchMonsterByName.`
-              )
+              console.warn(`⚠️ Warning: Card "${cardName}" not found.`)
             }
           }
+
+          console.log(
+            `[DEBUG] Monster Reward Embeds Count: ${monsterRewardEmbeds.length}`
+          )
+
+          // Create Reward Embed
+          const rewardEmbed = new EmbedBuilder()
+            .setTitle('🏆 Raid Rewards')
+            .setDescription(
+              `You received:\n\n` +
+                `**Gold:** ${baseRewards.gold}\n` +
+                `**Legendary Card:** ${
+                  baseRewards.legendaryCard ? 'Yes' : 'No'
+                }\n` +
+                `**⚙️ Gear:** ${gearReward}\n` +
+                `**Cards:** ${
+                  cardRewards.length ? cardRewards.join(', ') : 'None'
+                }`
+            )
+            .setColor('Green')
+
+          const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
+
+          // Send Rewards to User
+          await i.followUp({ embeds: embedsToSend, ephemeral: true })
         } else {
           console.log(
             'Rewards have already been distributed for this raid session.'
           )
         }
-
-        const rewardEmbed = new EmbedBuilder()
-          .setTitle('🏆 Raid Rewards')
-          .setDescription(
-            `You received:\n\n` +
-              `**Gold:** ${baseRewards.gold}\n` +
-              `**Legendary Card:** ${
-                baseRewards.legendaryCard ? 'Yes' : 'No'
-              }\n` +
-              `**⚙️ Gear:** ${gearReward}\n` +
-              `**Cards:** ${
-                cardRewards.length ? cardRewards.join(', ') : 'None'
-              }`
-          )
-          .setColor('Green')
-
-        const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
-        await i.followUp({ embeds: embedsToSend, ephemeral: true })
       } else {
         const defeatEmbed = new EmbedBuilder()
           .setTitle('💀 Defeat!')
           .setDescription(
             `Uh oh. Don't worry, you can heal by spending tokens or waiting for you health to recharge. The more you damage the Raid boss, the greater the rewards!`
           )
-          .setColor('Red').setFooter({ text: getUserFooter(user) })
+          .setColor('Red')
+          .setFooter({ text: getUserFooter(user) })
         await i.followUp({ embeds: [defeatEmbed], ephemeral: true })
       }
       setTimeout(async () => {

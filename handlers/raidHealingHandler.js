@@ -4,7 +4,6 @@ const { User } = require('../Models/model.js')
 
 async function healUsers() {
   try {
-    console.log('🩹 Healing players in raid...')
 
     // Fetch all users who need healing (HP < Max HP)
     const usersNeedingHealing = await User.findAll({
@@ -12,12 +11,6 @@ async function healUsers() {
         current_raidHp: { [Op.lt]: col('score') }, // Only users who need healing
       },
     })
-
-    if (usersNeedingHealing.length === 0) {
-      console.log('✅ No users need healing at this time.')
-      return
-    }
-
     // Heal users in batches
     await Promise.all(
       usersNeedingHealing.map(async (user) => {
