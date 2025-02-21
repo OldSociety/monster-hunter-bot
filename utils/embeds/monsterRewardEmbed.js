@@ -10,7 +10,7 @@ const { EmbedBuilder } = require('discord.js')
 function generateMonsterRewardEmbed(monster, category, rarityStars) {
   const categoryThumbnailMap = {
     brute:
-      'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteA.png',
+      'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/bruteC.png',
     spellsword:
       'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/spellswordC.png',
     stealth:
