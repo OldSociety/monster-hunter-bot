@@ -113,7 +113,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'wyvern', difficulty: 110, goldReward: 50 }, // 110
         { type: 'normal', monsterIndex: 'rakshasa', difficulty: 110, goldReward: 52 }, // 110
         { type: 'normal', monsterIndex: 'mammoth', difficulty: 126, goldReward: 54 }, // 126
-        { type: 'normal', monsterIndex: 'aboleth', difficulty: 1135, goldReward: 56 }, // 135 
+        { type: 'normal', monsterIndex: 'aboleth', difficulty: 113, goldReward: 56 }, // 135 
         { type: 'normal', monsterIndex: 'weretiger-hybrid', difficulty: 120, goldReward: 49 }, // 120
         { type: 'normal', monsterIndex: 'bearded-devil', difficulty: 110, goldReward: 51 }, // 110
         {
