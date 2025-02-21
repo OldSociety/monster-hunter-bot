@@ -18,6 +18,7 @@ function generateMonsterRewardEmbed(monster, category, rarityStars) {
   }
 
   const thumbnailUrl = categoryThumbnailMap[category] || monster.imageUrl
+  console.log(thumbnailUrl)
 
   return new EmbedBuilder()
     .setColor(monster.color)

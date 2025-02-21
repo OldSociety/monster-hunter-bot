@@ -42,7 +42,7 @@ async function healUsers() {
 function initializeRaidHealing(client) {
   console.log('🩹 Raid Healing Timer Initialized.')
   // Runs every 6 minutes
-  cron.schedule('*/1 * * * *', healUsers)
+  cron.schedule('*/6 * * * *', healUsers)
 }
 
 module.exports = { initializeRaidHealing }

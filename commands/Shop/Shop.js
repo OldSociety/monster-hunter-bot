@@ -153,7 +153,7 @@ module.exports = {
       const ichor = currency.ichor || 0
       const gear = currency.gear || 0
 
-      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
+      const footerText =`Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 
       const shopEmbed = new EmbedBuilder()
         .setColor(0x00ff00)
@@ -317,16 +317,16 @@ module.exports = {
 
             await user.save()
 
-            if (selectedItem === 'dragon') {
-              const monster = await pullSpecificMonster('adult-red-dragon')
+            if (selectedItem) {
+              const monster = await pullSpecificMonster(selectedItem.replace(/_/g, '-'))
 
               if (!monster) {
                 return interaction.editReply({
-                  content:
-                    'Could not retrieve the Adult Red Dragon card. Please try again later or contact support.',
+                  content: `Could not retrieve the **${DRAGON_PACK_DESCRIPTIONS[selectedItem]}** card. Please try again later or contact support.`,
                   ephemeral: true,
                 })
               }
+          
 
               // Ensure necessary fields exist
               monster.rarity = 'Very Rare'
@@ -346,17 +346,14 @@ module.exports = {
               await updateTop5AndUserScore(userId)
 
               const category = classifyMonsterType(monster.type)
+              console.log(category)
               const stars = getStarsBasedOnColor(monster.color || 0x000000) // Default color if missing
-              const monsterEmbed = generateMonsterRewardEmbed(
-                monster,
-                category,
-                stars
-              )
+              const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
 
-              return interaction.editReply({
-                content: `You have obtained the **${result.name}** from the Dragon Pack!`,
-                embeds: [monsterEmbed],
-              })
+    return interaction.editReply({
+      content: `You have obtained the **${result.name}** from the Dragon Pack!`,
+      embeds: [monsterEmbed],
+    })
             } else {
               // Handle normal equipment purchase (adding to Inventories table)
               // await Inventory.create({ userId, itemName: selectedItem })
