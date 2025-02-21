@@ -415,7 +415,7 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
   console.log(`[Heal] Handling heal action: ${healType}`)
   await interaction.deferUpdate()
 
-  if (user.currency.tokens < 1) {
+  if (user.currency.tokens < 10) {
     console.log('[Heal] Insufficient tokens to heal.')
     return interaction.followUp({
       content: "You don't have enough tokens to heal.",
