@@ -1,3 +1,4 @@
+const { EmbedBuilder } = require('discord.js')
 
 const {
   checkAdvantage,
@@ -25,7 +26,7 @@ const {
   createRaidBossEmbed,
   createInitialActionRow,
   createUpdatedActionRow,
-  processGlobalRaidRewards,
+  processGlobalRaidRewards
 } = require('./raidHelpers.js')
 
 const {
@@ -180,15 +181,31 @@ async function startRaidEncounter(interaction, user) {
   }
 
   if (!raidBoss.activePhase) {
+    if (globalRaidParticipants.size === 0) {
+      const embed = new EmbedBuilder()
+        .setTitle('🏆 Raid Complete.')
+        .setDescription(
+          `No one participated in this raid. No rewards were distributed.\n\n` +
+            `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`
+        )
+        .setColor('Gold')
+
+      if (interaction.deferred || interaction.replied) {
+        return interaction.followUp({ embeds: [embed], ephemeral: true })
+      } else {
+        return interaction.reply({ embeds: [embed], ephemeral: true })
+      }
+    }
     const elapsed = now - raidBossRotation.lastSwitch
     const timeRemaining = Math.max(0, cooldownDuration - elapsed)
 
-    // Option A: Using custom formatted string:
+    const summaryEmbed = await processGlobalRaidRewards(raidBoss)
     const embed = new EmbedBuilder()
       .setTitle('🏆 Raid Complete.')
-      .setDescription(
-        `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`
-      )
+      .setDescription(` ${summaryEmbed.data.description}`)
+      .setFooter({
+        text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`,
+      })
       .setColor('Gold')
 
     if (interaction.deferred || interaction.replied) {
@@ -303,6 +320,7 @@ async function startRaidEncounter(interaction, user) {
             const monster = await fetchMonsterByName(cardName)
             if (monster) {
               await updateOrAddMonsterToCollection(user.user_id, monster)
+              await updateTop5AndUserScore(userId)
               const stars = getStarsBasedOnColor(monster.color)
               const category = classifyMonsterType(monster.type)
               const monsterEmbed = generateMonsterRewardEmbed(

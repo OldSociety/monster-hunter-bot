@@ -21,7 +21,7 @@ module.exports = {
         {
           type: 'mini-boss',
           monsterIndex: 'bandit-captain',
-          difficulty: 1.5, // 97
+          difficulty: 115, // 97
           firstGoldReward: 297,
           goldReward: 55,
         },
@@ -93,7 +93,7 @@ module.exports = {
         {
           type: 'mini-boss',
           monsterIndex: 'deva', // 204
-          difficulty: 1.3,
+          difficulty: 153,
           firstGoldReward: 304,
           goldReward: 55,
         },
