@@ -153,7 +153,7 @@ async function runBattlePhases(
 async function startRaidEncounter(interaction, user) {
   console.log('[Raid] Starting raid encounter')
   stopUserCollector(interaction.user.id)
-  globalRaidParticipants.add(interaction.user_id)
+  globalRaidParticipants.add(interaction.user.id)
 
   if (!interaction.deferred && !interaction.replied) {
     await interaction.deferReply({ ephemeral: true })
