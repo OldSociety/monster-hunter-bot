@@ -139,14 +139,15 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
       }
     }
 
-    if (currentHunt.unlocksPage && huntPages[currentHunt.unlocksPage]) {
-      summaryEmbed.addFields({
-        name: 'New Hunt Page Unlocked!',
-        value: `You have unlocked **${
-          huntPages[currentHunt.unlocksPage].name
-        }**!`,
-      })
-    } else if (currentHunt.unlocksPage === 'finished') {
+    // if (currentHunt.unlocksPage && huntPages[currentHunt.unlocksPage]) {
+    //   summaryEmbed.addFields({
+    //     name: 'New Hunt Page Unlocked!',
+    //     value: `You have unlocked **${
+    //       huntPages[currentHunt.unlocksPage].name
+    //     }**!`,
+    //   })
+    // } else 
+    if (currentHunt.unlocksPage === 'finished') {
       summaryEmbed.addFields({
         name: 'All Available Hunts Completed!',
         value:
