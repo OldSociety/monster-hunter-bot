@@ -20,11 +20,11 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   let totalHuntsBefore = 0
   let unlockedPages = []
 
-  // If the user has completed 29 or more levels, force loading page5
-  if (completedLevels >= 29) {
-    currentPage = 'page5'
-    console.log(`User has completed ${completedLevels} levels – forcing page5.`)
-  } else {
+  // // If the user has completed 29 or more levels, force loading page5
+  // if (completedLevels >= 29) {
+  //   currentPage = 'page5'
+  //   console.log(`User has completed ${completedLevels} levels – forcing page5.`)
+  // } else {
     for (const [pageKey, pageData] of Object.entries(huntPages)) {
       if (completedLevels >= totalHuntsBefore) {
         unlockedPages.push(pageKey)
@@ -36,7 +36,7 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
           `❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`
         )
       }
-    }
+    // }
 
     const highestUnlockedPage =
       unlockedPages[unlockedPages.length - 1] || 'page1'
