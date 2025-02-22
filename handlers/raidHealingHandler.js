@@ -26,14 +26,12 @@ async function healUsers() {
       })
     )
 
-    console.log(`✅ ${usersNeedingHealing.length} users healed successfully.`)
   } catch (error) {
     console.error('❌ Error in raid healing cron job:', error)
   }
 }
 
 function initializeRaidHealing(client) {
-  console.log('🩹 Raid Healing Timer Initialized.')
   // Runs every 6 minutes
   cron.schedule('*/6 * * * *', healUsers)
 }

@@ -16,16 +16,25 @@ const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
 const { RaidBoss } = require('../../../Models/model.js')
-const { raidBossRotation, enterCooldownEarly } = require('../../../handlers/raidTimerHandler.js')
 const {
-  formatTimeRemaining,
+  raidBossRotation,
+  enterCooldownEarly,
+  getNextActiveTime,
+  isRaidActive,
+} = require('../../../handlers/raidTimerHandler.js')
+const {
   getUserFooter,
   createWelcomeEmbed,
   createRaidBossEmbed,
   createInitialActionRow,
   createUpdatedActionRow,
-  processGlobalRaidRewards,
 } = require('./raidHelpers.js')
+
+const { formatTimeRemaining } = require('./timeUtils.js')
+const { processGlobalRaidRewards } = require('./raidRewardsProcessor.js')
+const { globalRaidParticipants } = require('./raidState.js')
+console.log('[RaidEncounter] globalRaidParticipants:', globalRaidParticipants);
+
 
 const {
   getUniformBaseRewards,
@@ -33,9 +42,8 @@ const {
   getUniformCardRewards,
 } = require('./raidRewards')
 
-const cooldownDuration = 300000 // e.g., 1-minute cooldown
-// Global set to track user_ids of all raid participants for reward processing
-const globalRaidParticipants = new Set()
+const cooldownDuration = getNextActiveTime()
+
 let rewardsDistributed = false
 
 async function runBattlePhases(
@@ -147,15 +155,19 @@ async function startRaidEncounter(interaction, user) {
   stopUserCollector(interaction.user.id)
   globalRaidParticipants.add(interaction.user_id)
 
-  await interaction.deferReply({ ephemeral: true })
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferReply({ ephemeral: true })
+  }
+
   rewardsDistributed = false
   const now = Date.now()
 
   const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
   console.log(`[Raid] Retrieved ${raidBosses.length} raid bosses.`)
+
   if (!raidBosses || raidBosses.length === 0) {
     console.log('[Raid] No valid raid bosses found.')
-    return interaction.followUp({
+    return interaction.editReply({
       content: 'Error: No valid raid bosses found.',
       ephemeral: true,
     })
@@ -174,15 +186,29 @@ async function startRaidEncounter(interaction, user) {
     loot1: selectedBoss.loot1,
     loot2: selectedBoss.loot2,
     loot3: selectedBoss.loot3,
-    boss_score: selectedBoss.boss_score, // Make sure this field is correct
+    boss_score: selectedBoss.boss_score,
     imageUrl: selectedBoss.imageUrl,
     lootDrops: selectedBoss.lootDrops || [],
-    activePhase: raidBossRotation.phase === 'active',
-    instance: selectedBoss, // Attach the model instance here
+    activePhase: isRaidActive(),
+    instance: selectedBoss,
   }
 
+  // If the raid is inactive, show the cooldown/rewards popup automatically.
   if (!raidBoss.activePhase) {
+    console.log(
+      '[Raid] Raid is inactive (cooldown phase). Initiating end-of-raid procedure.'
+    )
+    const now = Date.now()
+    // Use getNextActiveTime() to calculate the duration until next active period.
+    const cooldownDuration = getNextActiveTime()
+    const elapsed = now - raidBossRotation.lastSwitch
+    const timeRemaining = Math.max(0, cooldownDuration - elapsed)
+    console.log(
+      `[Raid] Cooldown calculation: cooldownDuration = ${cooldownDuration} ms, elapsed = ${elapsed} ms, timeRemaining = ${timeRemaining} ms`
+    )
+
     if (globalRaidParticipants.size === 0) {
+      console.log('[Raid] No participants detected during this raid.')
       const embed = new EmbedBuilder()
         .setTitle('🏆 Raid Complete.')
         .setDescription(
@@ -190,40 +216,48 @@ async function startRaidEncounter(interaction, user) {
             `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`
         )
         .setColor('Gold')
-
-      if (interaction.deferred || interaction.replied) {
-        return interaction.followUp({ embeds: [embed], ephemeral: true })
-      } else {
-        return interaction.reply({ embeds: [embed], ephemeral: true })
-      }
+      console.log('[Raid] Displaying no-participant cooldown embed.')
+      return interaction.editReply({ embeds: [embed], ephemeral: true })
     }
-    const elapsed = now - raidBossRotation.lastSwitch
-    const timeRemaining = Math.max(0, cooldownDuration - elapsed)
 
-    const summaryEmbed = await processGlobalRaidRewards(raidBoss)
-    const embed = new EmbedBuilder()
-      .setTitle('🏆 Raid Complete.')
-      .setDescription(` ${summaryEmbed.data.description}`)
-      .setFooter({
-        text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`,
-      })
-      .setColor('Gold')
-
-    if (interaction.deferred || interaction.replied) {
-      return interaction.followUp({ embeds: [embed], ephemeral: true })
-    } else {
-      return interaction.reply({ embeds: [embed], ephemeral: true })
-    }
+    console.log(
+      '[Raid] Participants detected. Processing global rewards and calculating boss health...'
+    )
+    const {summaryEmbed} = await processGlobalRaidRewards(
+      raidBoss,
+      globalRaidParticipants
+    )
+    console.log(raidBoss, 1, globalRaidParticipants)
+    summaryEmbed.setTitle("This week's Raid is over.")
+    console.log(
+      '[Raid] Global rewards processed. Final boss health:',
+      raidBoss.current_hp,
+      '/',
+      raidBoss.hp
+    )
+    console.log('[Raid] Displaying end-of-raid popup with global rewards.')
+    return interaction.editReply({
+      embeds: [
+        new EmbedBuilder(summaryEmbed.data)
+          .setFooter({
+            text: `Raids will restart in ${formatTimeRemaining(
+              timeRemaining
+            )}.`,
+          })
+          .setColor('Gold'),
+      ],
+      ephemeral: true,
+    })
   }
 
+  // If the raid is active, send the welcome embed.
   const welcomeEmbed = createWelcomeEmbed(raidBoss, user)
-  console.log('[Raid] Overview embed created.')
+  console.log('[Raid] Overview embed created for active raid.')
 
-  // Use the initial action row: Raid, Heal, Cancel.
   const initialRow = createInitialActionRow(user)
   console.log('[Raid] Initial action row created.')
 
-  await interaction.followUp({
+  await interaction.editReply({
     embeds: [welcomeEmbed],
     components: [initialRow],
     ephemeral: true,
@@ -235,22 +269,21 @@ async function startRaidEncounter(interaction, user) {
     filter,
     time: 60000,
   })
+
   collectors.set(interaction.user.id, collector)
   console.log('[Raid] Collector set up for button interactions.')
 
   collector.on('collect', async (i) => {
     console.log('[Collector] Button pressed:', i.customId)
+
     if (i.customId === 'initiate_raid') {
-      console.log(
-        '[Collector] Raid button clicked - updating message with style buttons and retaining Heal/Cancel buttons.'
-      )
+      console.log('[Collector] Raid button clicked.')
       const updatedRow = createUpdatedActionRow(user)
       const updatedEmbed = createRaidBossEmbed(raidBoss, user)
       await i.update({
         embeds: [updatedEmbed],
         components: [updatedRow],
       })
-      console.log('[Collector] Message updated with new action row.')
       return
     }
 
@@ -272,6 +305,7 @@ async function startRaidEncounter(interaction, user) {
       const playerScore = user[`${selectedStyle}_score`]
       const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType)
       await i.deferUpdate()
+
       console.log('[Collector] Starting battle phases.')
       const playerWins = await runBattlePhases(
         i,
@@ -287,38 +321,53 @@ async function startRaidEncounter(interaction, user) {
         playerWins ? 'Victory' : 'Defeat'
       )
 
-      // Only process rewards if the boss was defeated.
-      if (playerWins) {
-        console.log('[Raid] Processing rewards...')
-      
-        if (!rewardsDistributed) {
+      // Determine if the raid is currently active
+      const raidActive = isRaidActive()
+
+      if (!rewardsDistributed) {
+        // Case 1: Raid is over (cooldown phase), regardless of individual win/loss.
+        if (!raidActive) {
           rewardsDistributed = true
-      
-          // ✅ If the boss is defeated, instantly enter cooldown
-          const bossDefeated = raidBoss.current_hp <= 0
-          if (bossDefeated) {
-            await enterCooldownEarly()
-          }
-      
-          // ✅ Calculate progress
+          console.log(
+            '[Collector] Raid is no longer active. Processing global rewards.'
+          )
+          console.log(raidBoss, globalRaidParticipants)
+          const { summaryEmbed, monsterRewardEmbeds } = await processGlobalRaidRewards(raidBoss, globalRaidParticipants);
+summaryEmbed.setTitle("This week's Raid is over.");
+console.log('[Collector] Global rewards processed. Displaying summary embed.');
+await i.followUp({ embeds: [summaryEmbed], ephemeral: true });
+
+        }
+        // Case 2: Raid is still active and the player managed to defeat the boss.
+        else if (playerWins) {
+          rewardsDistributed = true
+          console.log(
+            '[Collector] Player won while raid is active. Entering cooldown early.'
+          )
+          await enterCooldownEarly()
+
           const raidProgressPercentage = 1 - raidBoss.current_hp / raidBoss.hp
           console.log(`[DEBUG] Raid Progress: ${raidProgressPercentage * 100}%`)
-      
-          // ✅ Fetch Rewards
-          let baseRewards = getUniformBaseRewards(bossDefeated, raidProgressPercentage)
-          let gearReward = getUniformGearReward(bossDefeated, raidProgressPercentage)
-          let cardRewards = getUniformCardRewards(bossDefeated, raidProgressPercentage, raidBoss)
-      
-          // ✅ Process rewards
+
+          let baseRewards = getUniformBaseRewards(true, raidProgressPercentage)
+          let gearReward = getUniformGearReward(true, raidProgressPercentage)
+          let cardRewards = getUniformCardRewards(
+            true,
+            raidProgressPercentage,
+            raidBoss
+          )
+
           user.gold = Number(user.gold) || 0
-          user.currency = { ...user.currency, gear: Number(user.currency.gear) || 0 }
-      
+          user.currency = {
+            ...user.currency,
+            gear: Number(user.currency.gear) || 0,
+          }
+
           user.gold += baseRewards.gold
           user.currency.gear += gearReward
           await user.setDataValue('currency', user.currency)
           await user.save()
 
-          // Process Card Rewards
           let monsterRewardEmbeds = []
           for (const cardName of cardRewards) {
             const monster = await fetchMonsterByName(cardName)
@@ -333,18 +382,10 @@ async function startRaidEncounter(interaction, user) {
                 category,
                 stars
               )
-
               monsterRewardEmbeds.push(monsterEmbed)
-            } else {
-              console.warn(`⚠️ Warning: Card "${cardName}" not found.`)
             }
           }
 
-          console.log(
-            `[DEBUG] Monster Reward Embeds Count: ${monsterRewardEmbeds.length}`
-          )
-
-          // Create Reward Embed
           const rewardEmbed = new EmbedBuilder()
             .setTitle('🏆 Raid Rewards')
             .setDescription(
@@ -361,24 +402,27 @@ async function startRaidEncounter(interaction, user) {
             .setColor('Green')
 
           const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
-
-          // Send Rewards to User
-          await i.followUp({ embeds: embedsToSend, ephemeral: true })
-        } else {
           console.log(
-            'Rewards have already been distributed for this raid session.'
+            '[Collector] Displaying individual rewards embed to user.'
           )
+          await i.followUp({ embeds: embedsToSend, ephemeral: true })
         }
-      } else {
+      }
+      // Otherwise, if the player lost their battle while the raid is still active…
+      if (!playerWins && raidActive) {
         const defeatEmbed = new EmbedBuilder()
           .setTitle('💀 Defeat!')
           .setDescription(
-            `Uh oh. Don't worry, you can heal by spending tokens or waiting for you health to recharge. The more you damage the Raid boss, the greater the rewards!`
+            'Uh oh. Don’t worry, you can heal by spending tokens or waiting for your health to recharge.'
           )
           .setColor('Red')
           .setFooter({ text: getUserFooter(user) })
+        console.log(
+          '[Collector] Player lost the battle. Displaying defeat embed.'
+        )
         await i.followUp({ embeds: [defeatEmbed], ephemeral: true })
       }
+
       setTimeout(async () => {
         try {
           await i.deleteReply()
