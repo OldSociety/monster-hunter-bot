@@ -24,7 +24,7 @@ function updateFooter() {
   const now = Date.now()
   const nextActive = getNextActiveTime()
   const remainingMs = Math.max(nextActive - now, 0)
-  return `Raids will restart in ${formatTimeRemaining(remainingMs)}.`
+  return `Raids will restart in ${formatTimeRemaining(remainingMs)}`
 }
 
 function createWelcomeEmbed(raidBoss, user) {

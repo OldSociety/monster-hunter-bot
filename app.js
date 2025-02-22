@@ -66,13 +66,15 @@ eventHandler(client)
 
 // Import message handler
 const messageHandler = require('./handlers/messageHandler')
-const { initializeRaidTimer } = require('./handlers/raidTimerHandler') 
+const { initializeRaidTimer } = require('./handlers/raidTimerHandler')
 const { initializeRaidHealing } = require('./handlers/raidHealingHandler')
+const { populateMonsterCache } = require('./handlers/cacheHandler')
 
 messageHandler(client, User)
 
 client.once('ready', async () => {
   // Start Raid Timer only after bot is ready
+  await populateMonsterCache()
   initializeRaidTimer(client)
   initializeRaidHealing(client)
 })

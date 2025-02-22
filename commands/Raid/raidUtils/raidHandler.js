@@ -2,7 +2,7 @@ const { EmbedBuilder } = require('discord.js')
 
 const { checkAdvantage } = require('../../Hunt/huntUtils/huntHelpers.js')
 
-const { fetchMonsterByName } = require('../../../handlers/cacheHandler')
+const { pullSpecificMonster } = require('../../../handlers/cacheHandler')
 const {
   updateOrAddMonsterToCollection,
 } = require('../../../handlers/userMonsterHandler')
@@ -33,8 +33,7 @@ const {
 const { formatTimeRemaining } = require('./timeUtils.js')
 const { processGlobalRaidRewards } = require('./raidRewardsProcessor.js')
 const { globalRaidParticipants } = require('./raidState.js')
-console.log('[RaidEncounter] globalRaidParticipants:', globalRaidParticipants);
-
+console.log('[RaidEncounter] globalRaidParticipants:', globalRaidParticipants)
 
 const {
   getUniformBaseRewards,
@@ -176,6 +175,7 @@ async function startRaidEncounter(interaction, user) {
   const selectedBoss = raidBosses[raidBossRotation.currentIndex]
   console.log('[Raid] Selected raid boss:', selectedBoss.name)
 
+  // Use the global rotation phase directly.
   const raidBoss = {
     name: selectedBoss.name,
     index: selectedBoss.index,
@@ -189,60 +189,49 @@ async function startRaidEncounter(interaction, user) {
     boss_score: selectedBoss.boss_score,
     imageUrl: selectedBoss.imageUrl,
     lootDrops: selectedBoss.lootDrops || [],
-    activePhase: isRaidActive(),
+    activePhase: raidBossRotation.phase === 'active',
     instance: selectedBoss,
   }
 
-  // If the raid is inactive, show the cooldown/rewards popup automatically.
-  if (!raidBoss.activePhase) {
+  // If the raid is inactive (cooldown), show the rewards summary (or no-participant notice).
+  if (raidBossRotation.phase !== 'active') {
     console.log(
       '[Raid] Raid is inactive (cooldown phase). Initiating end-of-raid procedure.'
     )
     const now = Date.now()
-    // Use getNextActiveTime() to calculate the duration until next active period.
+    // Calculate the remaining time until the next active phase.
     const cooldownDuration = getNextActiveTime()
     const elapsed = now - raidBossRotation.lastSwitch
     const timeRemaining = Math.max(0, cooldownDuration - elapsed)
-    console.log(
-      `[Raid] Cooldown calculation: cooldownDuration = ${cooldownDuration} ms, elapsed = ${elapsed} ms, timeRemaining = ${timeRemaining} ms`
-    )
 
     if (globalRaidParticipants.size === 0) {
-      console.log('[Raid] No participants detected during this raid.')
       const embed = new EmbedBuilder()
         .setTitle('🏆 Raid Complete.')
         .setDescription(
           `No one participated in this raid. No rewards were distributed.\n\n` +
-            `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`
+            `Raids will restart in ${formatTimeRemaining(timeRemaining)}`
         )
         .setColor('Gold')
-      console.log('[Raid] Displaying no-participant cooldown embed.')
       return interaction.editReply({ embeds: [embed], ephemeral: true })
     }
 
-    console.log(
-      '[Raid] Participants detected. Processing global rewards and calculating boss health...'
-    )
-    const {summaryEmbed} = await processGlobalRaidRewards(
-      raidBoss,
-      globalRaidParticipants
-    )
-    console.log(raidBoss, 1, globalRaidParticipants)
-    summaryEmbed.setTitle("This week's Raid is over.")
-    console.log(
-      '[Raid] Global rewards processed. Final boss health:',
-      raidBoss.current_hp,
-      '/',
-      raidBoss.hp
-    )
-    console.log('[Raid] Displaying end-of-raid popup with global rewards.')
+    const { summaryEmbed, monsterRewardEmbeds } =
+      await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
+    // console.log(
+    //   '[Raid] Global rewards processed. Final boss health:',
+    //   raidBoss.current_hp,
+    //   '/',
+    //   raidBoss.hp
+    // )
+    // console.log('[Raid] Displaying end-of-raid popup with global rewards.')
     return interaction.editReply({
       embeds: [
         new EmbedBuilder(summaryEmbed.data)
+        .setDescription(`This week's raid has finished.`)
           .setFooter({
             text: `Raids will restart in ${formatTimeRemaining(
               timeRemaining
-            )}.`,
+            )}`,
           })
           .setColor('Gold'),
       ],
@@ -315,28 +304,29 @@ async function startRaidEncounter(interaction, user) {
         advMultiplier,
         selectedStyle
       )
-
       console.log(
         '[Collector] Battle phases complete. Outcome:',
         playerWins ? 'Victory' : 'Defeat'
       )
 
-      // Determine if the raid is currently active
-      const raidActive = isRaidActive()
-
+      // Check the current raid phase from the global rotation.
       if (!rewardsDistributed) {
         // Case 1: Raid is over (cooldown phase), regardless of individual win/loss.
-        if (!raidActive) {
+        if (raidBossRotation.phase !== 'active') {
           rewardsDistributed = true
           console.log(
             '[Collector] Raid is no longer active. Processing global rewards.'
           )
-          console.log(raidBoss, globalRaidParticipants)
-          const { summaryEmbed, monsterRewardEmbeds } = await processGlobalRaidRewards(raidBoss, globalRaidParticipants);
-summaryEmbed.setTitle("This week's Raid is over.");
-console.log('[Collector] Global rewards processed. Displaying summary embed.');
-await i.followUp({ embeds: [summaryEmbed], ephemeral: true });
-
+          const { summaryEmbed, monsterRewardEmbeds } =
+            await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
+          summaryEmbed.setTitle("This week's Raid is over.")
+          console.log(
+            '[Collector] Global rewards processed. Displaying summary embed.'
+          )
+          await i.followUp({
+            embeds: [summaryEmbed, ...monsterRewardEmbeds],
+            ephemeral: true,
+          })
         }
         // Case 2: Raid is still active and the player managed to defeat the boss.
         else if (playerWins) {
@@ -370,7 +360,7 @@ await i.followUp({ embeds: [summaryEmbed], ephemeral: true });
 
           let monsterRewardEmbeds = []
           for (const cardName of cardRewards) {
-            const monster = await fetchMonsterByName(cardName)
+            const monster = await pullSpecificMonster(cardName)
             if (monster) {
               await updateOrAddMonsterToCollection(user.user_id, monster)
               await updateTop5AndUserScore(user.user_id)
@@ -409,7 +399,7 @@ await i.followUp({ embeds: [summaryEmbed], ephemeral: true });
         }
       }
       // Otherwise, if the player lost their battle while the raid is still active…
-      if (!playerWins && raidActive) {
+      if (!playerWins && raidBossRotation.phase === 'active') {
         const defeatEmbed = new EmbedBuilder()
           .setTitle('💀 Defeat!')
           .setDescription(

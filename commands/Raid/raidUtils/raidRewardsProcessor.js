@@ -1,7 +1,7 @@
 // raidRewardsProcessor.js
 const { EmbedBuilder } = require('discord.js')
 const { User } = require('../../../Models/model')
-const { fetchMonsterByName } = require('../../../handlers/cacheHandler')
+const { pullSpecificMonster } = require('../../../handlers/cacheHandler')
 const {
   updateOrAddMonsterToCollection,
 } = require('../../../handlers/userMonsterHandler')
@@ -10,6 +10,12 @@ const {
   getUniformCardRewards,
   getUniformGearReward,
 } = require('../../../commands/Raid/raidUtils/raidRewards')
+
+const { getStarsBasedOnColor } = require('../../../utils/starRating')
+const {
+  generateMonsterRewardEmbed,
+} = require('../../../utils/embeds/monsterRewardEmbed')
+const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 
 async function processGlobalRaidRewards(raidBoss, globalRaidParticipants) {
   // Convert hp values to numbers explicitly
@@ -42,18 +48,30 @@ async function processGlobalRaidRewards(raidBoss, globalRaidParticipants) {
   for (const userId of globalRaidParticipants) {
     const user = await User.findByPk(userId)
 
-    console.log(userId, "global participants")
+    console.log(userId, 'global participants')
     if (!user) continue
 
     user.gold += baseRewards.gold
-    user.currency.gear = (user.currency.gear || 0) + gearReward
+    console.log('before gear:', user.currency.gear)
+
+    user.currency = {
+      ...user.currency,
+      gear: user.currency.gear + gearReward,
+    }
+
+    await user.setDataValue('currency', user.currency)
     await user.save()
+
+    console.log(
+      `[Rewards] For user ${userId}, new gear value: ${user.currency.gear}`
+    )
 
     totalGold += baseRewards.gold
     totalGear += gearReward
+    console.log('after gear:', user.currency.gear)
 
     for (const cardName of cardRewards) {
-      const monster = await fetchMonsterByName(cardName)
+      const monster = await pullSpecificMonster(cardName)
       if (monster) {
         await updateOrAddMonsterToCollection(user.user_id, monster)
         const stars = getStarsBasedOnColor(monster.color)

@@ -20,8 +20,8 @@ const TEST_MODE = true
 const TEST_ACTIVE_DURATION = '*/2 * * * *'
 const TEST_COOLDOWN_DURATION = '*/1 * * * *'
 
-const TEST_ACTIVE_DURATION_MS = 2 * 60 * 1000 // 2 minutes
-const TEST_COOLDOWN_DURATION_MS = 1 * 60 * 1000 // 1 minute
+const TEST_ACTIVE_DURATION_MS = 24 * 60 * 60 * 1000 // 1 hour
+const TEST_COOLDOWN_DURATION_MS = 24 * 60 * 60 * 1000 // 1 hour
 
 const raidBossRotation = {
   currentIndex: 0,
@@ -38,7 +38,9 @@ function createRaidAnnouncementEmbed(raidBoss) {
     )
     .setImage(raidBoss.imageUrl)
     .setColor('#FFD700')
-    .setFooter({ text: 'Good luck, hunter!' })
+    .setFooter({
+      text: `Raid ends in ${formatTimeRemaining(getTimeUntilCooldown())}`,
+    })
 }
 
 function isRaidActive() {
@@ -77,6 +79,28 @@ function getNextActiveTime() {
   nextActive.setDate(now.getDate() + daysUntilMonday)
   nextActive.setHours(6, 0, 0, 0)
   return nextActive.getTime() - now.getTime()
+}
+
+function getTimeUntilCooldown() {
+  if (TEST_MODE) {
+    return TEST_ACTIVE_DURATION_MS - (Date.now() - raidBossRotation.lastSwitch)
+  }
+  const now = new Date()
+  let nextCooldown
+  // If within active window, cooldown starts at Saturday 6 AM.
+  if (now.getDay() >= 1 && now.getDay() < 6) {
+    let daysUntilSaturday = 6 - now.getDay()
+    nextCooldown = new Date(now)
+    nextCooldown.setDate(now.getDate() + daysUntilSaturday)
+    nextCooldown.setHours(6, 0, 0, 0)
+  } else if (now.getDay() === 6 && now.getHours() < 6) {
+    nextCooldown = new Date(now)
+    nextCooldown.setHours(6, 0, 0, 0)
+  } else {
+    // Outside the active window; return 0.
+    return 0
+  }
+  return nextCooldown.getTime() - now.getTime()
 }
 
 async function enterCooldownEarly() {
@@ -155,7 +179,6 @@ async function enterCooldown() {
       process.env.DEVBOTTESTCHANNELID
     )
 
-
     // Calculate the time remaining until the next active period.
     const cooldownDuration = getNextActiveTime()
     const now = Date.now()
@@ -163,32 +186,37 @@ async function enterCooldown() {
     const timeRemaining = Math.max(0, cooldownDuration - elapsed)
 
     const { summaryEmbed, monsterRewardEmbeds } =
-    await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
-  summaryEmbed.setTitle("This week's Raid is over.")
-  summaryEmbed.setFooter({
-    text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`,
-  })
+      await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
+    summaryEmbed.setTitle("This week's Raid is over.")
+    summaryEmbed.setFooter({
+      text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`,
+    })
 
     console.log('[Cooldown] Summary embed built. Attempting to send embed.')
-   // Then send the embeds (for example, combined in one message)
-   await channel.send({ embeds: [summaryEmbed, ...monsterRewardEmbeds] })
-
+    // Then send the embeds (for example, combined in one message)
+    await channel.send({ embeds: [summaryEmbed, ...monsterRewardEmbeds] })
   } catch (error) {
     console.error('[Cooldown] Error processing global rewards:', error)
   }
 }
 
-function initializeRaidTimer(client) {
+async function runTestModeCycle() {
+  console.log('🚀 [Test Mode] Activating new raid phase.')
+  await activateRaid()
+  setTimeout(async () => {
+    console.log('🚀 [Test Mode] Entering cooldown phase.')
+    await enterCooldown()
+    setTimeout(runTestModeCycle, TEST_COOLDOWN_DURATION_MS)
+  }, TEST_ACTIVE_DURATION_MS)
+}
+async function initializeRaidTimer(client) {
   clientInstance = client
   console.log('🛠 Raid Timer Initialized.')
   cron.schedule(RAID_START_TIME, activateRaid)
   cron.schedule(RAID_END_TIME, enterCooldown)
   if (TEST_MODE) {
     console.log('🚀 Test Mode Active!')
-    // In test mode, immediately start an active raid then schedule recurring jobs.
-    activateRaid()
-    cron.schedule(TEST_ACTIVE_DURATION, activateRaid)
-    cron.schedule(TEST_COOLDOWN_DURATION, enterCooldown)
+    runTestModeCycle() // Start the recursive test mode cycle.
   }
 }
 
