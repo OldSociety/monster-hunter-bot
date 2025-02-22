@@ -76,7 +76,8 @@ function createInitialActionRow(user) {
     new ButtonBuilder()
       .setCustomId('initiate_raid')
       .setLabel('Begin Raid!')
-      .setStyle(ButtonStyle.Primary),
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(user.current_raidHp === 0),
     new ButtonBuilder()
       .setCustomId('heal')
       .setLabel('Heal (100 HP/🧿token)')
