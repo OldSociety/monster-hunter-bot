@@ -20,27 +20,21 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   let totalHuntsBefore = 0
   let unlockedPages = []
 
-  // // If the user has completed 29 or more levels, force loading page5
-  // if (completedLevels >= 29) {
-  //   currentPage = 'page5'
-  //   console.log(`User has completed ${completedLevels} levels – forcing page5.`)
-  // } else {
-    for (const [pageKey, pageData] of Object.entries(huntPages)) {
-      if (completedLevels >= totalHuntsBefore) {
-        unlockedPages.push(pageKey)
-      }
-      if (Array.isArray(pageData.hunts)) {
-        totalHuntsBefore += pageData.hunts.length
-      } else {
-        console.error(
-          `❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`
-        )
-      }
-    // }
+  for (const [pageKey, pageData] of Object.entries(huntPages)) {
+    if (completedLevels >= totalHuntsBefore) {
+      unlockedPages.push(pageKey)
+    }
+    if (Array.isArray(pageData.hunts)) {
+      totalHuntsBefore += pageData.hunts.length
+    } else {
+      console.error(
+        `❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`
+      )
+    }
+  }
 
-    const highestUnlockedPage =
-      unlockedPages[unlockedPages.length - 1] || 'page1'
-    console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
+  const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
+  console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
 
     currentPage = typeof newPage === 'string' ? newPage : highestUnlockedPage
     console.log(`📖 Current Page after button press: ${currentPage}`)
@@ -59,24 +53,6 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
 
   let completedLevelsOnPage = completedLevels - totalHuntsBefore
   console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`)
-
-  // Check if this page is marked as finished AND it's not the final page overall
-  const isLastPage =
-    Object.keys(huntPages).indexOf(currentPage) ===
-    Object.keys(huntPages).length - 1
-
-  if (
-    pageData.unlocksPage === 'finished' &&
-    !isLastPage &&
-    completedLevels >= totalHuntsBefore + pageData.hunts.length
-  ) {
-    return interaction.editReply({
-      content:
-        'Congratulations! You have completed all available hunts on this page.',
-      components: [],
-      ephemeral: true,
-    })
-  }
 
   const unlockedHunts = pageData.hunts.filter(
     (hunt) => hunt.id <= completedLevels + 1
@@ -102,6 +78,7 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     }))
     .reverse()
 
+  // Create dropdown for hunt selection
   const dropdownRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId('hunt_select')
@@ -109,24 +86,25 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       .addOptions(huntOptions)
   )
 
-  let pageRow = null
-  if (unlockedPages.length > 1) {
-    console.log(`🔄 Adding page-switching buttons: ${unlockedPages}`)
-
-    pageRow = new ActionRowBuilder().addComponents(
-      unlockedPages.map((pageKey) =>
-        new ButtonBuilder()
-          .setCustomId(`page_${pageKey}`)
-          .setLabel(`Page ${pageKey.replace('page', '')}`)
-          .setStyle(
-            pageKey === currentPage
-              ? ButtonStyle.Primary
-              : ButtonStyle.Secondary
-          )
+  // Create page buttons based on unlockedPages
+  const pageButtons = unlockedPages.map((pageKey) =>
+    new ButtonBuilder()
+      .setCustomId(`page_${pageKey}`)
+      .setLabel(`Page ${pageKey.replace('page', '')}`)
+      .setStyle(
+        pageKey === currentPage ? ButtonStyle.Primary : ButtonStyle.Secondary
       )
+  )
+
+  // Split the pageButtons into chunks of 5
+  const pageRows = []
+  for (let i = 0; i < pageButtons.length; i += 5) {
+    pageRows.push(
+      new ActionRowBuilder().addComponents(...pageButtons.slice(i, i + 5))
     )
   }
 
+  // Create the row for other action buttons (ichor, cancel)
   const buttonRow = new ActionRowBuilder().addComponents(
     ...(user.currency.ichor > 0 && !huntData.ichorUsed
       ? [
@@ -142,6 +120,7 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       .setStyle(ButtonStyle.Danger)
   )
 
+  // Build the embed
   const embed = new EmbedBuilder()
     .setTitle(pageData.name)
     .setDescription(
@@ -159,9 +138,8 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     })
   }
 
-  const components = [dropdownRow]
-  if (pageRow) components.push(pageRow)
-  components.push(buttonRow)
+  // Combine all components: dropdown, page buttons, then the action buttons
+  const components = [dropdownRow, ...pageRows, buttonRow]
 
   await interaction.editReply({
     embeds: [embed],

@@ -67,6 +67,10 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
+      current_raidHp: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
       last_chat_message: {
         type: Sequelize.DATE,
         allowNull: true,

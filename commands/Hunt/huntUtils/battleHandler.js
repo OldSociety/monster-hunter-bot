@@ -4,9 +4,9 @@ const { EmbedBuilder } = require('discord.js')
 
 function createHealthBar(currentHealth, maxHealth) {
   const totalSegments = 15
-  let filledSegments = Math.round((currentHealth / maxHealth) * totalSegments)
+  let filledSegments = Math.max(0, Math.round((currentHealth / maxHealth) * totalSegments)) // Ensure ≥ 0
   if (currentHealth > 0 && filledSegments < 1) filledSegments = 1
-  let unfilledSegments = totalSegments - filledSegments
+  let unfilledSegments = Math.max(0, totalSegments - filledSegments) // Ensure ≥ 0
   return (
     '``' +
     '『' +
@@ -130,5 +130,6 @@ async function runBattlePhases(
 }
 
 module.exports = {
+  createHealthBar,
   runBattlePhases,
 }

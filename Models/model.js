@@ -5,6 +5,7 @@ const sequelize = require('../config/sequelize')
 const User = require('./User/User')(sequelize, DataTypes)
 const Collection = require('./Collection/Collection')(sequelize, DataTypes)
 const Monster = require('./MonsterList/Monster')(sequelize, DataTypes)
+const RaidBoss = require('./MonsterList/RaidBoss')(sequelize, DataTypes)
 
 // Arena models
 // const Arena = require('./Arena/Arenas')(sequelize, DataTypes)
@@ -80,7 +81,8 @@ Collection.belongsTo(User, {
 module.exports = {
   User,
   Collection,
-  Monster
+  Monster,
+  RaidBoss
   // Arena,
   // ArenaMonster,
   // BaseItem,

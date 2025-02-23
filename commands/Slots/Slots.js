@@ -89,27 +89,27 @@ module.exports = {
 }
 
 async function startGame(interaction, userData) {
-  const userId = interaction.user.id;
+  const userId = interaction.user.id
 
   // Deduct token cost
   userData.currency = {
     ...userData.currency,
     tokens: userData.currency.tokens - 1,
-  };
-  await userData.save();
-  jackpot += Math.floor(Math.random() * 6) + 5;
+  }
+  await userData.save()
+  jackpot += Math.floor(Math.random() * 6) + 5
 
   // Timer initialization
-  const gameStartTime = Date.now();
-  let lastInteractionTime = Date.now();
+  const gameStartTime = Date.now()
+  let lastInteractionTime = Date.now()
 
   // Anti-spam variables
-  const lastClickTime = new Map();
-  const spamCount = new Map();
-  const bannedUsers = new Map();
-  const BAN_DURATION = 5 * 60 * 1000; // 5 minutes
-  const CLICK_COOLDOWN = 400; // 400 ms
-  const MAX_WARNINGS = 2;
+  const lastClickTime = new Map()
+  const spamCount = new Map()
+  const bannedUsers = new Map()
+  const BAN_DURATION = 5 * 60 * 1000 // 5 minutes
+  const CLICK_COOLDOWN = 400 // 400 ms
+  const MAX_WARNINGS = 2
 
   // Game state
   const gameState = {
@@ -117,7 +117,7 @@ async function startGame(interaction, userData) {
     totalGold: 0,
     running: true,
     spinCount: 0,
-  };
+  }
 
   // Column data for game rounds
   const columnData = [
@@ -379,7 +379,7 @@ async function startGame(interaction, userData) {
         .setLabel(`Stop and collect 🪙${totalGold} gold`)
         .setStyle('Secondary')
         .setDisabled(disabled)
-    );
+    )
 
   // Function to handle each round of the game
   const playRound = async (interactionObject, isInitial = false) => {
@@ -432,14 +432,14 @@ async function startGame(interaction, userData) {
     } else if (roll.type === 'zalathor') {
       // TODO: Implement Zalathor card reward logic
     } else if (roll.type === 'game_over') {
-      console.log(`[playRound] Game Over triggered for user: ${userId}`);
-      jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0);
-      gameState.running = false;
-      activePlayers.delete(userId);
-      message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`;
-      gameState.totalGold = 0;
+      console.log(`[playRound] Game Over triggered for user: ${userId}`)
+      jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0)
+      gameState.running = false
+      activePlayers.delete(userId)
+      message += ` You lost your pot of 🪙**${gameState.totalGold} gold**.`
+      gameState.totalGold = 0
       if (currentCollector) {
-        currentCollector.stop();
+        currentCollector.stop()
       }
     } else if (roll.type === 'energy') {
       if (userData.currency.energy < 15) {
@@ -567,8 +567,8 @@ async function startGame(interaction, userData) {
           components: [gameOverRowEnabled],
         });
 
-        await handlePlayAgain(interactionObject);
-      }, 1500);
+        await handlePlayAgain(interactionObject)
+      }, 1500)
 
       return;
     }
@@ -582,89 +582,91 @@ async function startGame(interaction, userData) {
       await interactionObject.editReply({
         embeds: [embed],
         components: [createRow(gameState.totalGold, true)],
-      });
+      })
 
       setTimeout(async () => {
         console.log(`[playRound] Re-enabling buttons after 2 seconds.`);
         await interactionObject.editReply({
           embeds: [embed],
           components: [createRow(gameState.totalGold, false)],
-        });
-      }, 2000);
+        })
+      }, 2000)
     } else {
       await interactionObject.editReply({
         embeds: [embed],
         components: [createRow(gameState.totalGold, false)],
-      });
+      })
     }
-  };
+  }
 
   // Helper function to create a new collector with anti-spam filtering and event handlers
   function createCollector() {
     const newCollector = interaction.channel.createMessageComponentCollector({
       filter: async (btnInteraction) => {
-        const now = Date.now();
+        const now = Date.now()
         if (bannedUsers.has(userId)) {
-          const banExpiration = bannedUsers.get(userId);
+          const banExpiration = bannedUsers.get(userId)
           if (now > banExpiration) {
-            bannedUsers.delete(userId);
+            bannedUsers.delete(userId)
           } else {
-            console.log(`[ANTI-SPAM] 🚨 User ${userId} is banned!`);
-            return false;
+            console.log(`[ANTI-SPAM] 🚨 User ${userId} is banned!`)
+            return false
           }
         }
         if (lastClickTime.has(userId)) {
-          const lastTime = lastClickTime.get(userId);
+          const lastTime = lastClickTime.get(userId)
           if (now - lastTime < CLICK_COOLDOWN) {
-            spamCount.set(userId, (spamCount.get(userId) || 0) + 1);
+            spamCount.set(userId, (spamCount.get(userId) || 0) + 1)
             console.log(
-              `[ANTI-SPAM] User ${userId} clicked too fast (${spamCount.get(userId)}/${MAX_WARNINGS})`
-            );
+              `[ANTI-SPAM] User ${userId} clicked too fast (${spamCount.get(
+                userId
+              )}/${MAX_WARNINGS})`
+            )
             if (spamCount.get(userId) >= MAX_WARNINGS) {
-              console.log(`[ANTI-SPAM] 🚨 TEMP BAN for user ${userId}`);
-              bannedUsers.set(userId, now + BAN_DURATION);
+              console.log(`[ANTI-SPAM] 🚨 TEMP BAN for user ${userId}`)
+              bannedUsers.set(userId, now + BAN_DURATION)
               try {
                 await btnInteraction.reply({
                   content: `⚠️ **You are temporarily banned for spamming!** Try again in 5 minutes.`,
                   ephemeral: true,
-                });
+                })
               } catch (err) {}
-              return false;
+              return false
             } else {
               try {
                 await btnInteraction.reply({
                   content: `⚠️ **Slow down!** Clicking too fast.`,
                   ephemeral: true,
-                });
+                })
               } catch (err) {}
-              return false;
+              return false
             }
           }
         }
-        spamCount.set(userId, 0);
-        lastClickTime.set(userId, now);
-        return btnInteraction.user.id === userId;
+        spamCount.set(userId, 0)
+        lastClickTime.set(userId, now)
+        return btnInteraction.user.id === userId
       },
       time: 60000, // 60-second lifetime for each collector
-    });
+    })
 
     newCollector.on('collect', async (btnInteraction) => {
-      lastInteractionTime = Date.now(); // update on each button press
+      lastInteractionTime = Date.now() // update on each button press
       console.log(
         `[Collector] Button pressed by ${btnInteraction.user.id}: ${btnInteraction.customId}`
-      );
+      )
       if (btnInteraction.customId === `spin_again_${userId}`) {
         if (!gameStates.has(userId)) {
           gameStates.set(userId, { running: false });
         }
-        const userGameState = gameStates.get(userId);
+        const userGameState = gameStates.get(userId)
         if (userGameState.running) {
           if (!btnInteraction.deferred && !btnInteraction.replied) {
             await btnInteraction.deferUpdate();
           }
           return;
         }
-        userGameState.running = true;
+        userGameState.running = true
         try {
           await playRound(btnInteraction);
         } catch (error) {
@@ -672,65 +674,71 @@ async function startGame(interaction, userData) {
             `[Collector] Error running playRound for user ${userId}: ${error}`
           );
         }
-        userGameState.running = false;
+        userGameState.running = false
       } else if (btnInteraction.customId === `stop_playing_${userId}`) {
-        console.log(`[Collector] Processing 'stop_playing' for user: ${userId}`);
-        userData.gold += gameState.totalGold;
-        await userData.save();
-        activePlayers.delete(userId);
-        newCollector.stop();
-        const timePlayedSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
-        const footerText = `Available: 🪙${userData.gold || 0} ⚡${userData.currency.energy || 0} 🧿${userData.currency.tokens || 0} 🥚${userData.currency.eggs || 0} 🧪${userData.currency.ichor || 0}`;
+        console.log(`[Collector] Processing 'stop_playing' for user: ${userId}`)
+        userData.gold += gameState.totalGold
+        await userData.save()
+        activePlayers.delete(userId)
+        newCollector.stop()
+        const timePlayedSeconds = Math.floor(
+          (Date.now() - gameStartTime) / 1000
+        )
+        const footerText = `Available: 🪙${userData.gold || 0} ⚡${
+          userData.currency.energy || 0
+        } 🧿${userData.currency.tokens || 0} 🥚${
+          userData.currency.eggs || 0
+        } 🧪${userData.currency.ichor || 0}`
         const finalEmbed = new EmbedBuilder()
           .setTitle(`Zalathor's Table Results 🎰`)
           .setDescription(
             `Congrats! You walked away with **🪙${gameState.totalGold} gold**.\nTime Played: ${timePlayedSeconds} seconds`
           )
           .setFooter({ text: footerText })
-          .setColor('Green');
-        await btnInteraction.update({ embeds: [finalEmbed], components: [] });
+          .setColor('Green')
+        await btnInteraction.update({ embeds: [finalEmbed], components: [] })
       }
-    });
+    })
 
     newCollector.on('end', async (collected, reason) => {
       console.log(
         `[Collector] Collector ended for user: ${userId} with reason: ${reason}`
-      );
+      )
       if (gameState.running) {
-        console.log(`[Collector] Renewing collector for user: ${userId}`);
-        currentCollector = createCollector();
-        collectors.set(userId, currentCollector);
+        console.log(`[Collector] Renewing collector for user: ${userId}`)
+        currentCollector = createCollector()
+        collectors.set(userId, currentCollector)
       } else {
-        activePlayers.delete(userId);
+        activePlayers.delete(userId)
         if (!interaction.replied && !interaction.deferred) {
           await interaction.editReply({
             content: `⏳ Time's up! Your game has ended. You can play again in **1 minute.**`,
             components: [],
-          });
+          })
         }
-        clearInterval(collectorRenewInterval);
+        clearInterval(collectorRenewInterval)
       }
-    });
+    })
 
-    return newCollector;
+    return newCollector
   }
 
   // Create the initial collector and set up the renewal interval
-  let currentCollector = createCollector();
-  collectors.set(userId, currentCollector);
+  let currentCollector = createCollector()
+  collectors.set(userId, currentCollector)
 
   const collectorRenewInterval = setInterval(async () => {
     if (Date.now() - lastInteractionTime >= 30000 && gameState.running) {
       console.log(
         `[Renew] No interaction for 30 seconds for user: ${userId}. Renewing collector.`
-      );
-      currentCollector.stop('timeout');
-      lastInteractionTime = Date.now();
+      )
+      currentCollector.stop('timeout')
+      lastInteractionTime = Date.now()
     }
-  }, 1000);
+  }, 1000)
 
   // Start the game by playing the first round
-  await playRound(interaction, true);
+  await playRound(interaction, true)
 }
 
 

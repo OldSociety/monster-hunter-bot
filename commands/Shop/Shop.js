@@ -9,7 +9,7 @@ const {
 } = require('discord.js')
 const { Op } = require('sequelize')
 
-const { Inventory, Collection } = require('../../Models/model.js')
+const { Monster, Inventory, Collection } = require('../../Models/model.js')
 
 const {
   populateMonsterCache,
@@ -17,8 +17,9 @@ const {
 } = require('../../handlers/cacheHandler')
 const {
   updateOrAddMonsterToCollection,
+  updateUserScores,
 } = require('../../handlers/userMonsterHandler')
-const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
+const { updateTop3AndUserScore } = require('../../handlers/topCardsManager')
 const { calculateMScore } = require('../../handlers/userMonsterHandler.js')
 const { pullSpecificMonster } = require('../../handlers/cacheHandler.js')
 const {
@@ -150,8 +151,9 @@ module.exports = {
       const tokens = currency.tokens || 0
       const eggs = currency.eggs || 0
       const ichor = currency.ichor || 0
+      const gear = currency.gear || 0
 
-      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor}`
+      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 
       const shopEmbed = new EmbedBuilder()
         .setColor(0x00ff00)
@@ -315,13 +317,14 @@ module.exports = {
 
             await user.save()
 
-            if (selectedItem === 'dragon') {
-              const monster = await pullSpecificMonster('adult-red-dragon')
+            if (selectedItem) {
+              const monster = await pullSpecificMonster(
+                selectedItem.replace(/_/g, '-')
+              )
 
               if (!monster) {
                 return interaction.editReply({
-                  content:
-                    'Could not retrieve the Adult Red Dragon card. Please try again later or contact support.',
+                  content: `Could not retrieve the **${DRAGON_PACK_DESCRIPTIONS[selectedItem]}** card. Please try again later or contact support.`,
                   ephemeral: true,
                 })
               }
@@ -341,9 +344,10 @@ module.exports = {
                 })
               }
 
-              await updateTop5AndUserScore(userId)
+              await updateTop3AndUserScore(userId)
 
               const category = classifyMonsterType(monster.type)
+              console.log(category)
               const stars = getStarsBasedOnColor(monster.color || 0x000000) // Default color if missing
               const monsterEmbed = generateMonsterRewardEmbed(
                 monster,
@@ -438,13 +442,21 @@ module.exports = {
             const result = await updateOrAddMonsterToCollection(userId, monster)
 
             await interaction.editReply({
+              content: 'Pack purchased!',
+              embeds: [],
+            });
+            
+            // Now send the card reward publicly:
+            await interaction.followUp({
               content: result.isDuplicate
-                ? `${interaction.user.username} obtained another ${result.name}. Come back to the /shop to promote your card and increase its score!`
+                ? `${interaction.user.username} obtained another ${result.name}.`
                 : `${interaction.user.username} pulled a new ${result.name} from the ${packType} pack!`,
               embeds: [monsterEmbed],
-            })
+              ephemeral: false, // This ensures it's visible to everyone
+            });
+            
 
-            await updateTop5AndUserScore(userId)
+            await updateTop3AndUserScore(userId)
 
             if (isStarterPackAvailable) {
               await interaction.followUp({
@@ -462,15 +474,17 @@ module.exports = {
             const userMonsters = await Collection.findAll({
               where: { userId, copies: { [Op.gt]: 0 } },
             })
-
-            if (userMonsters.length === 0) {
+            const promotableMonsters = userMonsters.filter(
+              (monster) => monster.rank < 7
+            )
+            if (promotableMonsters.length === 0) {
               return interaction.editReply({
                 content: 'You have no cards available for promotion.',
                 components: [],
               })
             }
 
-            const monsterOptions = userMonsters.map((monster) => ({
+            const monsterOptions = promotableMonsters.map((monster) => ({
               label: `${monster.name} (Lv. ${monster.rank})`,
               value: `promote_${monster.id}`,
               description: `Copies: ${monster.copies}`,
@@ -509,6 +523,10 @@ module.exports = {
                 components: [],
               })
             }
+            console.log(
+              `Before save: Monster ID=${selectedMonster.id}, m_score=${selectedMonster.m_score}`
+            )
+            console.log('stealth', user.stealth_score)
 
             const promotionCostEntry = PROMOTION_COSTS.find(
               (entry) => entry.cr === selectedMonster.cr
@@ -539,9 +557,10 @@ module.exports = {
               )
               .setColor('Gold')
               .setFooter({
-                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
-              .setThumbnail(imageUrl)
+              .setImage(imageUrl)
+            // .setThumbnail(thumbnailUrl)
 
             const confirmRow = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
@@ -609,8 +628,23 @@ module.exports = {
 
             monster.copies -= 1
 
-            await user.save()
             await monster.save()
+            console.log(
+              `After save: Monster ID=${monster.id}, m_score=${monster.m_score}`
+            )
+            console.log('stealth', user.stealth_score)
+
+            user.gold -= promotionCost
+            await user.save()
+            console.log(
+              `User after promotion: user_id=${user.user_id}, gold=${user.gold}`
+            )
+
+            await updateUserScores(
+              user.user_id,
+              classifyMonsterType(monster.type),
+              monster
+            )
 
             const successEmbed = new EmbedBuilder()
               .setTitle('✅ Promotion Successful!')
@@ -619,7 +653,7 @@ module.exports = {
               )
               .setColor('Green')
               .setFooter({
-                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor}`,
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
               .setImage(imageUrl)
 
