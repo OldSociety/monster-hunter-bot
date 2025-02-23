@@ -13,63 +13,60 @@ const { energyCostToEmoji } = require('./huntHelpers.js')
 async function showLevelSelection(interaction, user, huntData, newPage = null) {
   console.log(
     `showLevelSelection() called for user: ${interaction.user.tag} (ID: ${interaction.user.id})`
-  )
+  );
 
-  let completedLevels = user.completedLevels || 0
-  let totalHuntsBefore = 0
-  let unlockedPages = []
+  let completedLevels = user.completedLevels || 0;
+  let totalHuntsBefore = 0;
+  let unlockedPages = [];
 
   for (const [pageKey, pageData] of Object.entries(huntPages)) {
     if (completedLevels >= totalHuntsBefore) {
-      unlockedPages.push(pageKey)
+      unlockedPages.push(pageKey);
     }
     if (Array.isArray(pageData.hunts)) {
-      totalHuntsBefore += pageData.hunts.length
+      totalHuntsBefore += pageData.hunts.length;
     } else {
-      console.error(`❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`)
+      console.error(`❌ Hunt page '${pageKey}' is missing a valid 'hunts' array.`);
     }
   }
-  
 
-  const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
-  console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
+  const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1';
+  console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`);
 
-  const currentPage =
-    typeof newPage === 'string' ? newPage : highestUnlockedPage
-  console.log(`📖 Current Page after button press: ${currentPage}`)
+  const currentPage = typeof newPage === 'string' ? newPage : highestUnlockedPage;
+  console.log(`📖 Current Page after button press: ${currentPage}`);
 
-  const pageData = huntPages[currentPage]
+  const pageData = huntPages[currentPage];
 
   if (!pageData) {
-    console.error(`❌ Invalid hunt page detected: ${currentPage}`)
+    console.error(`❌ Invalid hunt page detected: ${currentPage}`);
     return interaction.editReply({
       content: 'Invalid hunt page.',
       ephemeral: true,
-    })
+    });
   }
 
   totalHuntsBefore = Object.keys(huntPages)
     .slice(0, Object.keys(huntPages).indexOf(currentPage))
-    .reduce((sum, key) => sum + huntPages[key].hunts.length, 0)
+    .reduce((sum, key) => sum + huntPages[key].hunts.length, 0);
 
-  let completedLevelsOnPage = completedLevels - totalHuntsBefore
-  console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`)
-
+  let completedLevelsOnPage = completedLevels - totalHuntsBefore;
+  console.log(`✅ Completed levels on ${currentPage}: ${completedLevelsOnPage}`);
 
   const unlockedHunts = pageData.hunts.filter(
     (hunt) => hunt.id <= completedLevels + 1
-  )
+  );
 
   console.log(
     `Unlocked hunts: ${unlockedHunts.map((h) => h.key).join(', ') || 'None'}`
-  )
+  );
 
   if (unlockedHunts.length === 0) {
     return interaction.editReply({
       content:
         'No hunts are available on this page. Complete previous hunts to unlock new ones.',
       ephemeral: true,
-    })
+    });
   }
 
   const huntOptions = unlockedHunts
@@ -78,33 +75,35 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       description: hunt.description,
       value: `hunt_${hunt.key}`,
     }))
-    .reverse()
+    .reverse();
 
+  // Create dropdown for hunt selection
   const dropdownRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId('hunt_select')
       .setPlaceholder('Choose a hunt')
       .addOptions(huntOptions)
-  )
+  );
 
-  let pageRow = null
-  if (unlockedPages.length > 1) {
-    console.log(`🔄 Adding page-switching buttons: ${unlockedPages}`)
-
-    pageRow = new ActionRowBuilder().addComponents(
-      unlockedPages.map((pageKey) =>
-        new ButtonBuilder()
-          .setCustomId(`page_${pageKey}`)
-          .setLabel(`Page ${pageKey.replace('page', '')}`)
-          .setStyle(
-            pageKey === currentPage
-              ? ButtonStyle.Primary
-              : ButtonStyle.Secondary
-          )
+  // Create page buttons based on unlockedPages
+  const pageButtons = unlockedPages.map((pageKey) =>
+    new ButtonBuilder()
+      .setCustomId(`page_${pageKey}`)
+      .setLabel(`Page ${pageKey.replace('page', '')}`)
+      .setStyle(
+        pageKey === currentPage ? ButtonStyle.Primary : ButtonStyle.Secondary
       )
-    )
+  );
+
+  // Split the pageButtons into chunks of 5
+  const pageRows = [];
+  for (let i = 0; i < pageButtons.length; i += 5) {
+    pageRows.push(
+      new ActionRowBuilder().addComponents(...pageButtons.slice(i, i + 5))
+    );
   }
 
+  // Create the row for other action buttons (ichor, cancel)
   const buttonRow = new ActionRowBuilder().addComponents(
     ...(user.currency.ichor > 0 && !huntData.ichorUsed
       ? [
@@ -118,8 +117,9 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
       .setCustomId('cancel_hunt')
       .setLabel('Cancel Hunt')
       .setStyle(ButtonStyle.Danger)
-  )
+  );
 
+  // Build the embed
   const embed = new EmbedBuilder()
     .setTitle(pageData.name)
     .setDescription(
@@ -128,26 +128,25 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
     .setColor('Green')
     .setFooter({
       text: `Available: ⚡${user.currency.energy} 🧪${user.currency.ichor}`,
-    })
+    });
 
   if (huntData.ichorUsed) {
     embed.addFields({
       name: 'Ichor Invigoration',
       value: 'You are invigorated with 🧪ichor! Your strength increases.',
-    })
+    });
   }
 
-  const components = [dropdownRow]
-  if (pageRow) components.push(pageRow)
-  components.push(buttonRow)
+  // Combine all components: dropdown, page buttons, then the action buttons
+  const components = [dropdownRow, ...pageRows, buttonRow];
 
   await interaction.editReply({
     embeds: [embed],
     components,
     ephemeral: true,
-  })
+  });
 
-  console.log('Setting up interaction collector for hunt selection...')
+  console.log('Setting up interaction collector for hunt selection...');
 }
 
-module.exports = { showLevelSelection }
+module.exports = { showLevelSelection };

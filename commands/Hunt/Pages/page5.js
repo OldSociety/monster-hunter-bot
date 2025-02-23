@@ -195,7 +195,7 @@ module.exports = {
           goldReward: 462,
         },
       ],
-      unlocksPage: 'finished',
+      unlocksPage: 'page6',
     },
   ],
 }

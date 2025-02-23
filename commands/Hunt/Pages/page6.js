@@ -1,14 +1,14 @@
 module.exports = {
   key: 'page6',
-  name: `Hunt Page 6 - `,
-  description: '',
+  name: `Hunt Page 6 - Sanity Check`,
+  description: 'Stop the insane solar.',
   finalBoss: 'Solar',
   hunts: [
     {
       id: 30,
       key: 'hunt30',
       name: 'Druid',
-      description: ``,
+      description: `A druid rises up to protect the solar.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -35,7 +35,7 @@ module.exports = {
       id: 31,
       key: 'hunt31',
       name: ``,
-      description: ``,
+      description: `a`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -62,7 +62,7 @@ module.exports = {
       id: 32,
       key: 'hunt32',
       name: '',
-      description: ``,
+      description: `a`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -89,7 +89,7 @@ module.exports = {
       id: 33,
       key: 'hunt33',
       name: '',
-      description: ``,
+      description: `a`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -116,7 +116,7 @@ module.exports = {
       id: 34,
       key: 'hunt34',
       name: '',
-      description: ``,
+      description: `a`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -143,7 +143,7 @@ module.exports = {
       id: 35,
       key: 'hunt35',
       name: 'Treant',
-      description: ``,
+      description: `a`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
@@ -170,7 +170,7 @@ module.exports = {
       id: 36,
       key: 'hunt36',
       name: 'Solar',
-      description: ``,
+      description: `The final showdown begins.`,
       energyCost: 3,
       totalBattles: 10,
       battles: [
