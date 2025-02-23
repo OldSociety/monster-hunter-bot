@@ -16,7 +16,7 @@ let clientInstance
 const RAID_START_TIME = '0 6 * * 1' // Monday at 6 AM
 const RAID_END_TIME = '0 6 * * 6' // Saturday at 6 AM
 
-const TEST_MODE = true
+const TEST_MODE = false
 const TEST_ACTIVE_DURATION = '*/2 * * * *'
 const TEST_COOLDOWN_DURATION = '*/1 * * * *'
 
