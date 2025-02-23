@@ -1,16 +1,14 @@
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
-const { User } = require('../../../Models/model')
+
 const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const { getNextActiveTime } = require('../../../handlers/raidTimerHandler') // Adjust path as needed
-const { globalRaidParticipants } = require('./raidState')
-const {  formatTimeRemaining} = require('./timeUtils.js')
-// const {  processGlobalRaidRewards} = require('./raidRewardsProcessor.js')
 
+const { globalRaidParticipants } = require('./raidState')
+const { formatTimeRemaining } = require('./timeUtils.js')
 
 function getUserFooter(user) {
   const gold = user.gold || 0
@@ -18,13 +16,6 @@ function getUserFooter(user) {
   return `Available: 🪙${gold} ⚡${currency.energy || 0} 🧿${
     currency.tokens || 0
   } 🥚${currency.eggs || 0} 🧪${currency.ichor || 0} ⚙️${currency.gear || 0}`
-}
-
-function updateFooter() {
-  const now = Date.now()
-  const nextActive = getNextActiveTime()
-  const remainingMs = Math.max(nextActive - now, 0)
-  return `Raids will restart in ${formatTimeRemaining(remainingMs)}`
 }
 
 function createWelcomeEmbed(raidBoss, user) {

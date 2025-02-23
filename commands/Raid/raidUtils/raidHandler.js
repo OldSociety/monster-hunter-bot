@@ -20,7 +20,6 @@ const {
   raidBossRotation,
   enterCooldownEarly,
   getNextActiveTime,
-  isRaidActive,
 } = require('../../../handlers/raidTimerHandler.js')
 const {
   getUserFooter,
@@ -40,8 +39,6 @@ const {
   getUniformGearReward,
   getUniformCardRewards,
 } = require('./raidRewards')
-
-const cooldownDuration = getNextActiveTime()
 
 let rewardsDistributed = false
 
