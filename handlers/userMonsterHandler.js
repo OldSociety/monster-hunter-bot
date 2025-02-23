@@ -27,7 +27,7 @@ const mScoreMultipliers = {
     6: 2.0,
     7: 2.24,
     8: 2.5,
-    9: 3.20,
+    9: 3.2,
     10: 4.0,
   },
   Rare: {
@@ -171,11 +171,13 @@ async function updateUserScores(userId, category, monster) {
     [categoryScoreField]: updatedClassScoreValue,
     score: newTotalScore,
   })
-// Reload the user from the database to get fresh values.
-await user.reload();
+  // Reload the user from the database to get fresh values.
+  await user.reload()
 
-console.log(`After update: ${categoryScoreField} = ${user[categoryScoreField]}`);
-console.log(`After update: total score = ${user.score}`);
+  console.log(
+    `After update: ${categoryScoreField} = ${user[categoryScoreField]}`
+  )
+  console.log(`After update: total score = ${user.score}`)
   console.log(`Updated user ${userId} data with new scores and top monsters.`)
 }
 
@@ -218,4 +220,8 @@ async function updateOrAddMonsterToCollection(userId, monster) {
   }
 }
 
-module.exports = { calculateMScore, updateUserScores, updateOrAddMonsterToCollection }
+module.exports = {
+  calculateMScore,
+  updateUserScores,
+  updateOrAddMonsterToCollection,
+}

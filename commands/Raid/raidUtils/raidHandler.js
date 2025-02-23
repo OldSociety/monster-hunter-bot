@@ -465,7 +465,6 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
     console.log('[Heal] Insufficient tokens to heal.')
     return interaction.followUp({
       content: "You don't have enough tokens to heal.",
-
       ephemeral: true,
     })
   }
@@ -475,16 +474,14 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
 
   if (missingHP <= 0) {
     console.log('[Heal] Already at max health. No tokens spent.')
-    // Optionally, you can return early here if no healing is needed.
+    // Optionally, return early if no healing is needed.
   } else if (healType === 'max') {
-    // Calculate tokens based on missing HP (10 HP per token).
     tokensSpent = Math.min(Math.ceil(missingHP / 10), user.currency.tokens)
     user.current_raidHp = user.score
     console.log(
       `[Heal] Healing to max. Healing ${missingHP} HP. Tokens spent: ${tokensSpent}`
     )
   } else {
-    // For non-max heal, define a fixed heal amount, but don't exceed max HP.
     const desiredHeal = 100
     const healingAmount = Math.min(desiredHeal, missingHP)
     tokensSpent = Math.ceil(healingAmount / 10)
@@ -494,32 +491,34 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
     )
   }
 
-  // Subtract only the tokens needed.
+  // Subtract the tokens spent.
   user.currency = {
     ...user.currency,
     tokens: user.currency.tokens - tokensSpent,
   }
   await user.save()
+
   const updatedEmbed = createRaidBossEmbed(raidBoss, user)
   console.log('[Heal] Updated embed after healing created.')
 
+  // Recreate the action row with updated user data.
+  const updatedActionRow = createInitialActionRow(user)
+
   try {
-    try {
-      await interaction.editReply({ embeds: [updatedEmbed] })
-    } catch (error) {
-      console.error(
-        '[Heal] Failed to edit ephemeral message, sending a new one instead.',
-        error
-      )
-      await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
-    }
+    await interaction.editReply({
+      embeds: [updatedEmbed],
+      components: [updatedActionRow],
+      ephemeral: true,
+    })
   } catch (error) {
-    console.error(
-      '[Heal] Failed to edit message, sending a new one instead.',
-      error
-    )
-    await interaction.followUp({ embeds: [updatedEmbed], ephemeral: true })
+    console.error('[Heal] Failed to edit ephemeral message:', error)
+    await interaction.followUp({
+      embeds: [updatedEmbed],
+      components: [updatedActionRow],
+      ephemeral: true,
+    })
   }
 }
+
 
 module.exports = { startRaidEncounter }

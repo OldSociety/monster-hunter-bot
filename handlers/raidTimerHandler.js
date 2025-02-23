@@ -16,7 +16,7 @@ let clientInstance
 const RAID_START_TIME = '0 6 * * 1' // Monday at 6 AM
 const RAID_END_TIME = '0 6 * * 6' // Saturday at 6 AM
 
-const TEST_MODE = false
+const TEST_MODE = true
 const TEST_ACTIVE_DURATION = '*/2 * * * *'
 const TEST_COOLDOWN_DURATION = '*/1 * * * *'
 
@@ -97,7 +97,7 @@ function getTimeUntilCooldown() {
     nextCooldown = new Date(now)
     nextCooldown.setHours(6, 0, 0, 0)
   } else {
-    // Outside the active window; return 0.
+    // Outside the active window return 0.
     return 0
   }
   return nextCooldown.getTime() - now.getTime()
@@ -133,9 +133,18 @@ async function activateRaid() {
       console.log(`🆕 New Raid Boss: ${newBoss.name}`)
 
       const announcementEmbed = createRaidAnnouncementEmbed(newBoss)
-      const channel = clientInstance.channels.cache.get(
-        process.env.DEVBOTTESTCHANNELID
-      )
+
+      let channel
+      if (process.env.NODE_ENV === 'development') {
+        channel = clientInstance.channels.cache.get(
+          process.env.DEVBOTTESTCHANNELID
+        )
+      } else {
+        channel = clientInstance.channels.cache.get(
+          process.env.BHUNTERCHANNELID
+        )
+      }
+
       await channel.send({ embeds: [announcementEmbed] })
     } else {
       console.log('No raid bosses found.')

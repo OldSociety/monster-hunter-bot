@@ -442,11 +442,19 @@ module.exports = {
             const result = await updateOrAddMonsterToCollection(userId, monster)
 
             await interaction.editReply({
+              content: 'Pack purchased!',
+              embeds: [],
+            });
+            
+            // Now send the card reward publicly:
+            await interaction.followUp({
               content: result.isDuplicate
-                ? `${interaction.user.username} obtained another ${result.name}. Come back to the /shop to promote your card and increase its score!`
+                ? `${interaction.user.username} obtained another ${result.name}.`
                 : `${interaction.user.username} pulled a new ${result.name} from the ${packType} pack!`,
               embeds: [monsterEmbed],
-            })
+              ephemeral: false, // This ensures it's visible to everyone
+            });
+            
 
             await updateTop3AndUserScore(userId)
 
