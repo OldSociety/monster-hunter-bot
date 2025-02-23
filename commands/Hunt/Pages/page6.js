@@ -13,7 +13,7 @@ module.exports = {
       totalBattles: 10,
       battles: [
         { type: 'normal', monsterIndex: 'specter', difficulty: 702, goldReward: 76 }, // 702
-        { type: 'normal', monsterIndex: 'warhorse-skeleton', difficulty: 709, goldReward: 78 }, // 709
+        { type: 'normal', monsterIndex: 'skeleton', difficulty: 709, goldReward: 78 }, // 709
         { type: 'normal', monsterIndex: 'hezrou', difficulty: 700, goldReward: 80 }, // 700
         { type: 'normal', monsterIndex: 'ankheg', difficulty: 705, goldReward: 83 }, // 705
         { type: 'normal', monsterIndex: 'duergar', difficulty: 706, goldReward: 85 }, // 706
@@ -71,7 +71,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'couatl', difficulty: 726, goldReward: 85 }, // 726
         { type: 'normal', monsterIndex: 'dretch', difficulty: 728, goldReward: 88 }, // 728
         { type: 'normal', monsterIndex: 'xorn', difficulty: 734, goldReward: 90 }, // 734
-        { type: 'normal', monsterIndex: 'behir', difficulty: 727, goldReward: 816 }, // 727
+        { type: 'normal', monsterIndex: 'behir', difficulty: 727, goldReward: 81 }, // 727
         { type: 'normal', monsterIndex: 'gnoll', difficulty: 736, goldReward: 84 }, // 736
         { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 725, goldReward: 86 }, // 725
         { type: 'normal', monsterIndex: 'imp', difficulty: 721, goldReward: 89 }, // 721
