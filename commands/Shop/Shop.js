@@ -19,7 +19,7 @@ const {
   updateOrAddMonsterToCollection,
   updateUserScores,
 } = require('../../handlers/userMonsterHandler')
-const { updateTop5AndUserScore } = require('../../handlers/topCardsManager')
+const { updateTop3AndUserScore } = require('../../handlers/topCardsManager')
 const { calculateMScore } = require('../../handlers/userMonsterHandler.js')
 const { pullSpecificMonster } = require('../../handlers/cacheHandler.js')
 const {
@@ -153,7 +153,7 @@ module.exports = {
       const ichor = currency.ichor || 0
       const gear = currency.gear || 0
 
-      const footerText =`Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
+      const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 
       const shopEmbed = new EmbedBuilder()
         .setColor(0x00ff00)
@@ -318,7 +318,9 @@ module.exports = {
             await user.save()
 
             if (selectedItem) {
-              const monster = await pullSpecificMonster(selectedItem.replace(/_/g, '-'))
+              const monster = await pullSpecificMonster(
+                selectedItem.replace(/_/g, '-')
+              )
 
               if (!monster) {
                 return interaction.editReply({
@@ -326,7 +328,6 @@ module.exports = {
                   ephemeral: true,
                 })
               }
-          
 
               // Ensure necessary fields exist
               monster.rarity = 'Very Rare'
@@ -343,17 +344,21 @@ module.exports = {
                 })
               }
 
-              await updateTop5AndUserScore(userId)
+              await updateTop3AndUserScore(userId)
 
               const category = classifyMonsterType(monster.type)
               console.log(category)
               const stars = getStarsBasedOnColor(monster.color || 0x000000) // Default color if missing
-              const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
+              const monsterEmbed = generateMonsterRewardEmbed(
+                monster,
+                category,
+                stars
+              )
 
-    return interaction.editReply({
-      content: `You have obtained the **${result.name}** from the Dragon Pack!`,
-      embeds: [monsterEmbed],
-    })
+              return interaction.editReply({
+                content: `You have obtained the **${result.name}** from the Dragon Pack!`,
+                embeds: [monsterEmbed],
+              })
             } else {
               // Handle normal equipment purchase (adding to Inventories table)
               // await Inventory.create({ userId, itemName: selectedItem })
@@ -443,7 +448,7 @@ module.exports = {
               embeds: [monsterEmbed],
             })
 
-            await updateTop5AndUserScore(userId)
+            await updateTop3AndUserScore(userId)
 
             if (isStarterPackAvailable) {
               await interaction.followUp({
@@ -461,15 +466,17 @@ module.exports = {
             const userMonsters = await Collection.findAll({
               where: { userId, copies: { [Op.gt]: 0 } },
             })
-
-            if (userMonsters.length === 0) {
+            const promotableMonsters = userMonsters.filter(
+              (monster) => monster.rank < 7
+            )
+            if (promotableMonsters.length === 0) {
               return interaction.editReply({
                 content: 'You have no cards available for promotion.',
                 components: [],
               })
             }
 
-            const monsterOptions = userMonsters.map((monster) => ({
+            const monsterOptions = promotableMonsters.map((monster) => ({
               label: `${monster.name} (Lv. ${monster.rank})`,
               value: `promote_${monster.id}`,
               description: `Copies: ${monster.copies}`,
@@ -508,6 +515,10 @@ module.exports = {
                 components: [],
               })
             }
+            console.log(
+              `Before save: Monster ID=${selectedMonster.id}, m_score=${selectedMonster.m_score}`
+            )
+            console.log('stealth', user.stealth_score)
 
             const promotionCostEntry = PROMOTION_COSTS.find(
               (entry) => entry.cr === selectedMonster.cr
@@ -609,8 +620,17 @@ module.exports = {
 
             monster.copies -= 1
 
-            await user.save()
             await monster.save()
+            console.log(
+              `After save: Monster ID=${monster.id}, m_score=${monster.m_score}`
+            )
+            console.log('stealth', user.stealth_score)
+
+            user.gold -= promotionCost
+            await user.save()
+            console.log(
+              `User after promotion: user_id=${user.user_id}, gold=${user.gold}`
+            )
 
             await updateUserScores(
               user.user_id,

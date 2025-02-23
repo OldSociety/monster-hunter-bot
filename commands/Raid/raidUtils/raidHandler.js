@@ -6,7 +6,7 @@ const { pullSpecificMonster } = require('../../../handlers/cacheHandler')
 const {
   updateOrAddMonsterToCollection,
 } = require('../../../handlers/userMonsterHandler')
-const { updateTop5AndUserScore } = require('../../../handlers/topCardsManager')
+const { updateTop3AndUserScore } = require('../../../handlers/topCardsManager')
 const {
   generateMonsterRewardEmbed,
 } = require('../../../utils/embeds/monsterRewardEmbed')
@@ -363,7 +363,7 @@ async function startRaidEncounter(interaction, user) {
             const monster = await pullSpecificMonster(cardName)
             if (monster) {
               await updateOrAddMonsterToCollection(user.user_id, monster)
-              await updateTop5AndUserScore(user.user_id)
+              await updateTop3AndUserScore(user.user_id)
 
               const stars = getStarsBasedOnColor(monster.color)
               const category = classifyMonsterType(monster.type)

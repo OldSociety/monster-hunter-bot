@@ -171,7 +171,11 @@ async function updateUserScores(userId, category, monster) {
     [categoryScoreField]: updatedClassScoreValue,
     score: newTotalScore,
   })
+// Reload the user from the database to get fresh values.
+await user.reload();
 
+console.log(`After update: ${categoryScoreField} = ${user[categoryScoreField]}`);
+console.log(`After update: total score = ${user.score}`);
   console.log(`Updated user ${userId} data with new scores and top monsters.`)
 }
 
