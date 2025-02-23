@@ -36,9 +36,8 @@ async function showLevelSelection(interaction, user, huntData, newPage = null) {
   const highestUnlockedPage = unlockedPages[unlockedPages.length - 1] || 'page1'
   console.log(`🌍 Highest Unlocked Page: ${highestUnlockedPage}`)
 
-    currentPage = typeof newPage === 'string' ? newPage : highestUnlockedPage
-    console.log(`📖 Current Page after button press: ${currentPage}`)
-  }
+  currentPage = typeof newPage === 'string' ? newPage : highestUnlockedPage
+  console.log(`📖 Current Page after button press: ${currentPage}`)
 
   // Ensure `currentPage` is always valid
   const pageData = huntPages[currentPage]
