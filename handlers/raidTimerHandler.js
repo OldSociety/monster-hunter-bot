@@ -56,6 +56,25 @@ function isRaidActive() {
     (day === 1 && hour >= 6) || (day > 1 && day < 6) || (day === 6 && hour < 6)
   )
 }
+
+function updateRaidPhaseOnStartup() {
+  if (isRaidActive()) {
+    console.log('[Raid Phase Startup] Current time indicates raids are active.')
+    raidBossRotation.phase = 'active'
+  } else {
+    console.log(
+      '[Raid Phase Startup] Current time indicates raids are in cooldown.'
+    )
+    raidBossRotation.phase = 'cooldown'
+  }
+  raidBossRotation.lastSwitch = Date.now()
+  console.log(
+    `[Raid Phase Startup] Raid phase set to "${
+      raidBossRotation.phase
+    }" at ${new Date(raidBossRotation.lastSwitch).toLocaleString()}`
+  )
+}
+
 function getNextActiveTime() {
   if (TEST_MODE) {
     return TEST_COOLDOWN_DURATION_MS
@@ -125,9 +144,10 @@ async function activateRaid() {
   try {
     const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
     if (raidBosses.length > 0) {
+      const newBoss = raidBosses[raidBossRotation.currentIndex]
       raidBossRotation.currentIndex =
         (raidBossRotation.currentIndex + 1) % raidBosses.length
-      const newBoss = raidBosses[raidBossRotation.currentIndex]
+
       newBoss.current_hp = newBoss.hp
       await newBoss.save()
       console.log(`🆕 New Raid Boss: ${newBoss.name}`)
@@ -221,6 +241,10 @@ async function runTestModeCycle() {
 async function initializeRaidTimer(client) {
   clientInstance = client
   console.log('🛠 Raid Timer Initialized.')
+
+  // Update the raid phase on startup based on the current time.
+  updateRaidPhaseOnStartup()
+
   cron.schedule(RAID_START_TIME, activateRaid)
   cron.schedule(RAID_END_TIME, enterCooldown)
   if (TEST_MODE) {
