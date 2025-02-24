@@ -168,57 +168,56 @@ async function pullValidMonster(
   userId,
   maxAttempts = 10
 ) {
-  let attempts = 0
-  let monster
+  let attempts = 0;
+  let monster;
 
-  const allowedMonstersSet = allowedMonstersByPack[packType]
+  const allowedMonstersSet = allowedMonstersByPack[packType];
   if (!allowedMonstersSet || allowedMonstersSet.size === 0) {
-    console.warn(
-      `[PULL ERROR] No allowed monsters defined for pack: ${packType}`
-    )
-    return null
+    console.warn(`[PULL ERROR] No allowed monsters defined for pack: ${packType}`);
+    return null;
   }
 
   do {
     const tierName =
       packType === 'elemental' && tierOption.customTiers
         ? selectTier(tierOption.customTiers)
-        : tierOption.name
+        : tierOption.name;
 
-    const eligibleMonsters = global.monsterCacheByTier?.[tierName] || []
+    const eligibleMonsters = global.monsterCacheByTier?.[tierName] || [];
 
-    console.log(
-      `[PULL] Checking ${tierName} tier - ${eligibleMonsters.length} available`
-    )
+    console.log(`[PULL] Checking ${tierName} tier - ${eligibleMonsters.length} available`);
 
     const filteredMonsters = eligibleMonsters.filter((monster) =>
       allowedMonstersSet.has(monster.index)
-    )
+    );
 
-    console.log(
-      `[PULL] Allowed monsters after filtering: ${filteredMonsters.length}`
-    )
+    console.log(`[PULL] Allowed monsters after filtering: ${filteredMonsters.length}`);
 
     if (!filteredMonsters.length) {
-      console.warn(
-        `[PULL ERROR] No eligible monsters in tier: ${tierName} after filtering`
-      )
-      return null
+      console.warn(`[PULL ERROR] No eligible monsters in tier: ${tierName} after filtering`);
+      return null;
     }
 
-    monster =
-      filteredMonsters[Math.floor(Math.random() * filteredMonsters.length)]
-    attempts++
-  } while (!monster && attempts < maxAttempts)
+    // Calculate total weight using 1 / (CR + 1)
+    const totalWeight = filteredMonsters.reduce((sum, m) => sum + (1 / (m.cr + 1)), 0);
+    let randomWeight = Math.random() * totalWeight;
+    for (const m of filteredMonsters) {
+      randomWeight -= (1 / (m.cr + 1));
+      if (randomWeight <= 0) {
+        monster = m;
+        break;
+      }
+    }
+
+    attempts++;
+  } while (!monster && attempts < maxAttempts);
 
   if (monster) {
-    console.log(
-      `[PULL] Successfully pulled ${monster.name}. Adding to collection.`
-    )
-    await updateOrAddMonsterToCollection(userId, monster)
+    console.log(`[PULL] Successfully pulled ${monster.name}. Adding to collection.`);
+    await updateOrAddMonsterToCollection(userId, monster);
   }
 
-  return monster
+  return monster;
 }
 
 async function fetchMonsterByName(name) {

@@ -64,6 +64,45 @@ for (const entry of commandEntries) {
 // Load events dynamically
 eventHandler(client)
 
+// 3 energy refill per minute
+if (process.env.NODE_ENV === 'production') {
+  cron.schedule('*/10 * * * *', async () => {
+    try {
+      const users = await User.findAll()
+
+      for (const user of users) {
+        let currency = user.currency || {
+          energy: 15,
+          gems: 0,
+          eggs: 0,
+          ichor: 0,
+          dice: 0,
+        }
+        if (typeof currency !== 'object') {
+          currency = { energy: 15, gems: 0, eggs: 0, ichor: 0, dice: 0 }
+        }
+
+        const currentEnergy = currency.energy || 0
+        if (currentEnergy < 15) {
+          currency.energy = Math.min(currentEnergy + 3, 15)
+          user.currency = currency
+          user.changed('currency', true)
+          await user.save()
+          console.log(
+            `User ID: ${user.user_id}, Updated Currency:`,
+            user.currency
+          )
+        } else {
+          console.log(`User ID: ${user.user_id} already has maximum energy.`)
+        }
+      }
+      console.log('Energy refilled for all users.')
+    } catch (error) {
+      console.error('Error refilling energy:', error)
+    }
+  })
+}
+
 // Import message handler
 const messageHandler = require('./handlers/messageHandler')
 const { initializeRaidTimer } = require('./handlers/raidTimerHandler')

@@ -259,4 +259,5 @@ module.exports = {
   enterCooldownEarly,
   getNextActiveTime,
   isRaidActive,
+  getTimeUntilCooldown
 }
