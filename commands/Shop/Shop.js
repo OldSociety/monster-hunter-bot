@@ -634,7 +634,6 @@ module.exports = {
             )
             console.log('stealth', user.stealth_score)
 
-            user.gold -= promotionCost
             await user.save()
             console.log(
               `User after promotion: user_id=${user.user_id}, gold=${user.gold}`
