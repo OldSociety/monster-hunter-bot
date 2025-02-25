@@ -14,7 +14,7 @@ function checkAdvantage(playerStyle, monsterType) {
     brute: 'spellsword',
   }
 
-  if (advantageMap[playerStyle] === monsterCategory) return 1.25 // Advantage multiplier
+  if (advantageMap[playerStyle] === monsterCategory) return 1.10 // Advantage multiplier
   if (disadvantageMap[playerStyle] === monsterCategory) return 0.75 // Disadvantage multiplier
 
   return 1 // No advantage/disadvantage

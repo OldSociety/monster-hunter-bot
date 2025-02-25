@@ -72,7 +72,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'drider', difficulty: 184, goldReward: 71 }, // 184
         { type: 'normal', monsterIndex: 'fire-giant', difficulty: 243, goldReward: 73 }, // 243
         { type: 'normal', monsterIndex: 'balor', difficulty: 262, goldReward: 75 }, // 262
-        { type: 'normal', monsterIndex: 'vampire-bat', difficulty: 216, goldReward: 680 }, // 216
+        { type: 'normal', monsterIndex: 'vampire-bat', difficulty: 216, goldReward: 68 }, // 216
         { type: 'normal', monsterIndex: 'giant-ape', difficulty: 186, goldReward: 70 }, // 186
         { type: 'normal', monsterIndex: 'gladiator', difficulty: 224, goldReward: 72 }, // 224
         { type: 'normal', monsterIndex: 'mammoth', difficulty: 252, goldReward: 74 }, // 252

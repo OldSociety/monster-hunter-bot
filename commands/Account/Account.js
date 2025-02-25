@@ -7,8 +7,82 @@ const {
 } = require('discord.js')
 const { User, Collection } = require('../../Models/model.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
+const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js');
 
 const { Op } = require('sequelize')
+
+async function verifyAndUpdateUserScores(userId) {
+  let user = await User.findOne({ where: { user_id: userId } });
+  if (!user) return null;
+
+  // Fetch all monsters for the user.
+  const monsters = await Collection.findAll({ where: { userId } });
+
+  // Annotate each monster with its style.
+  const monstersWithStyle = monsters.map(mon => ({
+    ...mon.dataValues,
+    style: classifyMonsterType(mon.type),
+  }));
+
+  // Calculate overall top 3 score.
+  const overallTop3 = monstersWithStyle
+    .sort((a, b) => (b.cr - a.cr) || (b.m_score - a.m_score))
+    .slice(0, 3);
+  const overallScore = overallTop3.reduce((acc, m) => acc + m.m_score, 0);
+
+  // Group monsters by style.
+  const styleGroups = { brute: [], spellsword: [], stealth: [] };
+  monstersWithStyle.forEach(mon => {
+    const style = styleGroups[mon.style] !== undefined ? mon.style : 'brute';
+    styleGroups[style].push(mon);
+  });
+
+  // For each style, sort and take the top 3, then sum their m_scores.
+  const bruteTop3 = styleGroups.brute
+    .sort((a, b) => (b.cr - a.cr) || (b.m_score - a.m_score))
+    .slice(0, 3);
+  const spellswordTop3 = styleGroups.spellsword
+    .sort((a, b) => (b.cr - a.cr) || (b.m_score - a.m_score))
+    .slice(0, 3);
+  const stealthTop3 = styleGroups.stealth
+    .sort((a, b) => (b.cr - a.cr) || (b.m_score - a.m_score))
+    .slice(0, 3);
+
+  const bruteScore = bruteTop3.reduce((acc, m) => acc + m.m_score, 0);
+  const spellswordScore = spellswordTop3.reduce((acc, m) => acc + m.m_score, 0);
+  const stealthScore = stealthTop3.reduce((acc, m) => acc + m.m_score, 0);
+
+  let updated = false;
+  if (user.score !== overallScore) {
+    user.score = overallScore;
+    user.top_monsters = overallTop3.map(mon => mon.id);
+    updated = true;
+  }
+  if (user.brute_score !== bruteScore) {
+    user.brute_score = bruteScore;
+    user.top_brutes = bruteTop3.map(mon => mon.id);
+    updated = true;
+  }
+  if (user.spellsword_score !== spellswordScore) {
+    user.spellsword_score = spellswordScore;
+    user.top_spellswords = spellswordTop3.map(mon => mon.id);
+    updated = true;
+  }
+  if (user.stealth_score !== stealthScore) {
+    user.stealth_score = stealthScore;
+    user.top_stealths = stealthTop3.map(mon => mon.id);
+    updated = true;
+  }
+
+  if (updated) {
+    await user.save();
+    console.log(
+      `[SCORE UPDATE] Updated user ${userId}: Overall=${overallScore}, Brute=${bruteScore}, Spellsword=${spellswordScore}, Stealth=${stealthScore}`
+    );
+  }
+  return user;
+}
+
 
 function getRaritySymbol(cr) {
   if (cr >= 20) return '⭐⭐⭐⭐⭐' // Legendary
@@ -93,7 +167,7 @@ module.exports = {
           ephemeral: true,
         })
       }
-
+      user = await verifyAndUpdateUserScores(userId);
       const displayEmbed = async (category) => {
         let embedColor =
           {
@@ -182,8 +256,9 @@ module.exports = {
         const statsEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setTitle(
-            `Top ${category.charAt(0).toUpperCase() + category.slice(1)} Cards`
+            `Top ${category.charAt(0).toUpperCase() + category.slice(1)} Cards (${user[`${category}_score`] || 0})`
           )
+          
           .setFooter({
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor}`,
           })
@@ -204,6 +279,7 @@ module.exports = {
 
         return statsEmbed
       }
+      
 
       await interaction.editReply({
         embeds: [await displayEmbed(category)],
