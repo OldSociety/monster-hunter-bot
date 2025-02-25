@@ -59,12 +59,8 @@ function isRaidActive() {
 
 function updateRaidPhaseOnStartup() {
   if (isRaidActive()) {
-    console.log('[Raid Phase Startup] Current time indicates raids are active.')
     raidBossRotation.phase = 'active'
   } else {
-    console.log(
-      '[Raid Phase Startup] Current time indicates raids are in cooldown.'
-    )
     raidBossRotation.phase = 'cooldown'
   }
   raidBossRotation.lastSwitch = Date.now()
@@ -140,7 +136,6 @@ async function enterCooldownEarly() {
 }
 
 async function activateRaid() {
-  console.log('🟢 Activating Raid Phase!')
   try {
     const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
     if (raidBosses.length > 0) {
@@ -150,7 +145,6 @@ async function activateRaid() {
 
       newBoss.current_hp = newBoss.hp
       await newBoss.save()
-      console.log(`🆕 New Raid Boss: ${newBoss.name}`)
 
       const announcementEmbed = createRaidAnnouncementEmbed(newBoss)
 
@@ -202,8 +196,6 @@ async function enterCooldown() {
       instance: selectedBoss,
     }
 
-    console.log('[Cooldown] Processing end-of-raid popup.')
-
     const channel = clientInstance.channels.cache.get(
       process.env.DEVBOTTESTCHANNELID
     )
@@ -221,7 +213,6 @@ async function enterCooldown() {
       text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`,
     })
 
-    console.log('[Cooldown] Summary embed built. Attempting to send embed.')
     // Then send the embeds (for example, combined in one message)
     await channel.send({ embeds: [summaryEmbed, ...monsterRewardEmbeds] })
   } catch (error) {
@@ -240,7 +231,7 @@ async function runTestModeCycle() {
 }
 async function initializeRaidTimer(client) {
   clientInstance = client
-  console.log('🛠 Raid Timer Initialized.')
+  // console.log('🛠 Raid Timer Initialized.')
 
   // Update the raid phase on startup based on the current time.
   updateRaidPhaseOnStartup()

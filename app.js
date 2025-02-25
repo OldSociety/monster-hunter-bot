@@ -92,9 +92,7 @@ if (process.env.NODE_ENV === 'production') {
             `User ID: ${user.user_id}, Updated Currency:`,
             user.currency
           )
-        } else {
-          console.log(`User ID: ${user.user_id} already has maximum energy.`)
-        }
+        } 
       }
       console.log('Energy refilled for all users.')
     } catch (error) {
