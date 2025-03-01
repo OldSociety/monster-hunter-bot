@@ -17,11 +17,9 @@ const RAID_START_TIME = '0 6 * * 1' // Monday at 6 AM
 const RAID_END_TIME = '0 6 * * 6' // Saturday at 6 AM
 
 const TEST_MODE = false
-const TEST_ACTIVE_DURATION = '*/2 * * * *'
-const TEST_COOLDOWN_DURATION = '*/1 * * * *'
 
-const TEST_ACTIVE_DURATION_MS = 24 * 60 * 60 * 1000 // 1 hour
-const TEST_COOLDOWN_DURATION_MS = 24 * 60 * 60 * 1000 // 1 hour
+const TEST_ACTIVE_DURATION_MS = 60 * 1000 // 1 minute
+const TEST_COOLDOWN_DURATION_MS = 60 * 1000 // 1 minute
 
 const raidBossRotation = {
   currentIndex: 0,
@@ -98,7 +96,9 @@ function getNextActiveTime() {
 
 function getTimeUntilCooldown() {
   if (TEST_MODE) {
-    return TEST_ACTIVE_DURATION_MS - (Date.now() - raidBossRotation.lastSwitch)
+    const remaining =
+      TEST_ACTIVE_DURATION_MS - (Date.now() - raidBossRotation.lastSwitch)
+    return remaining > 0 ? remaining : 0
   }
   const now = new Date()
   let nextCooldown
@@ -135,34 +135,68 @@ async function enterCooldownEarly() {
   raidBossRotation.lastSwitch = Date.now()
 }
 
+async function getNextBoss() {
+  try {
+    let nextBoss = await RaidBoss.findOne({
+      where: { active: false },
+      order: [['id', 'ASC']],
+    })
+    console.log('Initial query result for nextBoss:', nextBoss)
+
+    // If no inactive boss is found, reset all bosses.
+    if (!nextBoss) {
+      console.log('No inactive boss found. Resetting all bosses to inactive.')
+      await RaidBoss.update({ active: false }, { where: {} })
+      nextBoss = await RaidBoss.findOne({
+        where: { active: false },
+        order: [['id', 'ASC']],
+      })
+      console.log('After reset, nextBoss:', nextBoss)
+    }
+
+    // If we still have no boss, log an error and return null.
+    if (!nextBoss) {
+      console.error('getNextBoss: No boss found even after reset.')
+      return null
+    }
+
+    // Mark the boss as active using direct assignment.
+    nextBoss.active = true
+    await nextBoss.save()
+    await nextBoss.reload()
+    console.log('Boss updated to active:', nextBoss.active)
+    return nextBoss
+  } catch (error) {
+    console.error('Error in getNextBoss:', error)
+    throw error
+  }
+}
+
 async function activateRaid() {
   try {
-    const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
-    if (raidBosses.length > 0) {
-      const newBoss = raidBosses[raidBossRotation.currentIndex]
-      raidBossRotation.currentIndex =
-        (raidBossRotation.currentIndex + 1) % raidBosses.length
-
-      newBoss.current_hp = newBoss.hp
-      await newBoss.save()
-
-      const announcementEmbed = createRaidAnnouncementEmbed(newBoss)
-
-      let channel
-      if (process.env.NODE_ENV === 'development') {
-        channel = clientInstance.channels.cache.get(
-          process.env.DEVBOTTESTCHANNELID
-        )
-      } else {
-        channel = clientInstance.channels.cache.get(
-          process.env.BHUNTERCHANNELID
-        )
-      }
-
-      await channel.send({ embeds: [announcementEmbed] })
-    } else {
-      console.log('No raid bosses found.')
+    // Use the active flag to select the next boss.
+    const newBoss = await getNextBoss()
+    if (!newBoss) {
+      console.error('activateRaid: No valid boss returned.')
+      return
     }
+
+    // Reset the boss's health.
+    newBoss.current_hp = newBoss.hp
+    await newBoss.save()
+
+    const announcementEmbed = createRaidAnnouncementEmbed(newBoss)
+
+    let channel
+    if (process.env.NODE_ENV === 'development') {
+      channel = clientInstance.channels.cache.get(
+        process.env.DEVBOTTESTCHANNELID
+      )
+    } else {
+      channel = clientInstance.channels.cache.get(process.env.BHUNTERCHANNELID)
+    }
+
+    await channel.send({ embeds: [announcementEmbed] })
   } catch (error) {
     console.error('❌ Error rotating raid boss:', error)
   }
@@ -250,5 +284,5 @@ module.exports = {
   enterCooldownEarly,
   getNextActiveTime,
   isRaidActive,
-  getTimeUntilCooldown
+  getTimeUntilCooldown,
 }

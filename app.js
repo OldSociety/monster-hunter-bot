@@ -94,7 +94,6 @@ if (process.env.NODE_ENV === 'production') {
           )
         } 
       }
-      console.log('Energy refilled for all users.')
     } catch (error) {
       console.error('Error refilling energy:', error)
     }

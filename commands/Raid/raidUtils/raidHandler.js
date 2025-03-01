@@ -224,11 +224,9 @@ async function startRaidEncounter(interaction, user) {
     return interaction.editReply({
       embeds: [
         new EmbedBuilder(summaryEmbed.data)
-        .setDescription(`This week's raid has finished.`)
+          .setDescription(`This week's raid has finished.`)
           .setFooter({
-            text: `Raids will restart in ${formatTimeRemaining(
-              timeRemaining
-            )}`,
+            text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}`,
           })
           .setColor('Gold'),
       ],
@@ -516,6 +514,5 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
     })
   }
 }
-
 
 module.exports = { startRaidEncounter }
