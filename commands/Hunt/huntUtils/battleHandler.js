@@ -44,7 +44,8 @@ async function runBattlePhases(
     console.log(`--- Phase ${phase} ---`)
     const isDisadvantaged = advMultiplier < 1
     const isAdvantaged = advMultiplier > 1
-    const effectivePlayerScore = playerScore * advMultiplier
+    console.log(user.base_damage)
+    const effectivePlayerScore = (playerScore + user.base_damage) * advMultiplier
 
     const minimumRoll = huntData.ichorUsed
       ? playerScore * 0.3

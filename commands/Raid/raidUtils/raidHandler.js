@@ -286,7 +286,8 @@ async function startRaidEncounter(interaction, user) {
     if (i.customId.startsWith('style_')) {
       const selectedStyle = i.customId.split('_')[1]
       console.log('[Collector] Style selected:', selectedStyle)
-      const playerScore = user[`${selectedStyle}_score`]
+      const playerScore =
+        (user[`${selectedStyle}_score`] || 0) + (user.base_damage || 0)
       const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType)
       await i.deferUpdate()
 

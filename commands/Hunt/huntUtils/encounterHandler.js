@@ -65,14 +65,13 @@ function createStyleButtons(user) {
 
   const styleRow = new ActionRowBuilder()
   styles.forEach((style) => {
-    if (user[`${style}_score`] > 0) {
+    const styleScore = (user[`${style}_score`] || 0) + (user.base_damage || 0)
+    if (styleScore > 0) {
       styleRow.addComponents(
         new ButtonBuilder()
           .setCustomId(`style_${style}`)
           .setLabel(
-            `${style.charAt(0).toUpperCase() + style.slice(1)}: ${
-              user[`${style}_score`]
-            }`
+            `${style.charAt(0).toUpperCase() + style.slice(1)}: ${styleScore}`
           )
           .setStyle(styleColors[style])
       )
