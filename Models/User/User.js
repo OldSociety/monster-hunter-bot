@@ -61,6 +61,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       defaultValue: [], 
     },
+    base_damage: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     completedLevels: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

@@ -524,7 +524,9 @@ module.exports = {
 
             const promotionEmbed = new EmbedBuilder()
               .setTitle('🔼 Monster Promotion')
-              .setDescription('Increase the strength of your cards by fusing copies up to 6 times. Cards that directly affect your score are marked below.')
+              .setDescription(
+                'Increase the strength of your cards by fusing copies up to 6 times. Cards that directly affect your score are marked below.'
+              )
               .setColor('Gold')
               .addFields({
                 name: 'Legend',
@@ -581,31 +583,31 @@ module.exports = {
             )
 
             // Retrieve the matching monster from the Monster model
-const monsterData = await Monster.findOne({
-  where: { name: selectedMonster.name }
-});
+            const monsterData = await Monster.findOne({
+              where: { name: selectedMonster.name },
+            })
 
-const thumbnailUrl = monsterData && monsterData.combatType
-  ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monsterData.combatType}C.png`
-  : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.png';
+            const thumbnailUrl =
+              monsterData && monsterData.combatType
+                ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monsterData.combatType}C.png`
+                : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.png'
 
-console.log(thumbnailUrl)
-const promotionEmbed = new EmbedBuilder()
-  .setTitle(`Promote: ${selectedMonster.name}`)
-  .setDescription(
-    `**Current Rank:** ${selectedMonster.rank}\n` +
-    `**Next Rank:** ${nextRank}\n` +
-    `**Current Score:** ${selectedMonster.m_score}\n` +
-    `**New Score:** ${newScore}\n\n` +
-    `**Cost:** 🪙${promotionCost}`
-  )
-  .setColor('Gold')
-  .setFooter({
-    text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
-  })
-  .setImage(imageUrl)
-  .setThumbnail(thumbnailUrl);
-
+            console.log(thumbnailUrl)
+            const promotionEmbed = new EmbedBuilder()
+              .setTitle(`Promote: ${selectedMonster.name}`)
+              .setDescription(
+                `**Current Rank:** ${selectedMonster.rank}\n` +
+                  `**Next Rank:** ${nextRank}\n` +
+                  `**Current Score:** ${selectedMonster.m_score}\n` +
+                  `**New Score:** ${newScore}\n\n` +
+                  `**Cost:** 🪙${promotionCost}`
+              )
+              .setColor('Gold')
+              .setFooter({
+                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
+              })
+              .setImage(imageUrl)
+              .setThumbnail(thumbnailUrl)
 
             const confirmRow = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
@@ -660,13 +662,14 @@ const promotionEmbed = new EmbedBuilder()
             let assignedRarity = getRarityByCR(monster.cr)
 
             // Retrieve the matching monster data to get its combatType.
-const monsterData = await Monster.findOne({
-  where: { name: monster.name }
-});
+            const monsterData = await Monster.findOne({
+              where: { name: monster.name },
+            })
 
-const thumbnailUrl = monsterData && monsterData.combatType
-? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monsterData.combatType}C.png`
-: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.png';
+            const thumbnailUrl =
+              monsterData && monsterData.combatType
+                ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monsterData.combatType}C.png`
+                : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.png'
 
             const imageUrl = monster
               ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(
@@ -708,7 +711,8 @@ const thumbnailUrl = monsterData && monsterData.combatType
               .setFooter({
                 text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
-              .setImage(imageUrl).setThumbnail(thumbnailUrl)
+              .setImage(imageUrl)
+              .setThumbnail(thumbnailUrl)
 
             return interaction.update({
               embeds: [successEmbed],

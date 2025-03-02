@@ -6,6 +6,7 @@ const User = require('./User/User')(sequelize, DataTypes)
 const Collection = require('./Collection/Collection')(sequelize, DataTypes)
 const Monster = require('./MonsterList/Monster')(sequelize, DataTypes)
 const RaidBoss = require('./MonsterList/RaidBoss')(sequelize, DataTypes)
+const TrainingSession = require('./Training/TrainingSession')(sequelize, DataTypes)
 
 // Arena models
 // const Arena = require('./Arena/Arenas')(sequelize, DataTypes)
@@ -82,7 +83,8 @@ module.exports = {
   User,
   Collection,
   Monster,
-  RaidBoss
+  RaidBoss,
+  TrainingSession,
   // Arena,
   // ArenaMonster,
   // BaseItem,
