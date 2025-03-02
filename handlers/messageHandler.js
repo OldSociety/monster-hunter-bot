@@ -24,36 +24,36 @@ module.exports = (client, User) => {
     const userID = message.author.id
     const userName = message.author.username
 
-    try {
-      let userData = await User.findOne({ where: { user_id: userID } })
+    // try {
+    //   let userData = await User.findOne({ where: { user_id: userID } })
 
-      if (!userData) {
-        userData = await User.create({
-          user_id: userID,
-          user_name: userName,
-          gold: 100, // Initial amount of gold
-          last_chat_message: now,
-        })
-      }
+    //   if (!userData) {
+    //     userData = await User.create({
+    //       user_id: userID,
+    //       user_name: userName,
+    //       gold: 100, // Initial amount of gold
+    //       last_chat_message: now,
+    //     })
+    //   }
 
-      const lastMessageTime = new Date(userData.last_chat_message)
-      const minutesSinceLastMessage = (now - lastMessageTime) / (1000 * 60)
+    //   const lastMessageTime = new Date(userData.last_chat_message)
+    //   const minutesSinceLastMessage = (now - lastMessageTime) / (1000 * 60)
 
-      if (minutesSinceLastMessage >= 1) {
-        const goldToAdd = Math.floor(Math.random() * 5) + 1 // Award 1-3 gold randomly every minute
-        const newGoldAmount = userData.gold + goldToAdd
+    //   if (minutesSinceLastMessage >= 1) {
+    //     const goldToAdd = Math.floor(Math.random() * 5) + 1 // Award 1-3 gold randomly every minute
+    //     const newGoldAmount = userData.gold + goldToAdd
 
-        // Update user's gold and last message time
-        await User.update(
-          {
-            gold: newGoldAmount,
-            last_chat_message: now,
-          },
-          { where: { user_id: userID } }
-        )
-      }
-    } catch (error) {
-      console.error('Error updating user gold:', error)
-    }
+    //     // Update user's gold and last message time
+    //     await User.update(
+    //       {
+    //         gold: newGoldAmount,
+    //         last_chat_message: now,
+    //       },
+    //       { where: { user_id: userID } }
+    //     )
+    //   }
+    // } catch (error) {
+    //   console.error('Error updating user gold:', error)
+    // }
   })
 }

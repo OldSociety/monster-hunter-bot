@@ -7,6 +7,9 @@ const { handlePagination } = require('./huntUtils/paginationHandler.js')
 const { huntPages } = require('./huntPages.js')
 const { populateMonsterCache } = require('../../handlers/cacheHandler')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
+const {
+  verifyAndUpdateUserScores,
+} = require('../../utils/verifyUserScores.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -28,7 +31,7 @@ module.exports = {
     }
 
     stopUserCollector(interaction.user.id)
-
+await verifyAndUpdateUserScores(user.user_id)
     const highestUnlockedPage = Object.keys(huntPages).find(
       (pageKey, index) => {
         const totalHuntsBefore = Object.keys(huntPages)

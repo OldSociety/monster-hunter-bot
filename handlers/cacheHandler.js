@@ -55,11 +55,11 @@ function getRarityByCR(cr) {
  */
 async function populateMonsterCache() {
   if (cachePopulated) {
-    console.log('[CACHE] Already populated, skipping.')
+    // console.log('[CACHE] Already populated, skipping.')
     return
   }
 
-  console.log('[CACHE] Querying Monsters model for all monsters...')
+  // console.log('[CACHE] Querying Monsters model for all monsters...')
 
   try {
     // Query all monsters from the database

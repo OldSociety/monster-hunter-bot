@@ -9,7 +9,12 @@ const {
 
 const { globalRaidParticipants } = require('./raidState')
 const { formatTimeRemaining } = require('./timeUtils.js')
-const { getTimeUntilCooldown }= require('../../../handlers/raidTimerHandler.js')
+const {
+  getTimeUntilCooldown,
+} = require('../../../handlers/raidTimerHandler.js')
+const {
+  verifyAndUpdateUserScores,
+} = require('../../../utils/verifyUserScores.js')
 
 function getUserFooter(user) {
   const gold = user.gold || 0
@@ -19,7 +24,8 @@ function getUserFooter(user) {
   } 🥚${currency.eggs || 0} 🧪${currency.ichor || 0} ⚙️${currency.gear || 0}`
 }
 
-function createWelcomeEmbed(raidBoss, user) {
+ function createWelcomeEmbed(raidBoss, user) {
+  verifyAndUpdateUserScores(user.user_id)
   const playerHealthBar = createHealthBar(user.current_raidHp, user.score)
   return new EmbedBuilder()
     .setTitle(`Current Boss: ${raidBoss.name} (${raidBoss.hp})`)
@@ -27,7 +33,6 @@ function createWelcomeEmbed(raidBoss, user) {
       '**Welcome to Raids!** Join forces with other hunters to battle the most powerful bosses. Defeat the boss for exclusive loot and a legendary card.\n\n' +
         `**Raid ends in ${formatTimeRemaining(getTimeUntilCooldown())}**\n\n` +
         `**Your HP:** ${user.current_raidHp} / ${user.score}\n${playerHealthBar}\n\n`
-        
     )
     .setColor('#FFD700')
     .setThumbnail(raidBoss.imageUrl)
@@ -76,7 +81,9 @@ function createInitialActionRow(user) {
       .setCustomId('heal')
       .setLabel('Heal (100 HP/🧿token)')
       .setStyle(ButtonStyle.Success)
-      .setDisabled(user.currency.tokens < 1 || user.current_raidHp >= user.score),
+      .setDisabled(
+        user.currency.tokens < 1 || user.current_raidHp >= user.score
+      ),
     new ButtonBuilder()
       .setCustomId('cancel_raid')
       .setLabel('Cancel Raid')

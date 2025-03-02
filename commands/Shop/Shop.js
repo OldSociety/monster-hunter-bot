@@ -444,8 +444,8 @@ module.exports = {
             await interaction.editReply({
               content: 'Pack purchased!',
               embeds: [],
-            });
-            
+            })
+
             // Now send the card reward publicly:
             await interaction.followUp({
               content: result.isDuplicate
@@ -453,8 +453,7 @@ module.exports = {
                 : `${interaction.user.username} pulled a new ${result.name} from the ${packType} pack!`,
               embeds: [monsterEmbed],
               ephemeral: false, // This ensures it's visible to everyone
-            });
-            
+            })
 
             await updateTop3AndUserScore(userId)
 
@@ -484,11 +483,37 @@ module.exports = {
               })
             }
 
-            const monsterOptions = promotableMonsters.map((monster) => ({
-              label: `${monster.name} (Lv. ${monster.rank})`,
-              value: `promote_${monster.id}`,
-              description: `Copies: ${monster.copies}`,
-            }))
+            // First, sort the promotable monsters by m_score descending.
+            const sortedPromotable = promotableMonsters.sort(
+              (a, b) => b.m_score - a.m_score
+            )
+
+            const monsterOptions = sortedPromotable.map((monster) => {
+              // Determine the fighting style of the monster.
+              const style = classifyMonsterType(monster.type)
+
+              // Choose an emoji based on the style and if it's in the corresponding top list.
+              let emoji = ''
+              if (style === 'brute' && user.top_brutes.includes(monster.id)) {
+                emoji = ' ⚔️' // Sword for brute
+              } else if (
+                style === 'spellsword' &&
+                user.top_spellswords.includes(monster.id)
+              ) {
+                emoji = ' 🪄' // Wand for spellsword
+              } else if (
+                style === 'stealth' &&
+                user.top_stealths.includes(monster.id)
+              ) {
+                emoji = ' 🎭' // Thief mask for stealth
+              }
+
+              return {
+                label: `${monster.name} (Lv. ${monster.rank})${emoji}`,
+                value: `promote_${monster.id}`,
+                description: `Copies: ${monster.copies}`,
+              }
+            })
 
             const selectRow = new ActionRowBuilder().addComponents(
               new StringSelectMenuBuilder()
@@ -499,8 +524,13 @@ module.exports = {
 
             const promotionEmbed = new EmbedBuilder()
               .setTitle('🔼 Monster Promotion')
-              .setDescription('Select a monster to promote.')
+              .setDescription('Increase the strength of your cards by fusing copies up to 6 times. Cards that directly affect your score are marked below.')
               .setColor('Gold')
+              .addFields({
+                name: 'Legend',
+                value: '⚔️: Brute | 🪄: Spellsword | 🎭: Stealth',
+                inline: false,
+              })
 
             return interaction.update({
               embeds: [promotionEmbed],
@@ -550,17 +580,32 @@ module.exports = {
               nextRank
             )
 
-            const promotionEmbed = new EmbedBuilder()
-              .setTitle(`Promote: ${selectedMonster.name}`)
-              .setDescription(
-                `**Current Rank:** ${selectedMonster.rank}\n**Next Rank:** ${nextRank}\n**Current Score:** ${selectedMonster.m_score}\n**New Score:** ${newScore}\n\n**Cost:** 🪙${promotionCost}`
-              )
-              .setColor('Gold')
-              .setFooter({
-                text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
-              })
-              .setImage(imageUrl)
-            // .setThumbnail(thumbnailUrl)
+            // Retrieve the matching monster from the Monster model
+const monsterData = await Monster.findOne({
+  where: { name: selectedMonster.name }
+});
+
+const thumbnailUrl = monsterData && monsterData.combatType
+  ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monsterData.combatType}C.png`
+  : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.png';
+
+console.log(thumbnailUrl)
+const promotionEmbed = new EmbedBuilder()
+  .setTitle(`Promote: ${selectedMonster.name}`)
+  .setDescription(
+    `**Current Rank:** ${selectedMonster.rank}\n` +
+    `**Next Rank:** ${nextRank}\n` +
+    `**Current Score:** ${selectedMonster.m_score}\n` +
+    `**New Score:** ${newScore}\n\n` +
+    `**Cost:** 🪙${promotionCost}`
+  )
+  .setColor('Gold')
+  .setFooter({
+    text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
+  })
+  .setImage(imageUrl)
+  .setThumbnail(thumbnailUrl);
+
 
             const confirmRow = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
@@ -614,6 +659,15 @@ module.exports = {
 
             let assignedRarity = getRarityByCR(monster.cr)
 
+            // Retrieve the matching monster data to get its combatType.
+const monsterData = await Monster.findOne({
+  where: { name: monster.name }
+});
+
+const thumbnailUrl = monsterData && monsterData.combatType
+? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/refs/heads/main/assets/${monsterData.combatType}C.png`
+: 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.png';
+
             const imageUrl = monster
               ? `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${convertNameToIndex(
                   monster.name
@@ -654,7 +708,7 @@ module.exports = {
               .setFooter({
                 text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
               })
-              .setImage(imageUrl)
+              .setImage(imageUrl).setThumbnail(thumbnailUrl)
 
             return interaction.update({
               embeds: [successEmbed],

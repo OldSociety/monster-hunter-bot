@@ -141,7 +141,7 @@ async function getNextBoss() {
       where: { active: false },
       order: [['id', 'ASC']],
     })
-    console.log('Initial query result for nextBoss:', nextBoss)
+    // console.log('Initial query result for nextBoss:', nextBoss)
 
     // If no inactive boss is found, reset all bosses.
     if (!nextBoss) {

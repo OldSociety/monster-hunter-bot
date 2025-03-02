@@ -37,7 +37,6 @@ async function validateAllUserScores() {
       
       if (overallCalculatedScore !== user.score) {
         console.log(`\n[MISMATCH] User ${user.user_id} Overall Score: stored = ${user.score}, calculated = ${overallCalculatedScore}`);
-        console.log('   Overall top 3 monsters:');
         overallTop3.forEach((m, i) => {
           console.log(`     ${i + 1}. ${m.name} - CR: ${m.cr}, m_score: ${m.m_score}`);
         });

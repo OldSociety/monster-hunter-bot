@@ -11,6 +11,7 @@ const {
   generateMonsterRewardEmbed,
 } = require('../../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../../utils/starRating')
+
 const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
@@ -32,7 +33,6 @@ const {
 const { formatTimeRemaining } = require('./timeUtils.js')
 const { processGlobalRaidRewards } = require('./raidRewardsProcessor.js')
 const { globalRaidParticipants } = require('./raidState.js')
-console.log('[RaidEncounter] globalRaidParticipants:', globalRaidParticipants)
 
 const {
   getUniformBaseRewards,
