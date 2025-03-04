@@ -91,6 +91,14 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      lastWildHuntAvailable: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      wildHuntBuyInsUsed: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,

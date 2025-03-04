@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         eggs: 0,
         ichor: 0,
         dice: 0,
-        gear: 0
+        gear: 0,
       },
     },
     score: {
@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     top_brutes: {
       type: DataTypes.JSON,
-      defaultValue: [], 
+      defaultValue: [],
     },
     top_spellswords: {
       type: DataTypes.JSON,
@@ -59,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     top_stealths: {
       type: DataTypes.JSON,
-      defaultValue: [], 
+      defaultValue: [],
     },
     base_damage: {
       type: DataTypes.INTEGER,
@@ -88,6 +88,14 @@ module.exports = (sequelize, DataTypes) => {
     last_free_claim: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    lastWildHuntAvailable: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    wildHuntBuyInsUsed: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
     createdAt: {
       type: DataTypes.DATE,
