@@ -147,32 +147,41 @@ async function runBattlePhases(
 }
 
 async function startRaidEncounter(interaction, user) {
-  console.log('[Raid] Starting raid encounter')
-  stopUserCollector(interaction.user.id)
-  globalRaidParticipants.add(interaction.user.id)
+  console.log('[Raid] Starting raid encounter');
+  stopUserCollector(interaction.user.id);
+  globalRaidParticipants.add(interaction.user.id);
 
   if (!interaction.deferred && !interaction.replied) {
-    await interaction.deferReply({ ephemeral: true })
+    await interaction.deferReply({ ephemeral: true });
   }
 
-  rewardsDistributed = false
-  const now = Date.now()
-
-  const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] })
-  console.log(`[Raid] Retrieved ${raidBosses.length} raid bosses.`)
+  rewardsDistributed = false;
+  const raidBosses = await RaidBoss.findAll({ order: [['id', 'ASC']] });
+  console.log(`[Raid] Retrieved ${raidBosses.length} raid bosses.`);
 
   if (!raidBosses || raidBosses.length === 0) {
-    console.log('[Raid] No valid raid bosses found.')
+    console.log('[Raid] No valid raid bosses found.');
     return interaction.editReply({
       content: 'Error: No valid raid bosses found.',
       ephemeral: true,
-    })
+    });
   }
 
-  const selectedBoss = raidBosses[raidBossRotation.currentIndex]
-  console.log('[Raid] Selected raid boss:', selectedBoss.name)
+  // Iterate in reverse to select the last active boss.
+  let selectedBoss = null;
+  for (let i = raidBosses.length - 1; i >= 0; i--) {
+    if (raidBosses[i].active === true) {
+      selectedBoss = raidBosses[i];
+      break;
+    }
+  }
+  if (!selectedBoss) {
+    console.log('[Raid] No active raid boss found. Using default boss.');
+    selectedBoss = raidBosses[0];
+  } else {
+    console.log('[Raid] Selected raid boss:', selectedBoss.name);
+  }
 
-  // Use the global rotation phase directly.
   const raidBoss = {
     name: selectedBoss.name,
     index: selectedBoss.index,
@@ -188,237 +197,204 @@ async function startRaidEncounter(interaction, user) {
     lootDrops: selectedBoss.lootDrops || [],
     activePhase: raidBossRotation.phase === 'active',
     instance: selectedBoss,
-  }
+  };
 
-  // If the raid is inactive (cooldown), show the rewards summary (or no-participant notice).
+  // If the raid is inactive (cooldown), show the rewards summary.
   if (raidBossRotation.phase !== 'active') {
-    console.log(
-      '[Raid] Raid is inactive (cooldown phase). Initiating end-of-raid procedure.'
-    )
-    const now = Date.now()
-    // Calculate the remaining time until the next active phase.
-    const cooldownDuration = getNextActiveTime()
-    const elapsed = now - raidBossRotation.lastSwitch
-    const timeRemaining = Math.max(0, cooldownDuration - elapsed)
+    console.log('[Raid] Raid is inactive (cooldown phase). Initiating end-of-raid procedure.');
+    const now = Date.now();
+    const cooldownDuration = getNextActiveTime();
+    const elapsed = now - raidBossRotation.lastSwitch;
+    const timeRemaining = Math.max(0, cooldownDuration - elapsed);
 
     if (globalRaidParticipants.size === 0) {
       const embed = new EmbedBuilder()
         .setTitle('🏆 Raid Complete.')
         .setDescription(
-          `No one participated in this raid. No rewards were distributed.\n\n` +
-            `Raids will restart in ${formatTimeRemaining(timeRemaining)}`
+          `No one participated in this raid. No rewards were distributed.\n\nRaids will restart in ${formatTimeRemaining(timeRemaining)}`
         )
-        .setColor('Gold')
-      return interaction.editReply({ embeds: [embed], ephemeral: true })
+        .setColor('Gold');
+      return interaction.editReply({ embeds: [embed], ephemeral: true });
     }
 
-    const { summaryEmbed, monsterRewardEmbeds } =
-      await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
-    // console.log(
-    //   '[Raid] Global rewards processed. Final boss health:',
-    //   raidBoss.current_hp,
-    //   '/',
-    //   raidBoss.hp
-    // )
-    // console.log('[Raid] Displaying end-of-raid popup with global rewards.')
+    const { summaryEmbed, monsterRewardEmbeds } = await processGlobalRaidRewards(raidBoss, globalRaidParticipants);
+    summaryEmbed.setTitle("This week's Raid is over.");
+    console.log('[Collector] Global rewards processed. Displaying summary embed.');
     return interaction.editReply({
       embeds: [
         new EmbedBuilder(summaryEmbed.data)
           .setDescription(`This week's raid has finished.`)
-          .setFooter({
-            text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}`,
-          })
+          .setFooter({ text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}` })
           .setColor('Gold'),
       ],
       ephemeral: true,
-    })
+    });
   }
 
-  // If the raid is active, send the welcome embed.
-  const welcomeEmbed = createWelcomeEmbed(raidBoss, user)
-  console.log('[Raid] Overview embed created for active raid.')
-
-  const initialRow = createInitialActionRow(user)
-  console.log('[Raid] Initial action row created.')
-
+  // Send welcome embed for active raid.
+  const welcomeEmbed = createWelcomeEmbed(raidBoss, user);
+  console.log('[Raid] Overview embed created for active raid.');
+  const initialRow = createInitialActionRow(user);
+  console.log('[Raid] Initial action row created.');
   await interaction.editReply({
     embeds: [welcomeEmbed],
     components: [initialRow],
     ephemeral: true,
-  })
-  console.log('[Raid] Sent overview embed with initial action row.')
+  });
+  console.log('[Raid] Sent overview embed with initial action row.');
 
-  const filter = (i) => i.user.id === interaction.user.id
-  const collector = interaction.channel.createMessageComponentCollector({
-    filter,
-    time: 60000,
-  })
+  // --- Collector Renewal Logic for Long-Lasting Interactions ---
+  let lastInteractionTime = Date.now();
 
-  collectors.set(interaction.user.id, collector)
-  console.log('[Raid] Collector set up for button interactions.')
+  function createRaidCollector() {
+    const newCollector = interaction.channel.createMessageComponentCollector({
+      filter: (i) => i.user.id === interaction.user.id,
+      time: 60000,
+    });
 
-  collector.on('collect', async (i) => {
-    console.log('[Collector] Button pressed:', i.customId)
+    newCollector.on('collect', async (i) => {
+      lastInteractionTime = Date.now();
+      console.log('[Collector] Button pressed:', i.customId);
 
-    if (i.customId === 'initiate_raid') {
-      console.log('[Collector] Raid button clicked.')
-      const updatedRow = createUpdatedActionRow(user)
-      const updatedEmbed = createRaidBossEmbed(raidBoss, user)
-      await i.update({
-        embeds: [updatedEmbed],
-        components: [updatedRow],
-      })
-      return
-    }
+      if (i.customId === 'initiate_raid') {
+        console.log('[Collector] Raid button clicked.');
+        const updatedRow = createUpdatedActionRow(user);
+        const updatedEmbed = createRaidBossEmbed(raidBoss, user);
+        await i.update({
+          embeds: [updatedEmbed],
+          components: [updatedRow],
+        });
+        return;
+      }
 
-    if (i.customId === 'heal') {
-      console.log('[Collector] Heal button clicked.')
-      await handleHealAction(i, user, raidBoss, 'one')
-      return
-    }
+      if (i.customId === 'heal') {
+        console.log('[Collector] Heal button clicked.');
+        await handleHealAction(i, user, raidBoss, 'one');
+        return;
+      }
 
-    if (i.customId === 'cancel_raid') {
-      console.log('[Collector] Cancel raid button clicked.')
-      await handleCancelRaid(i, user)
-      return
-    }
+      if (i.customId === 'cancel_raid') {
+        console.log('[Collector] Cancel raid button clicked.');
+        await handleCancelRaid(i, user);
+        return;
+      }
 
-    if (i.customId.startsWith('style_')) {
-      const selectedStyle = i.customId.split('_')[1]
-      console.log('[Collector] Style selected:', selectedStyle)
-      const playerScore =
-        (user[`${selectedStyle}_score`] || 0) + (user.base_damage || 0)
-      const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType)
-      await i.deferUpdate()
+      if (i.customId.startsWith('style_')) {
+        const selectedStyle = i.customId.split('_')[1];
+        console.log('[Collector] Style selected:', selectedStyle);
+        const playerScore =
+          (user[`${selectedStyle}_score`] || 0) + (user.base_damage || 0);
+        const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType);
+        await i.deferUpdate();
 
-      console.log('[Collector] Starting battle phases.')
-      const playerWins = await runBattlePhases(
-        i,
-        user,
-        playerScore,
-        raidBoss,
-        advMultiplier,
-        selectedStyle
-      )
-      console.log(
-        '[Collector] Battle phases complete. Outcome:',
-        playerWins ? 'Victory' : 'Defeat'
-      )
+        console.log('[Collector] Starting battle phases.');
+        const playerWins = await runBattlePhases(i, user, playerScore, raidBoss, advMultiplier, selectedStyle);
+        console.log('[Collector] Battle phases complete. Outcome:', playerWins ? 'Victory' : 'Defeat');
 
-      // Check the current raid phase from the global rotation.
-      if (!rewardsDistributed) {
-        // Case 1: Raid is over (cooldown phase), regardless of individual win/loss.
-        if (raidBossRotation.phase !== 'active') {
-          rewardsDistributed = true
-          console.log(
-            '[Collector] Raid is no longer active. Processing global rewards.'
-          )
-          const { summaryEmbed, monsterRewardEmbeds } =
-            await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
-          summaryEmbed.setTitle("This week's Raid is over.")
-          console.log(
-            '[Collector] Global rewards processed. Displaying summary embed.'
-          )
-          await i.followUp({
-            embeds: [summaryEmbed, ...monsterRewardEmbeds],
-            ephemeral: true,
-          })
-        }
-        // Case 2: Raid is still active and the player managed to defeat the boss.
-        else if (playerWins) {
-          rewardsDistributed = true
-          console.log(
-            '[Collector] Player won while raid is active. Entering cooldown early.'
-          )
-          await enterCooldownEarly()
+        if (!rewardsDistributed) {
+          if (raidBossRotation.phase !== 'active') {
+            rewardsDistributed = true;
+            console.log('[Collector] Raid is no longer active. Processing global rewards.');
+            const { summaryEmbed, monsterRewardEmbeds } = await processGlobalRaidRewards(raidBoss, globalRaidParticipants);
+            summaryEmbed.setTitle("This week's Raid is over.");
+            console.log('[Collector] Global rewards processed. Displaying summary embed.');
+            await i.followUp({
+              embeds: [summaryEmbed, ...monsterRewardEmbeds],
+              ephemeral: true,
+            });
+          } else if (playerWins) {
+            rewardsDistributed = true;
+            console.log('[Collector] Player won while raid is active. Entering cooldown early.');
+            await enterCooldownEarly();
 
-          const raidProgressPercentage = 1 - raidBoss.current_hp / raidBoss.hp
-          console.log(`[DEBUG] Raid Progress: ${raidProgressPercentage * 100}%`)
+            const raidProgressPercentage = 1 - raidBoss.current_hp / raidBoss.hp;
+            console.log(`[DEBUG] Raid Progress: ${raidProgressPercentage * 100}%`);
 
-          let baseRewards = getUniformBaseRewards(true, raidProgressPercentage)
-          let gearReward = getUniformGearReward(true, raidProgressPercentage)
-          let cardRewards = getUniformCardRewards(
-            true,
-            raidProgressPercentage,
-            raidBoss
-          )
+            let baseRewards = getUniformBaseRewards(true, raidProgressPercentage);
+            let gearReward = getUniformGearReward(true, raidProgressPercentage);
+            let cardRewards = getUniformCardRewards(true, raidProgressPercentage, raidBoss);
 
-          user.gold = Number(user.gold) || 0
-          user.currency = {
-            ...user.currency,
-            gear: Number(user.currency.gear) || 0,
-          }
+            user.gold = Number(user.gold) || 0;
+            user.currency = { ...user.currency, gear: Number(user.currency.gear) || 0 };
 
-          user.gold += baseRewards.gold
-          user.currency.gear += gearReward
-          await user.setDataValue('currency', user.currency)
-          await user.save()
+            user.gold += baseRewards.gold;
+            user.currency.gear += gearReward;
+            await user.setDataValue('currency', user.currency);
+            await user.save();
 
-          let monsterRewardEmbeds = []
-          for (const cardName of cardRewards) {
-            const monster = await pullSpecificMonster(cardName)
-            if (monster) {
-              await updateOrAddMonsterToCollection(user.user_id, monster)
-              await updateTop3AndUserScore(user.user_id)
-
-              const stars = getStarsBasedOnColor(monster.color)
-              const category = classifyMonsterType(monster.type)
-              const monsterEmbed = generateMonsterRewardEmbed(
-                monster,
-                category,
-                stars
-              )
-              monsterRewardEmbeds.push(monsterEmbed)
+            let monsterRewardEmbeds = [];
+            for (const cardName of cardRewards) {
+              const monster = await pullSpecificMonster(cardName);
+              if (monster) {
+                await updateOrAddMonsterToCollection(user.user_id, monster);
+                await updateTop3AndUserScore(user.user_id);
+                const stars = getStarsBasedOnColor(monster.color);
+                const category = classifyMonsterType(monster.type);
+                const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars);
+                monsterRewardEmbeds.push(monsterEmbed);
+              }
             }
+
+            const rewardEmbed = new EmbedBuilder()
+              .setTitle('🏆 Raid Rewards')
+              .setDescription(
+                `You received:\n\n` +
+                  `**Gold:** ${baseRewards.gold}\n` +
+                  `**Legendary Card:** ${baseRewards.legendaryCard ? 'Yes' : 'No'}\n` +
+                  `**⚙️ Gear:** ${gearReward}\n` +
+                  `**Cards:** ${cardRewards.length ? cardRewards.join(', ') : 'None'}`
+              )
+              .setColor('Green');
+
+            const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds];
+            console.log('[Collector] Displaying individual rewards embed to user.');
+            await i.followUp({ embeds: embedsToSend, ephemeral: true });
           }
-
-          const rewardEmbed = new EmbedBuilder()
-            .setTitle('🏆 Raid Rewards')
-            .setDescription(
-              `You received:\n\n` +
-                `**Gold:** ${baseRewards.gold}\n` +
-                `**Legendary Card:** ${
-                  baseRewards.legendaryCard ? 'Yes' : 'No'
-                }\n` +
-                `**⚙️ Gear:** ${gearReward}\n` +
-                `**Cards:** ${
-                  cardRewards.length ? cardRewards.join(', ') : 'None'
-                }`
-            )
-            .setColor('Green')
-
-          const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
-          console.log(
-            '[Collector] Displaying individual rewards embed to user.'
-          )
-          await i.followUp({ embeds: embedsToSend, ephemeral: true })
         }
-      }
-      // Otherwise, if the player lost their battle while the raid is still active…
-      if (!playerWins && raidBossRotation.phase === 'active') {
-        const defeatEmbed = new EmbedBuilder()
-          .setTitle('💀 Defeat!')
-          .setDescription(
-            'Uh oh. Don’t worry, you can heal by spending tokens or waiting for your health to recharge.'
-          )
-          .setColor('Red')
-          .setFooter({ text: getUserFooter(user) })
-        console.log(
-          '[Collector] Player lost the battle. Displaying defeat embed.'
-        )
-        await i.followUp({ embeds: [defeatEmbed], ephemeral: true })
-      }
-
-      setTimeout(async () => {
-        try {
-          await i.deleteReply()
-          console.log('[Outcome] Raid message deleted after battle.')
-        } catch (error) {
-          console.error('[Outcome] Error deleting raid message:', error)
+        if (!playerWins && raidBossRotation.phase === 'active') {
+          const defeatEmbed = new EmbedBuilder()
+            .setTitle('💀 Defeat!')
+            .setDescription('Uh oh. Don’t worry, you can heal by spending tokens or waiting for your health to recharge.')
+            .setColor('Red')
+            .setFooter({ text: getUserFooter(user) });
+          console.log('[Collector] Player lost the battle. Displaying defeat embed.');
+          await i.followUp({ embeds: [defeatEmbed], ephemeral: true });
         }
-      }, 3000)
+  
+        setTimeout(async () => {
+          try {
+            await i.deleteReply();
+            console.log('[Outcome] Raid message deleted after battle.');
+          } catch (error) {
+            console.error('[Outcome] Error deleting raid message:', error);
+          }
+        }, 3000);
+      }
+    });
+  
+    newCollector.on('end', async (_, reason) => {
+      console.log(`[Raid Collector] Ended for user ${interaction.user.id} with reason: ${reason}`);
+      clearInterval(collectorRenewInterval);
+      if (!rewardsDistributed) {
+        console.log(`[Raid Collector] Renewing collector for user: ${interaction.user.id}`);
+        currentCollector = createRaidCollector();
+        collectors.set(interaction.user.id, currentCollector);
+      }
+    });
+  
+    return newCollector;
+  }
+  
+  let currentCollector = createRaidCollector();
+  collectors.set(interaction.user.id, currentCollector);
+  
+  const collectorRenewInterval = setInterval(async () => {
+    if (Date.now() - lastInteractionTime >= 30000) {
+      console.log(`[Renew] No interaction for 30 seconds for user ${interaction.user.id}. Renewing raid collector.`);
+      currentCollector.stop('timeout');
+      lastInteractionTime = Date.now();
     }
-  })
+  }, 1000);
 }
 
 async function handleCancelRaid(interaction, user) {
@@ -517,3 +493,4 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
 }
 
 module.exports = { startRaidEncounter }
+
