@@ -326,8 +326,10 @@ module.exports = {
           battleBoss,
           1, // advMultiplier fixed to 1.
           { ichorUsed: false },
-          'Brute'
-        )
+          'Brute',
+          beast.imageUrl || null // Pass the wildhunt-specific image URL if available.
+        );
+        
         if (battleResult) {
           winsInSet++
           currentIndex++
