@@ -37,7 +37,7 @@ function createRaidAnnouncementEmbed(raidBoss) {
     .setImage(raidBoss.imageUrl)
     .setColor('#FFD700')
     .setFooter({
-      text: `Raid ends in ${formatTimeRemaining(getTimeUntilCooldown())}`,
+      text: `Raid ends in \`${formatTimeRemaining(getTimeUntilCooldown())}\``,
     })
 }
 
@@ -244,7 +244,7 @@ async function enterCooldown() {
       await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
     summaryEmbed.setTitle("This week's Raid is over.")
     summaryEmbed.setFooter({
-      text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}.`,
+      text: `Raids will restart in \`${formatTimeRemaining(timeRemaining)}\`.`,
     })
 
     // Then send the embeds (for example, combined in one message)

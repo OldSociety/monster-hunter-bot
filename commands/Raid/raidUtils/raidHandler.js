@@ -211,7 +211,7 @@ async function startRaidEncounter(interaction, user) {
       const embed = new EmbedBuilder()
         .setTitle('🏆 Raid Complete.')
         .setDescription(
-          `No one participated in this raid. No rewards were distributed.\n\nRaids will restart in ${formatTimeRemaining(timeRemaining)}`
+          `No one participated in this raid. No rewards were distributed.\n\nRaids will restart in \`${formatTimeRemaining(timeRemaining)}\``
         )
         .setColor('Gold');
       return interaction.editReply({ embeds: [embed], ephemeral: true });
@@ -224,7 +224,7 @@ async function startRaidEncounter(interaction, user) {
       embeds: [
         new EmbedBuilder(summaryEmbed.data)
           .setDescription(`This week's raid has finished.`)
-          .setFooter({ text: `Raids will restart in ${formatTimeRemaining(timeRemaining)}` })
+          .setFooter({ text: `Raids will restart in \`${formatTimeRemaining(timeRemaining)}\`` })
           .setColor('Gold'),
       ],
       ephemeral: true,

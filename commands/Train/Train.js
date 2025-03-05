@@ -82,9 +82,9 @@ const {
           const inProgressEmbed = new EmbedBuilder()
             .setTitle('Training In Progress')
             .setDescription(
-              `You are already training. Please wait ${formatTimeRemaining(
+              `You are already training. Please wait \`${formatTimeRemaining(
                 finishTime - now
-              )} for this session to complete.`
+              )}\` for this session to complete.`
             )
             .setColor('Orange')
             .setFooter({

@@ -8,9 +8,21 @@ const {
 const { Monster, User, Collection } = require('../../Models/model.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
 const { populateMonsterCache } = require('../../handlers/cacheHandler')
-const { collectors, stopUserCollector } = require('../../utils/collectors')
+
 const { runBattlePhases } = require('../Hunt/huntUtils/battleHandler.js') // Adjust path if necessary
 const { verifyAndUpdateUserScores } = require('../../utils/verifyUserScores.js')
+
+const {
+  updateOrAddMonsterToCollection,
+} = require('../../handlers/userMonsterHandler')
+const { updateTop3AndUserScore } = require('../../handlers/topCardsManager')
+const {
+  generateMonsterRewardEmbed,
+} = require('../../utils/embeds/monsterRewardEmbed')
+const { getStarsBasedOnColor } = require('../../utils/starRating')
+const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
+
+const { collectors, stopUserCollector } = require('../../utils/collectors')
 
 // Utility function to format time remaining as a countdown.
 function formatTimeRemaining(ms) {
@@ -24,65 +36,129 @@ function formatTimeRemaining(ms) {
 
 // ---------------- Reward Wheel Setup ---------------- //
 async function setupRewardWheel(rewardMessage, user, timeout = 30000) {
-  console.log('[RewardWheel] Setting up reward wheel.')
-  const rewards = [800, 800, 1000, 1200, 2000, 3000, 4000, 5000]
-  const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣']
-  // Shuffle rewards.
-  for (let i = rewards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[rewards[i], rewards[j]] = [rewards[j], rewards[i]]
-  }
+  return new Promise(async (resolve) => {
+    console.log('[RewardWheel] Setting up reward wheel.')
+    // Define eight rewards following the new specification.
+    const rewards = [
+      { type: 'gold', amount: 180, text: '🪙180 gold' },
+      { type: 'gold', amount: 180, text: '🪙180 gold' },
+      { type: 'gold', amount: 360, text: '🪙360 gold' },
+      { type: 'gold', amount: 360, text: '🪙360 gold' },
+      { type: 'gear', text: '⚙️5-10 gear' },
+      { type: 'gear', text: '⚙️5-10 gear' },
+      { type: 'beast', text: 'Random Beast Card' },
+      { type: 'beast', text: 'Random Beast Card' },
+    ]
+    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣']
 
-  const filter = (reaction, userReacting) => {
-    return emojis.includes(reaction.emoji.name) && !userReacting.bot
-  }
-
-  const collector = rewardMessage.createReactionCollector({
-    filter,
-    time: timeout,
-  })
-  let rewardClaimed = false
-
-  collector.on('collect', async (reaction, reactingUser) => {
-    console.log('[RewardWheel] Reaction collected:', reaction.emoji.name)
-    rewardClaimed = true
-    const index = emojis.indexOf(reaction.emoji.name)
-    const selectedReward = rewards[index]
-    const userData = await User.findOne({ where: { user_id: reactingUser.id } })
-    if (userData) {
-      userData.gold = (userData.gold || 0) + selectedReward
-      await userData.save()
-      console.log(
-        `[RewardWheel] Awarded ${selectedReward} gold to user ${reactingUser.id}`
-      )
+    // Shuffle rewards.
+    for (let i = rewards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[rewards[i], rewards[j]] = [rewards[j], rewards[i]]
     }
-    const feedbackEmbed = new EmbedBuilder()
-      .setColor('#00FF00')
-      .setTitle('Congratulations!')
-      .setDescription(
-        `${reactingUser.username}, you selected ${reaction.emoji.name} and won 🪙${selectedReward} gold!`
-      )
-    await rewardMessage.edit({ content: ' ', embeds: [feedbackEmbed] })
-    await rewardMessage.reactions.removeAll().catch(console.error)
-    collector.stop()
-  })
 
-  collector.on('end', async () => {
-    if (!rewardClaimed) {
-      console.log('[RewardWheel] No reward was claimed.')
-      await rewardMessage
-        .edit({
-          content: 'No reward selected. Proceeding to the next set of battles.',
-          embeds: [],
-        })
-        .catch(console.error)
+    const filter = (reaction, userReacting) => {
+      return emojis.includes(reaction.emoji.name) && !userReacting.bot
+    }
+
+    const collector = rewardMessage.createReactionCollector({
+      filter,
+      time: timeout,
+    })
+    let rewardClaimed = false
+
+    collector.on('collect', async (reaction, reactingUser) => {
+      console.log('[RewardWheel] Reaction collected:', reaction.emoji.name)
+      rewardClaimed = true
+      const index = emojis.indexOf(reaction.emoji.name)
+      const selectedReward = rewards[index]
+      const userData = await User.findOne({
+        where: { user_id: reactingUser.id },
+      })
+      if (!userData) return
+
+      let feedbackEmbed
+      if (selectedReward.type === 'gold') {
+        userData.gold = (userData.gold || 0) + selectedReward.amount
+        await userData.save()
+        console.log(
+          `[RewardWheel] Awarded ${selectedReward.amount} gold to user ${reactingUser.id}`
+        )
+        feedbackEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('Congratulations!')
+          .setDescription(
+            `${reactingUser.username}, you selected ${reaction.emoji.name} and won 🪙${selectedReward.amount} gold!`
+          )
+      } else if (selectedReward.type === 'gear') {
+        // Generate a random gear reward between 5 and 10.
+        const gearReward = Math.floor(Math.random() * 6) + 5
+        user.currency = {
+          ...user.currency,
+          gear: user.currency.gear + gearReward,
+        }
+    
+        await user.setDataValue('currency', user.currency)
+        await user.save()
+        console.log(
+          `[RewardWheel] Awarded ⚙️${gearReward} gear to user ${reactingUser.id}`
+        )
+        feedbackEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('Congratulations!')
+          .setDescription(
+            `${reactingUser.username}, you selected ${reaction.emoji.name} and won ⚙️${gearReward} gear!`
+          )
+      } else if (selectedReward.type === 'beast') {
+        // Reward a random beast card.
+        const beasts = await Monster.findAll({ where: { type: 'beast' } })
+        if (beasts && beasts.length > 0) {
+          const randomIndex = Math.floor(Math.random() * beasts.length)
+          const beast = beasts[randomIndex]
+          await updateOrAddMonsterToCollection(userData.user_id, beast)
+          await updateTop3AndUserScore(userData.user_id)
+          const stars = getStarsBasedOnColor(beast.color)
+          const category = classifyMonsterType(beast.type)
+          feedbackEmbed = generateMonsterRewardEmbed(beast, category, stars)
+          console.log(
+            `[RewardWheel] Awarded a random beast card to user ${reactingUser.id}`
+          )
+        } else {
+          feedbackEmbed = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('Reward Error')
+            .setDescription('No beast cards available to reward.')
+        }
+      }
+
+      await rewardMessage.edit({ content: ' ', embeds: [feedbackEmbed] })
       await rewardMessage.reactions.removeAll().catch(console.error)
+      collector.stop()
+      resolve(true)
+    })
+
+    collector.on('end', async () => {
+      if (!rewardClaimed) {
+        console.log('[RewardWheel] No reward was claimed.')
+        const noRewardEmbed = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle('Reward Wheel')
+          .setDescription(
+            'No reward selected. Proceeding to the next set of battles.'
+          )
+        await rewardMessage
+          .edit({ content: ' ', embeds: [noRewardEmbed] })
+          .catch(console.error)
+        await rewardMessage.reactions.removeAll().catch(console.error)
+        resolve(false)
+      }
+    })
+
+    // Add reaction emojis.
+    for (const emoji of emojis) {
+      await rewardMessage.react(emoji)
     }
   })
-
-  for (const emoji of emojis) {
-    await rewardMessage.react(emoji)
-  }
 }
 
 // ---------------- Beast Ladder Generation ---------------- //
@@ -119,7 +195,6 @@ module.exports = {
     .setDescription('Embark on a Wild Hunt against a ladder of beasts.'),
   async execute(interaction) {
     console.log('[WildHunt] Command executed.')
-    // For debugging, ephemeral is set to false.
     if (!interaction.deferred && !interaction.replied) {
       await interaction.deferReply({ ephemeral: false })
       console.log('[WildHunt] Reply deferred.')
@@ -134,114 +209,112 @@ module.exports = {
     await populateMonsterCache()
 
     // ------------- Cooldown & Buy-In Logic ------------- //
-    const now = Date.now()
-    let onCooldown = false
-    if (
-      user.lastWildHuntAvailable &&
-      new Date(user.lastWildHuntAvailable).getTime() > now
-    ) {
-      onCooldown = true
-      console.log('[WildHunt] User is on cooldown.')
-    }
-    let replyMessage
-    if (!onCooldown) {
-      // New session: set cooldown to now + 24h and reset buy-ins to 0.
-      user.lastWildHuntAvailable = new Date(now + 24 * 3600000)
-      user.wildHuntBuyInsUsed = 0
-      console.log(
-        '[WildHunt] New session started. Cooldown set to',
+const now = Date.now();
+let onCooldown = false;
+if (
+  user.lastWildHuntAvailable &&
+  new Date(user.lastWildHuntAvailable).getTime() > now
+) {
+  onCooldown = true;
+  console.log('[WildHunt] User is on cooldown.');
+}
+let replyMessage;
+if (!onCooldown) {
+  // When not on cooldown, do not set the cooldown date yet—only reset buy-ins.
+  user.wildHuntBuyInsUsed = 0;
+  await user.save();
+  // Build welcome embed for active session.
+  const welcomeEmbed = new EmbedBuilder()
+    .setTitle('Wild Hunt!')
+    .setDescription(
+      `To win, climb the ladder of beasts and reach the top of the food chain using only your **brute strength**. Each round consists of 5 fights and comes with the chance to win gold, gear, and beast cards.
+      
+Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 0}`
+    )
+    .setColor('DarkGreen')
+    .setFooter({
+      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
+    });
+
+  const normalRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('begin_wildhunt')
+      .setLabel('Begin Wild Hunt')
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId('cancel_wildhunt')
+      .setLabel('Cancel Wild Hunt')
+      .setStyle(ButtonStyle.Danger)
+  );
+  console.log('[WildHunt] Sending welcome embed.');
+  replyMessage = await interaction.editReply({
+    embeds: [welcomeEmbed],
+    components: [normalRow],
+    ephemeral: false,
+  });
+} else {
+  if (user.wildHuntBuyInsUsed >= 4) {
+    console.log('[WildHunt] All daily buy-ins used.');
+    replyMessage = await interaction.editReply({
+      content: `Wild Hunt is on cooldown until ${new Date(
         user.lastWildHuntAvailable
-      )
-      await user.save()
-      // Build welcome embed for active session.
-      const welcomeEmbed = new EmbedBuilder()
-        .setTitle('Wild Hunt')
-        .setDescription(
-          'Prepare to face a ladder of beasts! Click **Begin Wild Hunt** to start, or **Cancel Wild Hunt** to abort.'
-        )
-        .setColor('DarkGreen')
-        .setFooter({
-          text: `Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
-            user.base_damage || 0
-          }`,
-        })
-      const normalRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('begin_wildhunt')
-          .setLabel('Begin Wild Hunt')
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId('cancel_wildhunt')
-          .setLabel('Cancel Wild Hunt')
-          .setStyle(ButtonStyle.Danger)
-      )
-      console.log('[WildHunt] Sending welcome embed.')
-      replyMessage = await interaction.editReply({
-        embeds: [welcomeEmbed],
-        components: [normalRow],
-        ephemeral: false,
-      })
-    } else {
-      if (user.wildHuntBuyInsUsed >= 4) {
-        console.log('[WildHunt] All daily buy-ins used.')
-        replyMessage = await interaction.editReply({
-          content: `Wild Hunt is on cooldown until ${new Date(
-            user.lastWildHuntAvailable
-          ).toLocaleString()}. You have used all 4 daily buy-ins.`,
-          ephemeral: false,
-        })
-        // Attach temporary collector.
-        const tempCollector = replyMessage.createMessageComponentCollector({
-          filter: (i) => i.user.id === interaction.user.id,
-          time: 60000,
-        })
-        tempCollector.on('collect', async (i) => {
-          console.log('[WildHunt] In cooldown - button pressed:', i.customId)
-          if (i.customId === 'cancel_wildhunt') {
-            if (!i.deferred) await i.deferUpdate()
-            await i.editReply({
-              content: 'Wild Hunt cancelled.',
-              components: [],
-              embeds: [],
-            })
-            tempCollector.stop()
-          }
-        })
-        return
+      ).toLocaleString()}. You have used all 4 daily buy-ins.`,
+      ephemeral: false,
+    });
+    const tempCollector = replyMessage.createMessageComponentCollector({
+      filter: (i) => i.user.id === interaction.user.id,
+      time: 60000,
+    });
+    tempCollector.on('collect', async (i) => {
+      console.log('[WildHunt] In cooldown - button pressed:', i.customId);
+      if (i.customId === 'cancel_wildhunt') {
+        if (!i.deferred) await i.deferUpdate();
+        await i.editReply({
+          content: 'Wild Hunt cancelled.',
+          components: [],
+          embeds: [],
+        });
+        tempCollector.stop();
       }
-      const cost = user.wildHuntBuyInsUsed * 1500
-      const remainingMs = new Date(user.lastWildHuntAvailable).getTime() - now
-      const countdown = formatTimeRemaining(remainingMs)
-      const footerText = `Wild Hunt available in ${countdown}. Buy-ins used: ${user.wildHuntBuyInsUsed}/4.`
-      const cooldownEmbed = new EmbedBuilder()
-        .setTitle('Wild Hunt - Cooldown')
-        .setDescription(
-          `Wild Hunt is on cooldown. You can purchase a buy-in for **${cost} gold** to play now.`
-        )
-        .setColor('DarkOrange')
-        .setFooter({ text: footerText })
-      const buyinRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('begin_wildhunt')
-          .setLabel('Begin Wild Hunt')
-          .setStyle(ButtonStyle.Success)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId('purchase_buyin')
-          .setLabel(`Purchase Buy-In (${cost} gold)`)
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('cancel_wildhunt')
-          .setLabel('Cancel Wild Hunt')
-          .setStyle(ButtonStyle.Danger)
-      )
-      console.log('[WildHunt] Sending cooldown embed.')
-      replyMessage = await interaction.editReply({
-        embeds: [cooldownEmbed],
-        components: [buyinRow],
-        ephemeral: false,
-      })
-    }
+    });
+    return;
+  }
+  // Compute cost as (buyinsUsed + 1) * 1500
+  const cost = (user.wildHuntBuyInsUsed + 1) * 1500;
+  const remainingMs = new Date(user.lastWildHuntAvailable).getTime() - now;
+  const countdown = formatTimeRemaining(remainingMs);
+  const cooldownEmbed = new EmbedBuilder()
+    .setTitle('Wild Hunt - Cooldown')
+    .setDescription(
+      `Wild Hunt available in \`${countdown}\`. Buy-ins used: ${user.wildHuntBuyInsUsed}/4.`
+    )
+    .setFooter({
+      text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
+    });
+
+  const buyinRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('begin_wildhunt')
+      .setLabel('Begin Wild Hunt')
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(true),
+    new ButtonBuilder()
+      .setCustomId('purchase_buyin')
+      .setLabel(`Purchase Buy-In (${cost} gold)`)
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('cancel_wildhunt')
+      .setLabel('Cancel Wild Hunt')
+      .setStyle(ButtonStyle.Danger)
+  );
+  console.log('[WildHunt] Sending cooldown embed.');
+  replyMessage = await interaction.editReply({
+    embeds: [cooldownEmbed],
+    components: [buyinRow],
+    ephemeral: false,
+  });
+}
+
 
     // Attach collector to the reply message.
     const filter = (i) => i.user.id === interaction.user.id
@@ -270,22 +343,32 @@ module.exports = {
       while (true) {
         if (winsInSet >= 5) {
           console.log('[WildHunt] 5 wins reached; triggering reward wheel.')
-          const rewardEmbed = new EmbedBuilder()
+          const rewardWheelEmbed = new EmbedBuilder()
             .setTitle('Reward Wheel')
             .setDescription(
-              'React with a number emoji (1️⃣ - 8️⃣) to claim your gold reward!'
+              'React with a number emoji (1️⃣ - 8️⃣) to claim your prize!'
             )
             .setColor('Gold')
           const rewardMessage = await interaction.followUp({
-            embeds: [rewardEmbed],
+            embeds: [rewardWheelEmbed],
             ephemeral: false,
             fetchReply: true,
           })
+
+          // Await the reward selection before continuing.
           await setupRewardWheel(rewardMessage, user, 30000)
+
+          const rewardClaimedEmbed = new EmbedBuilder()
+            .setTitle('Reward Wheel')
+            .setColor('Gold')
+            .setDescription(
+              'Reward selection complete! Continuing the Wild Hunt...'
+            )
           await interaction.followUp({
-            content: 'Reward claimed! Continuing the Wild Hunt...',
+            embeds: [rewardClaimedEmbed],
             ephemeral: false,
           })
+
           winsInSet = 0
           if (currentIndex >= beastLadder.length) {
             beastLadder = await getBeastLadder()
@@ -318,6 +401,7 @@ module.exports = {
         console.log(
           `[WildHunt] Battling beast: ${beast.name} with mScore ${mScore}, url ${beast.imageUrl}`
         )
+
         const battleResult = await runBattlePhases(
           interaction,
           user,
@@ -328,25 +412,35 @@ module.exports = {
           { ichorUsed: false },
           'Brute',
           beast.imageUrl || null // Pass the wildhunt-specific image URL if available.
-        );
-        
+        )
+
         if (battleResult) {
           winsInSet++
           currentIndex++
-          console.log(
-            `[WildHunt] Victory over ${beast.name}. Wins in set: ${winsInSet}`
-          )
+          const victoryEmbed = new EmbedBuilder()
+            .setTitle('Victory!')
+            .setColor('Green')
+            .setDescription(
+              `Victory over **${beast.name}**! (${winsInSet}/5 wins in this set)`
+            )
           await interaction.followUp({
-            content: `Victory over **${beast.name}**! (${winsInSet}/5 wins in this set)`,
+            embeds: [victoryEmbed],
             ephemeral: false,
           })
           await new Promise((res) => setTimeout(res, 2000))
         } else {
           console.log(`[WildHunt] Defeat by ${beast.name}. Ending hunt.`)
+          const defeatEmbed = new EmbedBuilder()
+            .setTitle('Defeat')
+            .setColor('Red')
+            .setDescription(
+              `You were defeated by **${beast.name}**. The Wild Hunt ends here.`
+            )
           await interaction.followUp({
-            content: `You were defeated by **${beast.name}**. The Wild Hunt ends here.`,
+            embeds: [defeatEmbed],
             ephemeral: false,
           })
+          // Only update the cooldown when the hunt completes due to defeat.
           user.lastWildHuntAvailable = new Date(Date.now() + 24 * 3600000)
           await user.save()
           collector.stop()
@@ -375,8 +469,7 @@ module.exports = {
         } catch (err) {
           console.error('[WildHunt] Error editing reply on cancel:', err)
         }
-        user.lastWildHuntAvailable = new Date(Date.now() + 24 * 3600000)
-        await user.save()
+        // Do NOT update lastWildHuntAvailable on cancel.
         collector.stop()
         return
       }
@@ -431,7 +524,7 @@ module.exports = {
           )
           .setColor('DarkGreen')
           .setFooter({
-            text: `Wild Hunt available in ${countdown}. Buy-ins used: ${user.wildHuntBuyInsUsed}/4`,
+            text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
           })
         try {
           console.log('[WildHunt] Updating reply after purchase_buyin.')
@@ -456,6 +549,10 @@ module.exports = {
             console.error('[WildHunt] Error deferring begin_wildhunt:', err)
           }
         }
+        // Update lastWildHuntAvailable only when the player actually begins the hunt.
+        user.lastWildHuntAvailable = new Date(Date.now() + 24 * 3600000)
+        user.wildHuntBuyInsUsed = 0 // Also reset buy-ins.
+        await user.save()
         runWildHunt()
       }
     })

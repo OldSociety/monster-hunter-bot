@@ -31,7 +31,7 @@ function getUserFooter(user) {
     .setTitle(`Current Boss: ${raidBoss.name} (${raidBoss.hp})`)
     .setDescription(
       '**Welcome to Raids!** Join forces with other hunters to battle the most powerful bosses. Defeat the boss for exclusive loot and a legendary card.\n\n' +
-        `**Raid ends in ${formatTimeRemaining(getTimeUntilCooldown())}**\n\n` +
+        `**Raid ends in \`${formatTimeRemaining(getTimeUntilCooldown())}\`**\n\n` +
         `**Your HP:** ${user.current_raidHp} / ${user.score}\n${playerHealthBar}\n\n`
     )
     .setColor('#FFD700')
