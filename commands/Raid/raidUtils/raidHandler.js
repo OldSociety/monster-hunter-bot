@@ -42,7 +42,7 @@ const {
 
 let rewardsDistributed = false
 
-async function runBattlePhases(
+async function runRaidBattlePhases(
   interaction,
   user,
   playerScore,
@@ -50,7 +50,7 @@ async function runBattlePhases(
   advMultiplier,
   selectedStyle
 ) {
-  console.log('[Battle] Starting Battle Phases')
+  console.log('[Battle] Starting Raid Battle Phases')
   let playerHP = user.current_raidHp
   let bossHP = raidBoss.current_hp
   const maxBossHP = raidBoss.hp
@@ -287,9 +287,9 @@ async function startRaidEncounter(interaction, user) {
         const advMultiplier = checkAdvantage(selectedStyle, raidBoss.combatType);
         await i.deferUpdate();
 
-        console.log('[Collector] Starting battle phases.');
-        const playerWins = await runBattlePhases(i, user, playerScore, raidBoss, advMultiplier, selectedStyle);
-        console.log('[Collector] Battle phases complete. Outcome:', playerWins ? 'Victory' : 'Defeat');
+        console.log('[Collector] Starting raid battle phases.');
+        const playerWins = await runRaidBattlePhases(i, user, playerScore, raidBoss, advMultiplier, selectedStyle);
+        console.log('[Collector] Raid Battle phases complete. Outcome:', playerWins ? 'Victory' : 'Defeat');
 
         if (!rewardsDistributed) {
           if (raidBossRotation.phase !== 'active') {
