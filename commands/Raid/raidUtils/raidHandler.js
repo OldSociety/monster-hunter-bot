@@ -42,7 +42,7 @@ const {
 
 let rewardsDistributed = false
 
-async function runBattlePhases(
+async function runBattleRaidPhases(
   interaction,
   user,
   playerScore,
@@ -288,7 +288,7 @@ async function startRaidEncounter(interaction, user) {
         await i.deferUpdate();
 
         console.log('[Collector] Starting battle phases.');
-        const playerWins = await runBattlePhases(i, user, playerScore, raidBoss, advMultiplier, selectedStyle);
+        const playerWins = await runBattleRaidPhases(i, user, playerScore, raidBoss, advMultiplier, selectedStyle);
         console.log('[Collector] Battle phases complete. Outcome:', playerWins ? 'Victory' : 'Defeat');
 
         if (!rewardsDistributed) {
