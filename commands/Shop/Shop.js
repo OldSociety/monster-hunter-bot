@@ -28,6 +28,7 @@ const {
 const { getStarsBasedOnColor } = require('../../utils/starRating')
 const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
 const { checkUserAccount } = require('../Account/checkAccount.js')
+const { handleRotatingPack } = require('./handlers/handleRotatingPack.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
 const {
@@ -44,7 +45,9 @@ const PACK_COSTS = {
   common: 800,
   uncommon: 3500,
   rare: 10000,
-  elemental: 5000,
+  elemental: 7000,
+  werefolk: 8000,
+  monstrosity: 6000,
   ichor: 650,
 }
 
@@ -86,7 +89,21 @@ const TIER_OPTIONS = {
       { name: 'Rare', chance: 0.02 },
     ],
   },
-}
+  werefolk: { 
+    customTiers: [
+      { name: 'Common', chance: 0.38 },
+      { name: 'Uncommon', chance: 0.68 },
+      { name: 'Rare', chance: 0.02 },
+    ],
+  },
+  monstrosity: { 
+    customTiers: [
+      { name: 'Uncommon', chance: 0.98 }, // example values
+      { name: 'Rare', chance: 0.02 },
+    ],
+  },
+};
+
 
 function getRarityByCR(cr) {
   if (cr >= 20) return 'Legendary'
@@ -98,6 +115,21 @@ function getRarityByCR(cr) {
 
 function convertNameToIndex(name) {
   return name.toLowerCase().replace(/\s+/g, '-')
+}
+
+function getCurrentRotatingPack() {
+  const now = new Date()
+  const day = now.getDay() // 0 (Sun) to 6 (Sat)
+  const hour = now.getHours()
+
+  // Packs switch at 6 AM
+  if ((day === 4 && hour >= 6) || day === 5 || (day === 6 && hour < 6)) {
+    return { type: 'Elemental', cost: PACK_COSTS.elemental }
+  } else if ((day === 6 && hour >= 6) || day === 0 || (day === 1 && hour < 6)) {
+    return { type: 'Werefolk', cost: PACK_COSTS.werefolk }
+  } else {
+    return { type: 'Monstrosity', cost: PACK_COSTS.monstrosity }
+  }
 }
 
 module.exports = {
@@ -171,6 +203,8 @@ module.exports = {
           inline: true,
         })
       } else {
+        const rotatingPack = getCurrentRotatingPack()
+
         shopEmbed
           .addFields(
             {
@@ -183,10 +217,14 @@ module.exports = {
               value: `🪙${PACK_COSTS.uncommon}`,
               inline: true,
             },
-            { name: 'Rare Pack', value: `🪙${PACK_COSTS.rare}`, inline: true },
             {
-              name: 'Elemental Pack',
-              value: `🪙${PACK_COSTS.elemental}`,
+              name: 'Rare Pack',
+              value: `🪙${PACK_COSTS.rare}`,
+              inline: true,
+            },
+            {
+              name: `${rotatingPack.type} Pack`,
+              value: `🪙${rotatingPack.cost}`,
               inline: true,
             },
             {
@@ -221,6 +259,8 @@ module.exports = {
             .setStyle(ButtonStyle.Secondary)
         )
       } else {
+        const rotatingPack = getCurrentRotatingPack() // Keep as is from your previous logic
+
         const packButtons = [
           new ButtonBuilder()
             .setCustomId('purchase_common_pack')
@@ -235,8 +275,8 @@ module.exports = {
             .setLabel('Rare Pack')
             .setStyle(ButtonStyle.Primary),
           new ButtonBuilder()
-            .setCustomId('purchase_elemental_pack')
-            .setLabel('Elemental Pack')
+            .setCustomId('purchase_rotating_pack')
+            .setLabel(`${rotatingPack.type} Pack`)
             .setStyle(ButtonStyle.Primary),
           new ButtonBuilder()
             .setCustomId('purchase_ichor_pack')
@@ -375,7 +415,9 @@ module.exports = {
             }
           }
 
-          if (interaction.customId.startsWith('purchase_')) {
+          if (interaction.customId === 'purchase_rotating_pack') {
+            return await handleRotatingPack(interaction, user)
+          } else if (interaction.customId.startsWith('purchase_')) {
             const packType = interaction.customId.split('_')[1]
 
             await interaction.deferReply({ ephemeral: true })
@@ -399,6 +441,14 @@ module.exports = {
 
             await user.save()
 
+            if (packType === 'rotating') {
+              // This prevents calling this handler incorrectly
+              return interaction.editReply({
+                content: 'Invalid pack selection. Please try again.',
+                ephemeral: true,
+              })
+            }
+
             if (packType === 'ichor') {
               user.currency = {
                 ...user.currency,
@@ -420,10 +470,11 @@ module.exports = {
             }
 
             const monster = await pullValidMonster(
-              TIER_OPTIONS[packType],
-              packType,
-              userId
+              TIER_OPTIONS[currentPack.type.toLowerCase()],
+              currentPack.type.toLowerCase(),
+              user.user_id
             )
+            
             if (!monster) {
               return interaction.editReply({
                 content: `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`,

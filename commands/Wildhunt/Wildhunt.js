@@ -196,7 +196,7 @@ module.exports = {
   async execute(interaction) {
     console.log('[WildHunt] Command executed.')
     if (!interaction.deferred && !interaction.replied) {
-      await interaction.deferReply({ ephemeral: false })
+      await interaction.deferReply({ ephemeral: true })
       console.log('[WildHunt] Reply deferred.')
     }
     const user = await checkUserAccount(interaction)
@@ -250,7 +250,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
   replyMessage = await interaction.editReply({
     embeds: [welcomeEmbed],
     components: [normalRow],
-    ephemeral: false,
+    ephemeral: true,
   });
 } else {
   if (user.wildHuntBuyInsUsed >= 4) {
@@ -259,7 +259,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
       content: `Wild Hunt is on cooldown until ${new Date(
         user.lastWildHuntAvailable
       ).toLocaleString()}. You have used all 4 daily buy-ins.`,
-      ephemeral: false,
+      ephemeral: true,
     });
     const tempCollector = replyMessage.createMessageComponentCollector({
       filter: (i) => i.user.id === interaction.user.id,
@@ -311,7 +311,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
   replyMessage = await interaction.editReply({
     embeds: [cooldownEmbed],
     components: [buyinRow],
-    ephemeral: false,
+    ephemeral: true,
   });
 }
 
@@ -330,7 +330,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
       console.log('[WildHunt] No beasts found.')
       return interaction.editReply({
         content: 'No beasts available for Wild Hunt.',
-        ephemeral: false,
+        ephemeral: true,
       })
     }
     let currentIndex = 0
@@ -366,7 +366,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
             )
           await interaction.followUp({
             embeds: [rewardClaimedEmbed],
-            ephemeral: false,
+            ephemeral: true,
           })
 
           winsInSet = 0
@@ -425,7 +425,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
             )
           await interaction.followUp({
             embeds: [victoryEmbed],
-            ephemeral: false,
+            ephemeral: true,
           })
           await new Promise((res) => setTimeout(res, 2000))
         } else {
@@ -491,7 +491,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
           try {
             await i.followUp({
               content: `You don't have enough gold for a buy-in (cost: ${cost}).`,
-              ephemeral: false,
+              ephemeral: true,
             })
           } catch (err) {
             console.error(
@@ -563,7 +563,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${user.base_damage || 
       if (reason === 'time') {
         await interaction.followUp({
           content: 'Wild Hunt session expired. Please try again.',
-          ephemeral: false,
+          ephemeral: true,
         })
       }
     })

@@ -194,11 +194,11 @@ const {
                     extraBonus
                   )
                 }
-                user.bonus_damage = (user.bonus_damage || 0) + allowedIncrease
+                user.base_damage = (user.base_damage || 0) + allowedIncrease
                 await user.save()
                 trainingSession.status = 'completed'
                 await trainingSession.save()
-                let description = `Your training session is complete and your bonus damage increased by +${allowedIncrease}.\nYour new bonus damage is **${user.bonus_damage}**.`
+                let description = `Your training session is complete and your bonus damage increased by +${allowedIncrease}.\nYour new bonus damage is **${user.base_damage}**.`
                 if (allowedIncrease < trainingSession.bonus) {
                   description += `\nYou have reached your maximum base score of ${maxBase}.`
                   console.log('[finish_training] Applied partial bonus:', allowedIncrease)

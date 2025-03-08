@@ -79,6 +79,30 @@ const allowedMonstersByPack = {
     'djinni',
     'efreeti'
   ]),
+  werefolk: new Set([
+    'wererat-rat',
+    'weretiger-human',
+    'werebear-human',
+    'werewolf-wolf',
+    'wereboar-human',
+    'wereboar-boar',
+    'wererat-hybrid',
+    'werewolf-hybrid',
+    'werebear-bear',
+    'weretiger-tiger'
+  ]),
+  monstrosity: new Set([
+    'bulette',
+    'gorgon',
+    'roper',
+    'drider',
+    'medusa',
+    'chimera',
+    'remorhaz',
+    'roc',
+    'spirit-naga',
+    'hydra'
+  ])
 }
 
 module.exports = { allowedMonstersByPack }

@@ -8,13 +8,13 @@ module.exports = {
     .setDescription('Start a Raid Boss encounter'),
 
   async execute(interaction) {
-    if (!interaction.deferred && !interaction.replied) {
-      await interaction.deferReply({ ephemeral: true })
-    }
+    // if (!interaction.deferred && !interaction.replied) {
+    //   await interaction.deferReply({ ephemeral: true })
+    // }
 
-    const user = await checkUserAccount(interaction)
-    if (!user) return
+    // const user = await checkUserAccount(interaction)
+    // if (!user) return
 
-    await startRaidEncounter(interaction, user)
+    // await startRaidEncounter(interaction, user)
   },
 }
