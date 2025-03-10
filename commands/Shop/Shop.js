@@ -228,7 +228,7 @@ module.exports = {
               inline: true,
             },
             {
-              name: '🧪Ichor Pack (12)',
+              name: '🧪Ichor Pack (10)',
               value: `🪙${PACK_COSTS.ichor}`,
               inline: true,
             }
@@ -470,10 +470,11 @@ module.exports = {
             }
 
             const monster = await pullValidMonster(
-              TIER_OPTIONS[currentPack.type.toLowerCase()],
-              currentPack.type.toLowerCase(),
+              TIER_OPTIONS[packType],
+              packType,
               user.user_id
             )
+            
             
             if (!monster) {
               return interaction.editReply({
