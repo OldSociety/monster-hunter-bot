@@ -5,8 +5,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const { checkUserAccount } = require('../Account/checkAccount.js')
-const { Monster } = require('../../Models/model.js') // ✅ Import Monster model
+const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
+const { Monster } = require('../../Models/model.js')
 const fs = require('fs')
 const path = require('path')
 
@@ -78,13 +78,13 @@ module.exports = {
 
 async function listMissingMonsters(interaction) {
   try {
-    const storedMonsters = await Monster.findAll({ attributes: ['index'] }) // ✅ Get all stored monster indexes
+    const storedMonsters = await Monster.findAll({ attributes: ['index'] })
     const storedIndexes = new Set(storedMonsters.map((m) => m.index))
 
     const missingMonsters = [...storedIndexes]
       .filter((index) => !validCreatures.has(index))
       .map((index) => ({
-        name: index.replace(/-/g, ' '), // Format name from index
+        name: index.replace(/-/g, ' '),
         index,
       }))
 

@@ -1,7 +1,7 @@
 // utils/checkUserAccount.js
 
 const { EmbedBuilder } = require('discord.js')
-const { User } = require('../../Models/model.js')
+const { User } = require('../../../Models/model.js')
 
 async function checkUserAccount(interaction) {
   const userId = interaction.user.id

@@ -3,15 +3,14 @@ const {
   ActionRowBuilder,
   StringSelectMenuBuilder,
 } = require('discord.js')
-const { checkUserAccount } = require('../../Account/checkAccount.js')
-
+const { checkUserAccount } = require('../../Account/helpers/checkAccount.js')
 
 const thumbnailUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/adult-red-dragon.jpg`
 
 const DRAGON_PACK_COSTS = {
   blue_dragon_wyrmling: 10, // CR 3
   young_blue_dragon: 20, // CR 9
-  adult_blue_dragon: 45, // CR 16  
+  adult_blue_dragon: 45, // CR 16
   green_dragon_wyrmling: 10, // CR 2
   young_green_dragon: 25, // CR 8
   adult_green_dragon: 50, // CR 15
@@ -19,7 +18,6 @@ const DRAGON_PACK_COSTS = {
   young_red_dragon: 30, // CR 10
   adult_red_dragon: 60, // CR 18
 }
-
 
 const DRAGON_PACK_DESCRIPTIONS = {
   blue_dragon_wyrmling: 'Blue Dragon Wyrmling (CR 3)',
@@ -35,7 +33,10 @@ const DRAGON_PACK_DESCRIPTIONS = {
 
 async function handleDragonPack(interaction) {
   try {
-    console.log('Handling Dragon Pack interaction for user:', interaction.user.id)
+    console.log(
+      'Handling Dragon Pack interaction for user:',
+      interaction.user.id
+    )
 
     const user = await checkUserAccount(interaction)
     if (!user) {
@@ -50,7 +51,9 @@ async function handleDragonPack(interaction) {
     const affordablePacks = Object.entries(DRAGON_PACK_COSTS)
       .filter(([name, cost]) => eggs >= cost)
       .map(([name, cost]) => ({
-        label: `${name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} - 🥚${cost}`,
+        label: `${name
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase())} - 🥚${cost}`,
         value: name,
         description: DRAGON_PACK_DESCRIPTIONS[name],
       }))
@@ -58,7 +61,8 @@ async function handleDragonPack(interaction) {
     if (affordablePacks.length === 0) {
       console.log('User cannot afford any Dragon Pack items.')
       return interaction.reply({
-        content: 'You do not have enough eggs to purchase any Dragon Pack items.',
+        content:
+          'You do not have enough eggs to purchase any Dragon Pack items.',
         ephemeral: true,
       })
     }

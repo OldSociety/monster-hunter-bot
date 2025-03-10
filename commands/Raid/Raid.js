@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
-const { checkUserAccount } = require('../Account/checkAccount.js')
+const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
 const { startRaidEncounter } = require('./raidUtils/raidHandler.js')
 
 module.exports = {
@@ -11,10 +11,8 @@ module.exports = {
     // if (!interaction.deferred && !interaction.replied) {
     //   await interaction.deferReply({ ephemeral: true })
     // }
-
     // const user = await checkUserAccount(interaction)
     // if (!user) return
-
     // await startRaidEncounter(interaction, user)
   },
 }

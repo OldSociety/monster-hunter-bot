@@ -126,15 +126,15 @@ async function startGame(interaction, userData) {
       color: 'Red',
       effects: [
         {
-          emoji: '🎅',
+          emoji: '🍀',
           type: 'gain',
           chance: 50,
           range: [1, 3],
-          message: '**Tiny Win 🎅**',
+          message: '**Tiny Win 🍀**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '🎅',
+          emoji: '☘️',
           type: 'false_alarm',
           chance: 16,
           message: '**Near Advance!**',
@@ -148,9 +148,9 @@ async function startGame(interaction, userData) {
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f381.svg',
         },
         {
-          emoji: '❄️',
+          emoji: '🌷',
           type: 'lose',
-          chance: 12,
+          chance: 14,
           range: [1, 3],
           message: '**Small Loss 💔**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2744.svg',
@@ -158,14 +158,14 @@ async function startGame(interaction, userData) {
         {
           emoji: '✅',
           type: 'advance',
-          chance: 6,
+          chance: 8,
           message: '**Advance to Next Stage! ⏩**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
         },
         {
           emoji: '🛑',
           type: 'game_over',
-          chance: 16,
+          chance: 12,
           message: '**Game Over! 🛑**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f6d1.svg',
         },
@@ -176,22 +176,22 @@ async function startGame(interaction, userData) {
       color: 'Blue',
       effects: [
         {
-          emoji: '🎅',
+          emoji: '🍀',
           type: 'gain',
           chance: 42,
           range: [1, 8],
-          message: '**Small Win 🎅**',
+          message: '**Small Win 🍀**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '🎅',
+          emoji: '☘️',
           type: 'false_alarm',
           chance: 10,
           message: '**Near Advance!**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '❄️',
+          emoji: '🌷',
           type: 'lose',
           chance: 25,
           range: [1, 18],
@@ -226,22 +226,22 @@ async function startGame(interaction, userData) {
       color: 'Green',
       effects: [
         {
-          emoji: '🎅',
+          emoji: '🍀',
           type: 'gain',
           chance: 40,
           range: [1, 13],
-          message: '**Medium Win 🎅**',
+          message: '**Medium Win 🍀**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '🎅',
+          emoji: '☘️',
           type: 'false_alarm',
           chance: 8,
           message: '**Near Advance!**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '❄️',
+          emoji: '🌷',
           type: 'lose',
           chance: 24,
           range: [1, 13],
@@ -251,7 +251,7 @@ async function startGame(interaction, userData) {
         {
           emoji: '✅',
           type: 'advance',
-          chance: 6,
+          chance: 8,
           message: '**Advance to Next Stage! ⏩**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2705.svg',
         },
@@ -265,7 +265,7 @@ async function startGame(interaction, userData) {
         {
           emoji: '🛑',
           type: 'game_over',
-          chance: 14,
+          chance: 12,
           message: '**Game Over! 🛑**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f6d1.svg',
         },
@@ -276,22 +276,22 @@ async function startGame(interaction, userData) {
       color: '#BCC0C0',
       effects: [
         {
-          emoji: '🎅',
+          emoji: '🍀',
           type: 'gain',
           chance: 35,
           range: [1, 19],
-          message: '**Big Win 🎅**',
+          message: '**Big Win 🍀**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '🎅',
+          emoji: '☘️',
           type: 'false_alarm',
           chance: 5,
           message: '**Near Advance!**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
-          emoji: '❄️',
+          emoji: '🌷',
           type: 'lose',
           chance: 27,
           range: [1, 19],
@@ -326,11 +326,11 @@ async function startGame(interaction, userData) {
       color: 'Gold',
       effects: [
         {
-          emoji: '🎅',
+          emoji: '🍀',
           type: 'gain',
           chance: 39,
           range: [1, 19],
-          message: '**Massive Win 🎅**',
+          message: '**Massive Win 🍀**',
           link: 'https://twemoji.maxcdn.com/v/latest/svg/1f385.svg',
         },
         {
@@ -341,7 +341,7 @@ async function startGame(interaction, userData) {
           link: 'https://twemoji.maxcdn.com/v/latest/svg/2b50.svg',
         },
         {
-          emoji: '❄️',
+          emoji: '🌷',
           type: 'lose',
           chance: 34,
           range: [1, 19],

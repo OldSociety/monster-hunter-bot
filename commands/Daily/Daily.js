@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { grantDailyReward } = require('./helpers/dailyRewardsHandler')
 const { User } = require('../../Models/model')
-const { checkUserAccount } = require('../Account/checkAccount.js')
+const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
 
 module.exports = {
   data: new SlashCommandBuilder()

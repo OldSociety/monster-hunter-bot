@@ -1,4 +1,4 @@
-const { Monster } = require('../Models/model') // ✅ Import Sequelize model
+const { Monster } = require('../Models/model')
 
 // Define rarity tiers
 const defaultTiers = [
@@ -70,7 +70,6 @@ async function populateMonsterDatabase() {
         const combatType = classifyMonsterType(monsterDetails.type)
         const imageUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/${monster.index}.jpg`
 
-        // ✅ Use Sequelize's findOrCreate to avoid duplicates
         await Monster.findOrCreate({
           where: { index: monster.index },
           defaults: {

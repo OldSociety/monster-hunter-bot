@@ -1,32 +1,32 @@
-// const { ActionRowBuilder, ButtonBuilder, EmbedBuilder } = require('discord.js')
-// // const { User, Arena, } = require('../../Models')
+const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, SlashCommandBuilder } = require('discord.js')
+// const { User, Arena, } = require('../../Models')
 
-// module.exports = {
-//   data: new SlashCommandBuilder()
-//     .setName('arena')
-//     .setDescription('Access arena features and manage your arena profile.')
-//     // .addSubcommand((subcommand) =>
-//       subcommand
-//         .setName('overview')
-//         .setDescription(
-//           'View your Blood Hunter character sheet (stats, abilities, equipment, and allocations).'
-//         )
-//     )
-//     .addSubcommand((subcommand) =>
-//       subcommand.setName('fight').setDescription('Engage in an arena fight.')
-//     )
-//     .addSubcommand((subcommand) =>
-//       subcommand
-//         .setName('worldboss')
-//         .setDescription('Take on the server-wide worldboss challenge.')
-//     )
-//     .addSubcommand((subcommand) =>
-//       subcommand
-//         .setName('inventory')
-//         .setDescription('Manage and equip your arena abilities and weapons.')
-//     ),
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('arena')
+    .setDescription('Access arena features and manage your arena profile.')
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('overview')
+        .setDescription(
+          'View your Blood Hunter character sheet (stats, abilities, equipment, and allocations).'
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('fight').setDescription('Engage in an arena fight.')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('worldboss')
+        .setDescription('Take on the server-wide worldboss challenge.')
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('inventory')
+        .setDescription('Manage and equip your arena abilities and weapons.')
+    ),
 
-//   async execute(interaction) {
+  async execute(interaction) {
 //     const allowedChannels = [process.env.BOTTESTCHANNELID]
 //     if (!allowedChannels.includes(interaction.channel.id)) {
 //       await interaction.reply({
@@ -112,5 +112,5 @@
 //     } else if (subcommand === 'inventory') {
 //       // Implement inventory management logic here.
 //     }
-//   },
-// }
+  },
+}

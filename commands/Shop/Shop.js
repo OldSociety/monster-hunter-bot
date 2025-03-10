@@ -27,7 +27,7 @@ const {
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
 const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
-const { checkUserAccount } = require('../Account/checkAccount.js')
+const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
 const { handleRotatingPack } = require('./handlers/handleRotatingPack.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
@@ -89,21 +89,20 @@ const TIER_OPTIONS = {
       { name: 'Rare', chance: 0.02 },
     ],
   },
-  werefolk: { 
+  werefolk: {
     customTiers: [
       { name: 'Common', chance: 0.38 },
       { name: 'Uncommon', chance: 0.68 },
       { name: 'Rare', chance: 0.02 },
     ],
   },
-  monstrosity: { 
+  monstrosity: {
     customTiers: [
       { name: 'Uncommon', chance: 0.98 }, // example values
       { name: 'Rare', chance: 0.02 },
     ],
   },
-};
-
+}
 
 function getRarityByCR(cr) {
   if (cr >= 20) return 'Legendary'
@@ -474,8 +473,7 @@ module.exports = {
               packType,
               user.user_id
             )
-            
-            
+
             if (!monster) {
               return interaction.editReply({
                 content: `Could not retrieve a valid monster for the ${packType} pack. Please try again later or contact support.`,

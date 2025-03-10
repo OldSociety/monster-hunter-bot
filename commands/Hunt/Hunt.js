@@ -1,15 +1,13 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { Collection } = require('../../Models/model.js')
-const { checkUserAccount } = require('../Account/checkAccount.js')
+const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
 const { showLevelSelection } = require('./huntUtils/huntHandlers.js')
 const { startNewEncounter } = require('./huntUtils/encounterHandler.js')
 const { handlePagination } = require('./huntUtils/paginationHandler.js')
 const { huntPages } = require('./huntPages.js')
 const { populateMonsterCache } = require('../../handlers/cacheHandler')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
-const {
-  verifyAndUpdateUserScores,
-} = require('../../utils/verifyUserScores.js')
+const { verifyAndUpdateUserScores } = require('../../utils/verifyUserScores.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -31,7 +29,7 @@ module.exports = {
     }
 
     stopUserCollector(interaction.user.id)
-await verifyAndUpdateUserScores(user.user_id)
+    await verifyAndUpdateUserScores(user.user_id)
     const highestUnlockedPage = Object.keys(huntPages).find(
       (pageKey, index) => {
         const totalHuntsBefore = Object.keys(huntPages)
