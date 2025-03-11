@@ -519,6 +519,7 @@ module.exports = {
             return
           }
 
+          // ----- Promotion Initial Selection (when user clicks "promote_cards") -----
           if (interaction.customId === 'promote_cards') {
             const userMonsters = await Collection.findAll({
               where: { userId, copies: { [Op.gt]: 0 } },
@@ -533,31 +534,28 @@ module.exports = {
               })
             }
 
-            // First, sort the promotable monsters by m_score descending.
+            // Sort monsters by m_score descending
             const sortedPromotable = promotableMonsters.sort(
               (a, b) => b.m_score - a.m_score
             )
 
+            // Map to options for select menu
             const monsterOptions = sortedPromotable.map((monster) => {
-              // Determine the fighting style of the monster.
               const style = classifyMonsterType(monster.type)
-
-              // Choose an emoji based on the style and if it's in the corresponding top list.
               let emoji = ''
               if (style === 'brute' && user.top_brutes.includes(monster.id)) {
-                emoji = ' ⚔️' // Sword for brute
+                emoji = ' ⚔️'
               } else if (
                 style === 'spellsword' &&
                 user.top_spellswords.includes(monster.id)
               ) {
-                emoji = ' 🪄' // Wand for spellsword
+                emoji = ' 🪄'
               } else if (
                 style === 'stealth' &&
                 user.top_stealths.includes(monster.id)
               ) {
-                emoji = ' 🎭' // Thief mask for stealth
+                emoji = ' 🎭'
               }
-
               return {
                 label: `${monster.name} (Lv. ${monster.rank})${emoji}`,
                 value: `promote_${monster.id}`,
@@ -565,12 +563,49 @@ module.exports = {
               }
             })
 
-            const selectRow = new ActionRowBuilder().addComponents(
-              new StringSelectMenuBuilder()
-                .setCustomId('select_promotion')
-                .setPlaceholder('Select a card to promote')
-                .addOptions(monsterOptions)
-            )
+            const itemsPerPage = 25
+            const totalPages = Math.ceil(monsterOptions.length / itemsPerPage)
+            let currentPage = 0
+            const getPageOptions = (page) =>
+              monsterOptions.slice(
+                page * itemsPerPage,
+                (page + 1) * itemsPerPage
+              )
+
+            // Build select menu with the options for the current page
+            const selectMenu = new StringSelectMenuBuilder()
+              .setCustomId(`select_promotion_page_${currentPage}`)
+              .setPlaceholder(
+                `Select a card to promote (Page ${
+                  currentPage + 1
+                } of ${totalPages})`
+              )
+              .addOptions(getPageOptions(currentPage))
+
+            // Build action rows: one for the select menu, one for pagination buttons (if needed)
+            const actionRows = []
+            actionRows.push(new ActionRowBuilder().addComponents(selectMenu))
+
+            if (totalPages > 1) {
+              const paginationRow = new ActionRowBuilder()
+              if (currentPage > 0) {
+                paginationRow.addComponents(
+                  new ButtonBuilder()
+                    .setCustomId(`promotion_prev_page_${currentPage}`)
+                    .setLabel('Previous Page')
+                    .setStyle(ButtonStyle.Secondary)
+                )
+              }
+              if (currentPage < totalPages - 1) {
+                paginationRow.addComponents(
+                  new ButtonBuilder()
+                    .setCustomId(`promotion_next_page_${currentPage}`)
+                    .setLabel('Next Page')
+                    .setStyle(ButtonStyle.Secondary)
+                )
+              }
+              actionRows.push(paginationRow)
+            }
 
             const promotionEmbed = new EmbedBuilder()
               .setTitle('🔼 Monster Promotion')
@@ -586,11 +621,120 @@ module.exports = {
 
             return interaction.update({
               embeds: [promotionEmbed],
-              components: [selectRow],
+              components: actionRows,
             })
           }
 
-          if (interaction.customId === 'select_promotion') {
+          // ----- Pagination Button Handlers -----
+          if (
+            interaction.customId.startsWith('promotion_next_page_') ||
+            interaction.customId.startsWith('promotion_prev_page_')
+          ) {
+            // Extract current page from customId
+            const parts = interaction.customId.split('_')
+            const currentPage = parseInt(parts.pop())
+            let newPage = currentPage
+            if (interaction.customId.startsWith('promotion_next_page_')) {
+              newPage = currentPage + 1
+            } else {
+              newPage = currentPage - 1
+            }
+
+            // Rebuild the promotion options (repeat same query and mapping)
+            const userMonsters = await Collection.findAll({
+              where: { userId, copies: { [Op.gt]: 0 } },
+            })
+            const promotableMonsters = userMonsters.filter(
+              (monster) => monster.rank < 7
+            )
+            const sortedPromotable = promotableMonsters.sort(
+              (a, b) => b.m_score - a.m_score
+            )
+            const monsterOptions = sortedPromotable.map((monster) => {
+              const style = classifyMonsterType(monster.type)
+              let emoji = ''
+              if (style === 'brute' && user.top_brutes.includes(monster.id)) {
+                emoji = ' ⚔️'
+              } else if (
+                style === 'spellsword' &&
+                user.top_spellswords.includes(monster.id)
+              ) {
+                emoji = ' 🪄'
+              } else if (
+                style === 'stealth' &&
+                user.top_stealths.includes(monster.id)
+              ) {
+                emoji = ' 🎭'
+              }
+              return {
+                label: `${monster.name} (Lv. ${monster.rank})${emoji}`,
+                value: `promote_${monster.id}`,
+                description: `Copies: ${monster.copies}`,
+              }
+            })
+            const itemsPerPage = 25
+            const totalPages = Math.ceil(monsterOptions.length / itemsPerPage)
+            const getPageOptions = (page) =>
+              monsterOptions.slice(
+                page * itemsPerPage,
+                (page + 1) * itemsPerPage
+              )
+
+            // Build updated select menu with newPage options
+            const selectMenu = new StringSelectMenuBuilder()
+              .setCustomId(`select_promotion_page_${newPage}`)
+              .setPlaceholder(
+                `Select a card to promote (Page ${
+                  newPage + 1
+                } of ${totalPages})`
+              )
+              .addOptions(getPageOptions(newPage))
+
+            const actionRows = []
+            actionRows.push(new ActionRowBuilder().addComponents(selectMenu))
+
+            if (totalPages > 1) {
+              const paginationRow = new ActionRowBuilder()
+              if (newPage > 0) {
+                paginationRow.addComponents(
+                  new ButtonBuilder()
+                    .setCustomId(`promotion_prev_page_${newPage}`)
+                    .setLabel('Previous Page')
+                    .setStyle(ButtonStyle.Secondary)
+                )
+              }
+              if (newPage < totalPages - 1) {
+                paginationRow.addComponents(
+                  new ButtonBuilder()
+                    .setCustomId(`promotion_next_page_${newPage}`)
+                    .setLabel('Next Page')
+                    .setStyle(ButtonStyle.Secondary)
+                )
+              }
+              actionRows.push(paginationRow)
+            }
+
+            const promotionEmbed = new EmbedBuilder()
+              .setTitle('🔼 Monster Promotion')
+              .setDescription(
+                'Increase the strength of your cards by fusing copies up to 6 times. Cards that directly affect your score are marked below.'
+              )
+              .setColor('Gold')
+              .addFields({
+                name: 'Legend',
+                value: '⚔️: Brute | 🪄: Spellsword | 🎭: Stealth',
+                inline: false,
+              })
+
+            return interaction.update({
+              embeds: [promotionEmbed],
+              components: actionRows,
+            })
+          }
+
+          // ----- Handling Selection from the Paginated Menu -----
+          // Note: We now handle any selection from a menu whose customId starts with "select_promotion_page_"
+          if (interaction.customId.startsWith('select_promotion_page_')) {
             const selectedMonsterId = interaction.values[0].replace(
               'promote_',
               ''
@@ -617,7 +761,6 @@ module.exports = {
               ? promotionCostEntry.cost
               : 1200
             const nextRank = selectedMonster.rank + 1
-
             let assignedRarity = getRarityByCR(selectedMonster.cr)
 
             const imageUrl = selectedMonster
