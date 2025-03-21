@@ -15,7 +15,7 @@ async function healUsers() {
     await Promise.all(
       usersNeedingHealing.map(async (user) => {
         const maxHP = user.score
-        const healAmount = Math.ceil(maxHP * 0.2) // Heal 20% of max HP
+        const healAmount = Math.ceil(maxHP * 0.1) // Heal 20% of max HP
 
         user.current_raidHp = Math.min(user.current_raidHp + healAmount, maxHP)
         await user.save()

@@ -82,7 +82,7 @@ function createInitialActionRow(user) {
       .setLabel('Heal (100 HP/🧿token)')
       .setStyle(ButtonStyle.Success)
       .setDisabled(
-        user.currency.tokens < 1 || user.current_raidHp >= user.score
+        user.currency.tokens < 10 || user.current_raidHp >= user.score
       ),
     new ButtonBuilder()
       .setCustomId('cancel_raid')

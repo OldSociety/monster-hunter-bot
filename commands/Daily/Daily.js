@@ -26,16 +26,16 @@ module.exports = {
     const displayDay =
       user.daily_streak % 10 === 0 && user.daily_streak > 0
         ? 10
-        : user.daily_streak % 10 || 1
+        : user.daily_streak % 80 || 1
 
     const rewards = [
-      '🪙200 coins',
+      '🪙1000 coins',
       '🥚2 dragon egg',
       '🧪3 demon ichor',
-      '🪙600 coins',
+      '🪙3000 coins',
       '🥚3 dragon egg',
       '🧪3 demon ichor',
-      '🪙1000 coins',
+      '🪙6000 coins',
       '🥚3 dragon egg',
       '🧪3 demon ichor',
       'Demon Card 🃏',
@@ -78,7 +78,11 @@ module.exports = {
     try {
       const rewardMessage = await grantDailyReward(user, interaction)
 
-      user.daily_streak = (user.daily_streak % 10) + 1
+      user.daily_streak += 1 // 🔹 Simply increment daily streak
+
+      if (user.daily_streak > 80) {
+        user.daily_streak = 1 // 🔹 Reset after 80 days
+      }
       user.last_daily_claim = now
       await user.save()
 

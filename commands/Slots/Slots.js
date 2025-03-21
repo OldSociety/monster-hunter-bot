@@ -7,7 +7,7 @@ const {
 const { User } = require('../../Models/model.js')
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
-let jackpot = 10000
+let jackpot = 100000
 const activePlayers = new Set()
 const thumbnailUrl = `https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/pit-fiend.jpg`
 const gameStates = new Map() // Track each player's game state individually
@@ -473,7 +473,7 @@ async function startGame(interaction, userData) {
       gameState.totalGold = 0;
       activePlayers.delete(userId);
       message += ` You won the JACKPOT of 🪙${jackpot} gold!`;
-      jackpot = 1000; // Reset the jackpot
+      jackpot = 100000; // Reset the jackpot
     }
 
     const footerText = `Current Jackpot 🪙${jackpot}`;

@@ -35,21 +35,18 @@ function formatTimeRemaining(ms) {
 }
 
 // ---------------- Reward Wheel Setup ---------------- //
-async function setupRewardWheel(rewardMessage, user, timeout = 30000) {
+async function setupRewardWheel(rewardMessage, user, timeout = 60000) {
   return new Promise(async (resolve) => {
     console.log('[RewardWheel] Setting up reward wheel.')
-    // Define eight rewards following the new specification.
+    // Define five rewards.
     const rewards = [
       { type: 'gold', amount: 180, text: '🪙180 gold' },
-      { type: 'gold', amount: 180, text: '🪙180 gold' },
       { type: 'gold', amount: 360, text: '🪙360 gold' },
-      { type: 'gold', amount: 360, text: '🪙360 gold' },
-      { type: 'gear', text: '⚙️5-10 gear' },
-      { type: 'gear', text: '⚙️5-10 gear' },
-      { type: 'beast', text: 'Random Beast Card' },
+      { type: 'gear', min: 1, max: 5, text: '⚙️1-5 gear' },
+      { type: 'gear', min: 5, max: 10, text: '⚙️5-10 gear' },
       { type: 'beast', text: 'Random Beast Card' },
     ]
-    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣']
+    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
 
     // Shuffle rewards.
     for (let i = rewards.length - 1; i > 0; i--) {
@@ -91,13 +88,14 @@ async function setupRewardWheel(rewardMessage, user, timeout = 30000) {
             `${reactingUser.username}, you selected ${reaction.emoji.name} and won 🪙${selectedReward.amount} gold!`
           )
       } else if (selectedReward.type === 'gear') {
-        // Generate a random gear reward between 5 and 10.
-        const gearReward = Math.floor(Math.random() * 6) + 5
+        // Generate a random gear reward between selectedReward.min and selectedReward.max.
+        const gearReward =
+          Math.floor(Math.random() * (selectedReward.max - selectedReward.min + 1)) +
+          selectedReward.min
         user.currency = {
           ...user.currency,
           gear: user.currency.gear + gearReward,
         }
-
         await user.setDataValue('currency', user.currency)
         await user.save()
         console.log(
@@ -131,7 +129,12 @@ async function setupRewardWheel(rewardMessage, user, timeout = 30000) {
         }
       }
 
-      await rewardMessage.edit({ content: ' ', embeds: [feedbackEmbed] })
+      // If beast reward, send a non-ephemeral follow-up; otherwise, edit the reward message.
+      if (selectedReward.type === 'beast') {
+        await interaction.followUp({ embeds: [feedbackEmbed], ephemeral: false })
+      } else {
+        await rewardMessage.edit({ content: ' ', embeds: [feedbackEmbed] })
+      }
       await rewardMessage.reactions.removeAll().catch(console.error)
       collector.stop()
       resolve(true)
@@ -347,7 +350,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
           const rewardWheelEmbed = new EmbedBuilder()
             .setTitle('Reward Wheel')
             .setDescription(
-              'React with a number emoji (1️⃣ - 8️⃣) to claim your prize!'
+              'React with a number emoji (1️⃣ - 5️⃣) to claim your prize!'
             )
             .setColor('Gold')
           const rewardMessage = await interaction.followUp({
