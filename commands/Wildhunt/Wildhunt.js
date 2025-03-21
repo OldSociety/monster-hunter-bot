@@ -90,8 +90,9 @@ async function setupRewardWheel(rewardMessage, user, timeout = 60000) {
       } else if (selectedReward.type === 'gear') {
         // Generate a random gear reward between selectedReward.min and selectedReward.max.
         const gearReward =
-          Math.floor(Math.random() * (selectedReward.max - selectedReward.min + 1)) +
-          selectedReward.min
+          Math.floor(
+            Math.random() * (selectedReward.max - selectedReward.min + 1)
+          ) + selectedReward.min
         user.currency = {
           ...user.currency,
           gear: user.currency.gear + gearReward,
@@ -118,6 +119,11 @@ async function setupRewardWheel(rewardMessage, user, timeout = 60000) {
           const stars = getStarsBasedOnColor(beast.color)
           const category = classifyMonsterType(beast.type)
           feedbackEmbed = generateMonsterRewardEmbed(beast, category, stars)
+          // Add a message over the top of the reward embed.
+          feedbackEmbed.setDescription(
+            `${reactingUser.username}, obtained another ${beast.name} in their Wild Hunt.\n\n` +
+              (feedbackEmbed.data.description || '')
+          )
           console.log(
             `[RewardWheel] Awarded a random beast card to user ${reactingUser.id}`
           )
@@ -131,7 +137,10 @@ async function setupRewardWheel(rewardMessage, user, timeout = 60000) {
 
       // If beast reward, send a non-ephemeral follow-up; otherwise, edit the reward message.
       if (selectedReward.type === 'beast') {
-        await interaction.followUp({ embeds: [feedbackEmbed], ephemeral: false })
+        await interaction.followUp({
+          embeds: [feedbackEmbed],
+          ephemeral: false,
+        })
       } else {
         await rewardMessage.edit({ content: ' ', embeds: [feedbackEmbed] })
       }
