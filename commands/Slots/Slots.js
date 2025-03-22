@@ -62,7 +62,7 @@ module.exports = {
         `Welcome to my game of chance. Shit's not fair, but give it a spin anyway. Advance through five stages of Hell—**Red, Blue, Green, Silver, and Gold**. Each stage increases the stakes and potential rewards.\n` +
           `- **Risk/Reward:** Grow your pot of gold with each roll, but be careful—every new roll risks losing it all. You can stop at any time to collect your winnings *(items won are never lost)*.\n` +
           `- **Jackpot:** Chance to win the 🪙grand prize on the Gold Stage! 🏆\n` +
-          `- **Balor Card:** With a bit of bad luck, you might even earn me—the rarest card in Blood Hunter! *(Pit Fiend, CR: 20)*\n\n`
+          `- **Balor Card:** With a bit of bad luck, you might even earn me—the rarest card in Blood Hunter! *(Pit Fiend, Base Score: 200)*\n\n`
       )
       .setColor('Red')
       .setThumbnail(thumbnailUrl)
