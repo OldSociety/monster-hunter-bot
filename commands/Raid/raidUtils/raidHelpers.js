@@ -103,7 +103,7 @@ function createUpdatedActionRow(user) {
     if (user[`${style}_score`] > 0) {
       styleButtons.push(
         new ButtonBuilder()
-          .setCustomId(`style_${style}`)
+          .setCustomId(`raid_style_${style}`)
           .setLabel(
             `${style.charAt(0).toUpperCase() + style.slice(1)}: ${
               user[`${style}_score`]

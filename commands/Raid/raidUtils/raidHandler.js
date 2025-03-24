@@ -77,11 +77,19 @@ async function runRaidBattlePhases(
     let phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
     console.log(`[Battle] Phase ${phase} result: ${phaseResult}`)
 
+    // When a player deals damage to the boss:
     if (phaseResult === 'Hit!') {
       let damage = Math.round(playerRoll * 0.1)
-      bossHP -= damage
-      console.log(`[Battle] Phase ${phase} - Boss HP reduced by ${damage}`)
+      // Atomically decrement boss's health:
+      await raidBoss.instance.decrement('current_hp', { by: damage })
+      // Optionally, fetch the updated value:
+      await raidBoss.instance.reload()
+      bossHP = raidBoss.instance.current_hp
+      console.log(
+        `[Battle] Phase ${phase} - Boss HP reduced by ${damage}, new HP: ${bossHP}`
+      )
     } else {
+      // For player damage, you can still update the player's record as needed.
       let damage = Math.round(monsterRoll * 0.1)
       playerHP -= damage
       console.log(`[Battle] Phase ${phase} - Player HP reduced by ${damage}`)
@@ -254,16 +262,26 @@ async function startRaidEncounter(interaction, user) {
   })
   console.log('[Raid] Sent overview embed with initial action row.')
 
-  // --- Collector Renewal Logic for Long-Lasting Interactions ---
-  let lastInteractionTime = Date.now()
+  // --- Start Collector with Renewal Logic ---
+  function startCollector() {
+    let lastInteractionTime = Date.now()
 
-  function createRaidCollector() {
-    const newCollector = interaction.channel.createMessageComponentCollector({
+    const collector = interaction.channel.createMessageComponentCollector({
       filter: (i) => i.user.id === interaction.user.id,
       time: 60000,
     })
 
-    newCollector.on('collect', async (i) => {
+    const renewalInterval = setInterval(() => {
+      if (Date.now() - lastInteractionTime >= 30000) {
+        console.log(
+          `[Renew] No interaction for 30 seconds for user ${interaction.user.id}. Stopping collector.`
+        )
+        collector.stop('timeout')
+        lastInteractionTime = Date.now()
+      }
+    }, 1000)
+
+    collector.on('collect', async (i) => {
       lastInteractionTime = Date.now()
       console.log('[Collector] Button pressed:', i.customId)
 
@@ -290,8 +308,9 @@ async function startRaidEncounter(interaction, user) {
         return
       }
 
-      if (i.customId.startsWith('style_')) {
-        const selectedStyle = i.customId.split('_')[1]
+      if (i.customId.startsWith('raid_style_')) {
+        // "raid_style_brute" -> split gives ["raid", "style", "brute"]
+        const selectedStyle = i.customId.split('_')[2]
         console.log('[Collector] Style selected:', selectedStyle)
         const playerScore =
           (user[`${selectedStyle}_score`] || 0) + (user.base_damage || 0)
@@ -433,35 +452,25 @@ async function startRaidEncounter(interaction, user) {
       }
     })
 
-    newCollector.on('end', async (_, reason) => {
+    collector.on('end', async (_, reason) => {
       console.log(
         `[Raid Collector] Ended for user ${interaction.user.id} with reason: ${reason}`
       )
-      clearInterval(collectorRenewInterval)
+      clearInterval(renewalInterval)
       if (!rewardsDistributed) {
         console.log(
           `[Raid Collector] Renewing collector for user: ${interaction.user.id}`
         )
-        currentCollector = createRaidCollector()
-        collectors.set(interaction.user.id, currentCollector)
+        const newCollector = startCollector()
+        collectors.set(interaction.user.id, newCollector)
       }
     })
 
-    return newCollector
+    return collector
   }
 
-  let currentCollector = createRaidCollector()
+  const currentCollector = startCollector()
   collectors.set(interaction.user.id, currentCollector)
-
-  const collectorRenewInterval = setInterval(async () => {
-    if (Date.now() - lastInteractionTime >= 30000) {
-      console.log(
-        `[Renew] No interaction for 30 seconds for user ${interaction.user.id}. Renewing raid collector.`
-      )
-      currentCollector.stop('timeout')
-      lastInteractionTime = Date.now()
-    }
-  }, 1000)
 }
 
 async function handleCancelRaid(interaction, user) {
