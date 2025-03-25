@@ -73,13 +73,14 @@ if (process.env.NODE_ENV === 'production') {
       for (const user of users) {
         let currency = user.currency || {
           energy: 15,
-          gems: 0,
+          tokens: 0,
           eggs: 0,
           ichor: 0,
           dice: 0,
+          gear: 0
         }
         if (typeof currency !== 'object') {
-          currency = { energy: 15, gems: 0, eggs: 0, ichor: 0, dice: 0 }
+          currency = { energy: 15, tokens: 0, eggs: 0, ichor: 0, dice: 0, gear: 0 }
         }
 
         const currentEnergy = currency.energy || 0

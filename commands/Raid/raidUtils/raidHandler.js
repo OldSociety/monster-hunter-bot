@@ -425,6 +425,7 @@ async function startRaidEncounter(interaction, user) {
               '[Collector] Displaying individual rewards embed to user.'
             )
             await i.followUp({ embeds: embedsToSend, ephemeral: true })
+            collector.stop('fight_over')
           }
         }
         if (!playerWins && raidBossRotation.phase === 'active') {
@@ -439,6 +440,7 @@ async function startRaidEncounter(interaction, user) {
             '[Collector] Player lost the battle. Displaying defeat embed.'
           )
           await i.followUp({ embeds: [defeatEmbed], ephemeral: true })
+          collector.stop('fight_over')
         }
 
         setTimeout(async () => {
@@ -453,14 +455,14 @@ async function startRaidEncounter(interaction, user) {
     })
 
     collector.on('end', async (_, reason) => {
-      console.log(
-        `[Raid Collector] Ended for user ${interaction.user.id} with reason: ${reason}`
-      )
       clearInterval(renewalInterval)
+      if (reason === 'fight_over') {
+        console.log('Fight is over; not renewing the collector.')
+        return
+      }
+      // Otherwise, if you want to renew for other reasons (like timeout), do it here.
       if (!rewardsDistributed) {
-        console.log(
-          `[Raid Collector] Renewing collector for user: ${interaction.user.id}`
-        )
+        console.log(`[Raid Collector] Renewing collector for user: ${interaction.user.id}`)
         const newCollector = startCollector()
         collectors.set(interaction.user.id, newCollector)
       }

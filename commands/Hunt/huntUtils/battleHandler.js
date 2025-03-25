@@ -78,7 +78,7 @@ async function runBattlePhases(
       const flatDamage = 4;
       momentum -= Math.min(flatDamage, momentum);
       if (playerWins >= 4) {
-        user.currency.gems = (user.currency.gems || 0) + 1;
+        user.currency.tokens = (user.currency.tokens || 0) + 1;
         user.changed('currency', true);
         await user.save();
         return true;

@@ -468,6 +468,41 @@ module.exports = {
               })
             }
 
+            if (packType === 'starter') {
+              const { allowedMonstersByPack } = require('../../utils/shopMonsters.js')
+              const starters = Array.from(allowedMonstersByPack.starter)
+              const randomIndex = Math.floor(Math.random() * starters.length)
+              const selectedKey = starters[randomIndex]
+            
+              const monster = await pullSpecificMonster(selectedKey)
+              if (!monster) {
+                return interaction.editReply({
+                  content:
+                    'Could not retrieve the starter pack monster. Please try again later or contact support.',
+                  ephemeral: true,
+                })
+              }
+              const category = classifyMonsterType(monster.type)
+              const stars = getStarsBasedOnColor(monster.color)
+              const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
+            
+              const result = await updateOrAddMonsterToCollection(userId, monster)
+              await updateTop3AndUserScore(userId)
+            
+              await interaction.editReply({
+                content: 'Starter pack purchased!',
+                embeds: [],
+              })
+              await interaction.followUp({
+                content: `${interaction.user.username} obtained a new ${result.name} from the Starter Pack!`,
+                embeds: [monsterEmbed],
+                ephemeral: false,
+              })
+            
+              collector.stop('completed')
+              return
+            }
+
             const monster = await pullValidMonster(
               TIER_OPTIONS[packType],
               packType,
