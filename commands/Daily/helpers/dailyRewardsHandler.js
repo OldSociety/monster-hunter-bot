@@ -22,17 +22,17 @@ const rotatingMonsters = [
 ] // 8 demon cards
 
 async function grantDailyReward(user, interaction) {
-  const currentDay = (user.daily_streak + 1) % 80 || 80 // Full 80-day cycle before resetting
+  const currentDay = ((user.daily_streak + 1) % 80) || 80;
 
-  if (user.daily_streak % 10 === 0 && user.daily_streak <= 80) {
-    // Every 10th day, grant a demon card
+  if (currentDay % 10 === 0) {
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(0xffcc00)
           .setDescription('Loading demon reward, please wait...'),
       ],
-    })
+    });
+
 
     // Cycle through the 8 demon cards based on `daily_streak / 10`
     const monsterIndex = Math.floor((user.daily_streak - 1) / 10) % rotatingMonsters.length;
@@ -67,12 +67,13 @@ async function grantDailyReward(user, interaction) {
       { type: 'gold', amount: 1000, text: '🪙1000 gold' },
       { type: 'eggs', amount: 2, text: '🥚2 dragon eggs' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
+      { type: 'gold', amount: 2000, text: '🪙2000 gold' },
+      { type: 'eggs', amount: 3, text: '🥚3 dragon eggs' },
+      { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
       { type: 'gold', amount: 3000, text: '🪙3000 gold' },
       { type: 'eggs', amount: 3, text: '🥚3 dragon eggs' },
       { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
-      { type: 'gold', amount: 6000, text: '🪙6000 gold' },
-      { type: 'eggs', amount: 3, text: '🥚3 dragon eggs' },
-      { type: 'ichor', amount: 3, text: '🧪3 demon ichor' },
+      null,
     ]
 
     const reward = rewards[(currentDay - 1) % rewards.length] || {
