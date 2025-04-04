@@ -193,19 +193,20 @@ module.exports = {
                 'currentBase:',
                 currentBase
               )
-              if (currentBase >= maxBase) {
-                console.log(
-                  '[finish_training] User base score already maxed out.'
-                )
+              const allowedIncrease = Math.min(
+                trainingSession.bonus,
+                maxBase - currentBase
+              )
+
+              if (allowedIncrease <= 0) {
+                trainingSession.status = 'completed'
+                await trainingSession.save()
                 return i.editReply({
                   content: `Your base score is already maxed out (${maxBase}). Add new cards or promote them to increase your maximum.`,
                   components: [],
                 })
               }
-              const allowedIncrease = Math.min(
-                trainingSession.bonus,
-                maxBase - currentBase
-              )
+
               let extraBonus = 0
               const trainingMonster = await Collection.findOne({
                 where: { id: trainingSession.monsterId },

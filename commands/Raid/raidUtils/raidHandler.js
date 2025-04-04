@@ -273,9 +273,9 @@ async function startRaidEncounter(interaction, user) {
 
     const renewalInterval = setInterval(() => {
       if (Date.now() - lastInteractionTime >= 30000) {
-        console.log(
-          `[Renew] No interaction for 30 seconds for user ${interaction.user.id}. Stopping collector.`
-        )
+        // console.log(
+        //   `[Renew] No interaction for 30 seconds for user ${interaction.user.id}. Stopping collector.`
+        // )
         collector.stop('timeout')
         lastInteractionTime = Date.now()
       }
@@ -462,7 +462,7 @@ async function startRaidEncounter(interaction, user) {
       }
       // Otherwise, if you want to renew for other reasons (like timeout), do it here.
       if (!rewardsDistributed) {
-        console.log(`[Raid Collector] Renewing collector for user: ${interaction.user.id}`)
+        // console.log(`[Raid Collector] Renewing collector for user: ${interaction.user.id}`)
         const newCollector = startCollector()
         collectors.set(interaction.user.id, newCollector)
       }
