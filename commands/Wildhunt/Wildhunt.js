@@ -5,7 +5,7 @@ const {
   ButtonStyle,
   EmbedBuilder,
 } = require('discord.js')
-const { Monster, User, Collection } = require('../../Models/model.js')
+const { Monster } = require('../../Models/model.js')
 const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
 const { populateMonsterCache } = require('../../handlers/cacheHandler')
 
@@ -100,7 +100,7 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
             Math.random() * (selectedReward.max - selectedReward.min + 1)
           ) + selectedReward.min
         user.currency.gear = (user.currency.gear || 0) + gearReward
-        await user.changed('currency', true) // ✅ explicitly tell Sequelize it changed
+        await user.changed('currency', true) 
         await user.save()
 
         resultEmbed = new EmbedBuilder()
@@ -145,7 +145,6 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
           ephemeral: true,
         })
       }
-      // Do NOT edit ephemeral rewardMessage here—ephemeral messages are automatically handled by Discord.
     })
   })
 }

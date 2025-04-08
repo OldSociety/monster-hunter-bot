@@ -376,6 +376,7 @@ module.exports = {
                 userId,
                 monster
               )
+
               if (!result) {
                 return interaction.editReply({
                   content: `An error occurred while adding **${monster.name}** to your collection. Please try again.`,
@@ -537,7 +538,7 @@ module.exports = {
                 ? `${interaction.user.username} obtained another ${result.name}.`
                 : `${interaction.user.username} pulled a new ${result.name} from the ${packType} pack!`,
               embeds: [monsterEmbed],
-              ephemeral: false, // This ensures it's visible to everyone
+              ephemeral: false,
             })
 
             await updateTop3AndUserScore(userId)

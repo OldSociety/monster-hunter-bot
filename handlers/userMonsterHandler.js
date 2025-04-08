@@ -182,41 +182,51 @@ async function updateUserScores(userId, category, monster) {
 }
 
 async function updateOrAddMonsterToCollection(userId, monster) {
+  const standardizedName = monster.name
+
   let collectionEntry = await Collection.findOne({
-    where: { userId, name: monster.name },
+    where: { userId, name: standardizedName },
   })
+
+  if (collectionEntry) {
+  } else {
+  }
 
   const category = classifyMonsterType(monster.type)
 
   if (collectionEntry) {
     collectionEntry.copies += 1
-
     await collectionEntry.save()
 
-    if (category) await updateUserScores(userId, category, collectionEntry)
+    if (category) {
+      await updateUserScores(userId, category, collectionEntry)
+    }
 
     return {
       isDuplicate: true,
-      name: monster.name,
+      name: standardizedName,
       copies: collectionEntry.copies,
-      level: collectionEntry.rank,
+      level: collectionEntry.rank, // Ensure rank/level consistency.
     }
   } else {
     const initialMScore = calculateMScore(monster.cr, monster.rarity, 1)
+
     collectionEntry = await Collection.create({
       userId,
-      name: monster.name,
+      name: standardizedName,
       type: monster.type,
       rarity: monster.rarity,
       cr: monster.cr,
       m_score: initialMScore,
       level: 1,
-      copies: 0,
+      copies: 0, // This is the first card; no duplicates.
     })
 
-    if (category) await updateUserScores(userId, category, collectionEntry)
+    if (category) {
+      await updateUserScores(userId, category, collectionEntry)
+    }
 
-    return { isDuplicate: false, name: monster.name }
+    return { isDuplicate: false, name: standardizedName }
   }
 }
 

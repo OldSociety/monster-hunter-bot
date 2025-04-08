@@ -229,12 +229,12 @@ async function pullValidMonster(
     attempts++
   } while (!monster && attempts < maxAttempts)
 
-  if (monster) {
-    console.log(
-      `[PULL] Successfully pulled ${monster.name}. Adding to collection.`
-    )
-    await updateOrAddMonsterToCollection(userId, monster)
-  }
+  // if (monster) {
+  //   console.log(
+  //     `[PULL] Successfully pulled ${monster.name}. Adding to collection.`
+  //   )
+  //   await updateOrAddMonsterToCollection(userId, monster)
+  // }
 
   return monster
 }
