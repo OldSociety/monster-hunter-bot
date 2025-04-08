@@ -41,12 +41,14 @@ function convertNameToIndex(name) {
 
 async function calculateMaxBaseScore(userId) {
   const userCards = await Collection.findAll({
-    where: { userId, copies: { [Op.gt]: 0 } },
+    where: { userId },
   })
+
   let max = 0
   userCards.forEach((card) => {
-    max += card.copies + card.rank
+    max += card.rank
   })
+
   return max
 }
 
