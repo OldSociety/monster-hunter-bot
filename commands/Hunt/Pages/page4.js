@@ -25,7 +25,7 @@ module.exports = {
         {
           type: 'mini-boss',
           monsterIndex: 'young-black-dragon', // 254
-          difficulty: 2,
+          difficulty: 254,
           firstGoldReward: 298,
           goldReward: 72,
         },

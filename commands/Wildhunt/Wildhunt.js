@@ -35,141 +35,118 @@ function formatTimeRemaining(ms) {
 }
 
 // ---------------- Reward Wheel Setup ---------------- //
-async function setupRewardWheel(rewardMessage, user, timeout = 60000) {
+async function setupRewardWheel(interaction, user, timeout = 30000) {
   return new Promise(async (resolve) => {
-    console.log('[RewardWheel] Setting up reward wheel.')
-    // Define five rewards.
     const rewards = [
-      { type: 'gold', amount: 180, text: '🪙180 gold' },
-      { type: 'gold', amount: 360, text: '🪙360 gold' },
-      { type: 'gear', min: 1, max: 5, text: '⚙️1-5 gear' },
-      { type: 'gear', min: 5, max: 10, text: '⚙️5-10 gear' },
-      { type: 'beast', text: 'Random Beast Card' },
+      { type: 'gold', amount: 180 },
+      { type: 'gold', amount: 360 },
+      { type: 'gear', min: 1, max: 5 },
+      { type: 'gear', min: 5, max: 10 },
+      { type: 'beast' },
     ]
-    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
 
-    // Shuffle rewards.
-    for (let i = rewards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[rewards[i], rewards[j]] = [rewards[j], rewards[i]]
-    }
+    rewards.sort(() => Math.random() - 0.5)
 
-    const filter = (reaction, userReacting) => {
-      return emojis.includes(reaction.emoji.name) && !userReacting.bot
-    }
+    const rewardButtons = new ActionRowBuilder().addComponents(
+      rewards.map((_, index) =>
+        new ButtonBuilder()
+          .setCustomId(`reward_choice_${index}`)
+          .setLabel(`Door ${index + 1}`)
+          .setStyle(ButtonStyle.Primary)
+      )
+    )
 
-    const collector = rewardMessage.createReactionCollector({
-      filter,
-      time: timeout,
+    const rewardEmbed = new EmbedBuilder()
+      .setTitle('🎡 Reward Wheel')
+      .setDescription('Choose a door below to claim your reward!')
+      .setColor('Gold')
+
+    const rewardMessage = await interaction.followUp({
+      embeds: [rewardEmbed],
+      components: [rewardButtons],
+      ephemeral: true,
+      fetchReply: true,
     })
-    let rewardClaimed = false
 
-    collector.on('collect', async (reaction, reactingUser) => {
-      console.log('[RewardWheel] Reaction collected:', reaction.emoji.name)
-      rewardClaimed = true
-      const index = emojis.indexOf(reaction.emoji.name)
-      const selectedReward = rewards[index]
-      const userData = await User.findOne({
-        where: { user_id: reactingUser.id },
-      })
-      if (!userData) return
+    const collector = rewardMessage.createMessageComponentCollector({
+      filter: (i) => i.user.id === interaction.user.id,
+      time: timeout,
+      max: 1,
+    })
 
-      let feedbackEmbed
+    let claimed = false
+
+    collector.on('collect', async (i) => {
+      claimed = true
+      await i.deferUpdate()
+
+      const selectedReward = rewards[parseInt(i.customId.split('_')[2])]
+
+      let resultEmbed
+
       if (selectedReward.type === 'gold') {
-        userData.gold = (userData.gold || 0) + selectedReward.amount
-        await userData.save()
-        console.log(
-          `[RewardWheel] Awarded ${selectedReward.amount} gold to user ${reactingUser.id}`
-        )
-        feedbackEmbed = new EmbedBuilder()
+        user.gold += selectedReward.amount
+        await user.save()
+
+        resultEmbed = new EmbedBuilder()
           .setColor('#00FF00')
-          .setTitle('Congratulations!')
+          .setTitle('🎉 Congratulations!')
           .setDescription(
-            `${reactingUser.username}, you selected ${reaction.emoji.name} and won 🪙${selectedReward.amount} gold!`
+            `${i.user.username}, you've won 🪙${selectedReward.amount} gold!`
           )
       } else if (selectedReward.type === 'gear') {
-        // Generate a random gear reward between selectedReward.min and selectedReward.max.
         const gearReward =
           Math.floor(
             Math.random() * (selectedReward.max - selectedReward.min + 1)
           ) + selectedReward.min
-        user.currency = {
-          ...user.currency,
-          gear: user.currency.gear + gearReward,
-        }
-        await user.setDataValue('currency', user.currency)
+        user.currency.gear = (user.currency.gear || 0) + gearReward
+        await user.changed('currency', true) // ✅ explicitly tell Sequelize it changed
         await user.save()
-        console.log(
-          `[RewardWheel] Awarded ⚙️${gearReward} gear to user ${reactingUser.id}`
-        )
-        feedbackEmbed = new EmbedBuilder()
+
+        resultEmbed = new EmbedBuilder()
           .setColor('#00FF00')
-          .setTitle('Congratulations!')
+          .setTitle('🎉 Congratulations!')
           .setDescription(
-            `${reactingUser.username}, you selected ${reaction.emoji.name} and won ⚙️${gearReward} gear!`
+            `${i.user.username}, you've won ⚙️${gearReward} gear!`
           )
       } else if (selectedReward.type === 'beast') {
-        // Reward a random beast card.
         const beasts = await Monster.findAll({ where: { type: 'beast' } })
-        if (beasts && beasts.length > 0) {
-          const randomIndex = Math.floor(Math.random() * beasts.length)
-          const beast = beasts[randomIndex]
-          await updateOrAddMonsterToCollection(userData.user_id, beast)
-          await updateTop3AndUserScore(userData.user_id)
+        if (beasts.length > 0) {
+          const beast = beasts[Math.floor(Math.random() * beasts.length)]
+          await updateOrAddMonsterToCollection(user.user_id, beast)
+          await updateTop3AndUserScore(user.user_id)
+
           const stars = getStarsBasedOnColor(beast.color)
           const category = classifyMonsterType(beast.type)
-          feedbackEmbed = generateMonsterRewardEmbed(beast, category, stars)
-          // Add a message over the top of the reward embed.
-          feedbackEmbed.setDescription(
-            `${reactingUser.username}, obtained another ${beast.name} in their Wild Hunt.\n\n` +
-              (feedbackEmbed.data.description || '')
-          )
-          console.log(
-            `[RewardWheel] Awarded a random beast card to user ${reactingUser.id}`
+          resultEmbed = generateMonsterRewardEmbed(beast, category, stars)
+          resultEmbed.setDescription(
+            `${i.user.username} obtained ${
+              beast.name
+            } from their Wild Hunt!\n\n${resultEmbed.data.description || ''}`
           )
         } else {
-          feedbackEmbed = new EmbedBuilder()
+          resultEmbed = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle('Reward Error')
-            .setDescription('No beast cards available to reward.')
+            .setDescription('No beast cards available.')
         }
       }
 
-      // If beast reward, send a non-ephemeral follow-up; otherwise, edit the reward message.
-      if (selectedReward.type === 'beast') {
-        await interaction.followUp({
-          embeds: [feedbackEmbed],
-          ephemeral: false,
-        })
-      } else {
-        await rewardMessage.edit({ content: ' ', embeds: [feedbackEmbed] })
-      }
-      await rewardMessage.reactions.removeAll().catch(console.error)
-      collector.stop()
+      // Send non-ephemeral result to channel
+      await interaction.channel.send({ embeds: [resultEmbed] })
+
       resolve(true)
     })
 
     collector.on('end', async () => {
-      if (!rewardClaimed) {
-        console.log('[RewardWheel] No reward was claimed.')
-        const noRewardEmbed = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle('Reward Wheel')
-          .setDescription(
-            'No reward selected. Proceeding to the next set of battles.'
-          )
-        await rewardMessage
-          .edit({ content: ' ', embeds: [noRewardEmbed] })
-          .catch(console.error)
-        await rewardMessage.reactions.removeAll().catch(console.error)
-        resolve(false)
+      if (!claimed) {
+        await interaction.followUp({
+          content: '⏳ Time expired! No reward was selected.',
+          ephemeral: true,
+        })
       }
+      // Do NOT edit ephemeral rewardMessage here—ephemeral messages are automatically handled by Discord.
     })
-
-    // Add reaction emojis.
-    for (const emoji of emojis) {
-      await rewardMessage.react(emoji)
-    }
   })
 }
 
@@ -293,7 +270,6 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
         })
         return
       }
-      // Compute cost as (buyinsUsed + 1) * 1500
       const cost = (user.wildHuntBuyInsUsed + 1) * 1500
       const remainingMs = new Date(user.lastWildHuntAvailable).getTime() - now
       const countdown = formatTimeRemaining(remainingMs)
@@ -369,7 +345,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
           })
 
           // Await the reward selection before continuing.
-          await setupRewardWheel(rewardMessage, user, 30000)
+          await setupRewardWheel(interaction, user, 30000)
 
           const rewardClaimedEmbed = new EmbedBuilder()
             .setTitle('Reward Wheel')
@@ -495,7 +471,8 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
             console.error('[WildHunt] Error deferring purchase_buyin:', err)
           }
         }
-        const cost = user.wildHuntBuyInsUsed * 1500 // first buy-in free when count is 0.
+        const cost = (user.wildHuntBuyInsUsed + 1) * 1500
+
         console.log(
           `[WildHunt] Purchase cost: ${cost}. User gold: ${user.gold}`
         )
@@ -516,7 +493,11 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
         }
         user.gold -= cost
         user.wildHuntBuyInsUsed += 1
+        // Restart the 24-hour cooldown on every purchase.
+        user.lastWildHuntAvailable = new Date(Date.now() + 24 * 3600000)
         await user.save()
+
+        // Update the embed/UI as needed.
         const remainingMs =
           new Date(user.lastWildHuntAvailable).getTime() - Date.now()
         const countdown = formatTimeRemaining(remainingMs)
@@ -553,6 +534,7 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
         }
         return
       }
+
       if (i.customId === 'begin_wildhunt') {
         console.log('[WildHunt] Processing begin_wildhunt button.')
         if (!i.deferred) {
@@ -564,7 +546,6 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
         }
         // Update lastWildHuntAvailable only when the player actually begins the hunt.
         user.lastWildHuntAvailable = new Date(Date.now() + 24 * 3600000)
-        user.wildHuntBuyInsUsed = 0 // Also reset buy-ins.
         await user.save()
         runWildHunt()
       }
