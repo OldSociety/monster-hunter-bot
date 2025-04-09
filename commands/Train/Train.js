@@ -576,8 +576,8 @@ module.exports = {
                   )}.jpg`
                 : 'https://raw.githubusercontent.com/OldSociety/monster-hunter-bot/main/assets/default.jpg'
             )
+          await i.editReply({ embeds: [trainingStartedEmbed], components: [] })
           collector.stop('completed')
-          return i.editReply({ embeds: [trainingStartedEmbed], components: [] })
         }
         if (i.customId === 'cancel_training') {
           return i.update({

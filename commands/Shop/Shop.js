@@ -9,7 +9,12 @@ const {
 } = require('discord.js')
 const { Op } = require('sequelize')
 
-const { Monster, Inventory, Collection } = require('../../Models/model.js')
+const {
+  User,
+  Monster,
+  Inventory,
+  Collection,
+} = require('../../Models/model.js')
 
 const {
   populateMonsterCache,
@@ -470,11 +475,13 @@ module.exports = {
             }
 
             if (packType === 'starter') {
-              const { allowedMonstersByPack } = require('../../utils/shopMonsters.js')
+              const {
+                allowedMonstersByPack,
+              } = require('../../utils/shopMonsters.js')
               const starters = Array.from(allowedMonstersByPack.starter)
               const randomIndex = Math.floor(Math.random() * starters.length)
               const selectedKey = starters[randomIndex]
-            
+
               const monster = await pullSpecificMonster(selectedKey)
               if (!monster) {
                 return interaction.editReply({
@@ -485,11 +492,18 @@ module.exports = {
               }
               const category = classifyMonsterType(monster.type)
               const stars = getStarsBasedOnColor(monster.color)
-              const monsterEmbed = generateMonsterRewardEmbed(monster, category, stars)
-            
-              const result = await updateOrAddMonsterToCollection(userId, monster)
+              const monsterEmbed = generateMonsterRewardEmbed(
+                monster,
+                category,
+                stars
+              )
+
+              const result = await updateOrAddMonsterToCollection(
+                userId,
+                monster
+              )
               await updateTop3AndUserScore(userId)
-            
+
               await interaction.editReply({
                 content: 'Starter pack purchased!',
                 embeds: [],
@@ -499,7 +513,7 @@ module.exports = {
                 embeds: [monsterEmbed],
                 ephemeral: false,
               })
-            
+
               collector.stop('completed')
               return
             }
@@ -793,9 +807,8 @@ module.exports = {
             const promotionCostEntry = PROMOTION_COSTS.find(
               (entry) => entry.cr === selectedMonster.cr
             )
-            const promotionCost = promotionCostEntry
-              ? promotionCostEntry.cost
-              : 1200
+            const promotionCost = 5 * (selectedMonster.rank + 1)
+
             const nextRank = selectedMonster.rank + 1
             let assignedRarity = getRarityByCR(selectedMonster.cr)
 
@@ -829,7 +842,7 @@ module.exports = {
                   `**Next Rank:** ${nextRank}\n` +
                   `**Current Score:** ${selectedMonster.m_score}\n` +
                   `**New Score:** ${newScore}\n\n` +
-                  `**Cost:** 🪙${promotionCost}`
+                  `**Cost:** ⚙️${promotionCost}`
               )
               .setColor('Gold')
               .setFooter({
@@ -871,21 +884,37 @@ module.exports = {
               })
             }
 
-            const promotionCostEntry = PROMOTION_COSTS.find(
-              (entry) => entry.cr === monster.cr
-            )
-            const promotionCost = promotionCostEntry
-              ? promotionCostEntry.cost
-              : 1200
+            const promotionCost = 5 * (monster.rank + 1)
 
-            if (user.gold < promotionCost) {
+            if (user.currency.gear < promotionCost) {
               return interaction.update({
-                content: 'You do not have enough gold to promote this monster.',
+                content:
+                  'You do not have enough ⚙️gears to promote this monster.',
                 components: [],
               })
             }
 
-            user.gold -= promotionCost
+            const updatedCurrency = {
+              ...user.currency,
+              gear: user.currency.gear - promotionCost,
+            }
+
+            user.currency = updatedCurrency
+            user.set('currency', updatedCurrency)
+            await user.save()
+
+            // Subtract gears, save currency
+            console.log('Before Save:', user.currency.gear)
+
+            if (!User) console.log('User model is undefined')
+
+            try {
+              const refreshed = await User.findByPk(user.user_id)
+              console.log('After Refresh:', refreshed.currency.gear)
+            } catch (e) {
+              console.error('Could not refresh user from DB:', e)
+            }
+
             monster.rank += 1
 
             let assignedRarity = getRarityByCR(monster.cr)
@@ -931,10 +960,26 @@ module.exports = {
               monster
             )
 
+            const currentRank = monster.rank
+            const previousRank = currentRank - 1
+
+            const oldScore = calculateMScore(
+              monster.cr,
+              assignedRarity,
+              previousRank
+            )
+            const newScore = calculateMScore(
+              monster.cr,
+              assignedRarity,
+              currentRank
+            )
+
             const successEmbed = new EmbedBuilder()
               .setTitle('✅ Promotion Successful!')
               .setDescription(
-                `**${monster.name}** has reached level ${monster.rank}!`
+                `**${monster.name}** has reached level ${currentRank}!\n\n` +
+                  `**Previous Score:** ${oldScore}\n` +
+                  `**New Score:** ${newScore}`
               )
               .setColor('Green')
               .setFooter({
