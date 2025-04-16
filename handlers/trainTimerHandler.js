@@ -1,5 +1,5 @@
-const cron = require('node-cron');
-const { EmbedBuilder } = require('discord.js');
+const cron = require('node-cron')
+const { EmbedBuilder } = require('discord.js')
 
 /**
  * Formats a time value in milliseconds to a string: "Xh Ym Zs".
@@ -7,11 +7,11 @@ const { EmbedBuilder } = require('discord.js');
  * @returns {string} Formatted time string.
  */
 function formatTimeRemaining(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours}h ${minutes}m ${seconds}s`;
+  const totalSeconds = Math.floor(ms / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${hours}h ${minutes}m ${seconds}s`
 }
 
 /**
@@ -21,25 +21,30 @@ function formatTimeRemaining(ms) {
  * @param {function} updateCallback - Called every second with the formatted remaining time.
  * @param {function} completionCallback - Called when the training time is up.
  */
-function startTrainingTimer(trainingID, trainingDuration, updateCallback, completionCallback) {
-  const startTime = Date.now();
+function startTrainingTimer(
+  trainingID,
+  trainingDuration,
+  updateCallback,
+  completionCallback
+) {
+  const startTime = Date.now()
 
   // Use setInterval to update every second.
   const timer = setInterval(() => {
-    const elapsed = Date.now() - startTime;
-    const remaining = trainingDuration - elapsed;
+    const elapsed = Date.now() - startTime
+    const remaining = trainingDuration - elapsed
 
     if (remaining <= 0) {
-      clearInterval(timer);
-      updateCallback("Training complete!");
-      completionCallback();
+      clearInterval(timer)
+      updateCallback('Training complete!')
+      completionCallback()
     } else {
-      updateCallback(formatTimeRemaining(remaining));
+      updateCallback(formatTimeRemaining(remaining))
     }
-  }, 1000);
+  }, 1000)
 
   // Return the timer instance if needed for cancellation.
-  return timer;
+  return timer
 }
 
 /**
@@ -56,11 +61,11 @@ function createTrainingEmbed(title, countdownText, user) {
     .setColor('Blue')
     .setFooter({
       text: `Available: 🪙${user.gold} | Base Score: ${user.base_score || 0}`,
-    });
+    })
 }
 
 module.exports = {
   startTrainingTimer,
   formatTimeRemaining,
   createTrainingEmbed,
-};
+}

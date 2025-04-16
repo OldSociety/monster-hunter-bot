@@ -100,7 +100,7 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
             Math.random() * (selectedReward.max - selectedReward.min + 1)
           ) + selectedReward.min
         user.currency.gear = (user.currency.gear || 0) + gearReward
-        await user.changed('currency', true) 
+        await user.changed('currency', true)
         await user.save()
 
         resultEmbed = new EmbedBuilder()

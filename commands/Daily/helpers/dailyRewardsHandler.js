@@ -22,7 +22,7 @@ const rotatingMonsters = [
 ] // 8 demon cards
 
 async function grantDailyReward(user, interaction) {
-  const currentDay = ((user.daily_streak + 1) % 80) || 80;
+  const currentDay = (user.daily_streak + 1) % 80 || 80
 
   if (currentDay % 10 === 0) {
     await interaction.editReply({
@@ -31,11 +31,11 @@ async function grantDailyReward(user, interaction) {
           .setColor(0xffcc00)
           .setDescription('Loading demon reward, please wait...'),
       ],
-    });
-
+    })
 
     // Cycle through the 8 demon cards based on `daily_streak / 10`
-    const monsterIndex = Math.floor((user.daily_streak - 1) / 10) % rotatingMonsters.length;
+    const monsterIndex =
+      Math.floor((user.daily_streak - 1) / 10) % rotatingMonsters.length
     const monsterName = rotatingMonsters[monsterIndex]
 
     // Fetch monster from database

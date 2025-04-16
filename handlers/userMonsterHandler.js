@@ -219,7 +219,7 @@ async function updateOrAddMonsterToCollection(userId, monster) {
       cr: monster.cr,
       m_score: initialMScore,
       level: 1,
-      copies: 0, // This is the first card; no duplicates.
+      copies: 0, 
     })
 
     if (category) {
