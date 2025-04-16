@@ -12,7 +12,6 @@ const { Op } = require('sequelize')
 const {
   User,
   Monster,
-  Inventory,
   Collection,
 } = require('../../Models/model.js')
 
@@ -55,33 +54,6 @@ const PACK_COSTS = {
   monstrosity: 6000,
   ichor: 650,
 }
-
-const PROMOTION_COSTS = [
-  { cr: 1, cost: 1200 },
-  { cr: 2, cost: 2300 },
-  { cr: 3, cost: 3400 },
-  { cr: 4, cost: 4500 },
-  { cr: 5, cost: 5300 },
-  { cr: 6, cost: 6200 },
-  { cr: 7, cost: 7100 },
-  { cr: 8, cost: 8000 },
-  { cr: 9, cost: 9000 },
-  { cr: 10, cost: 9900 },
-  { cr: 11, cost: 11200 },
-  { cr: 12, cost: 12500 },
-  { cr: 13, cost: 13800 },
-  { cr: 14, cost: 15100 },
-  { cr: 15, cost: 16400 },
-  { cr: 16, cost: 18100 },
-  { cr: 17, cost: 19800 },
-  { cr: 18, cost: 21500 },
-  { cr: 19, cost: 23200 },
-  { cr: 20, cost: 25000 },
-  { cr: 21, cost: 27200 },
-  { cr: 22, cost: 29400 },
-  { cr: 23, cost: 31600 },
-  { cr: 24, cost: 34000 },
-]
 
 // Define tier options for each pack
 const TIER_OPTIONS = {
@@ -799,14 +771,7 @@ module.exports = {
                 components: [],
               })
             }
-            console.log(
-              `Before save: Monster ID=${selectedMonster.id}, m_score=${selectedMonster.m_score}`
-            )
-            console.log('stealth', user.stealth_score)
 
-            const promotionCostEntry = PROMOTION_COSTS.find(
-              (entry) => entry.cr === selectedMonster.cr
-            )
             const promotionCost = 5 * (selectedMonster.rank + 1)
 
             const nextRank = selectedMonster.rank + 1
@@ -889,7 +854,7 @@ module.exports = {
             if (user.currency.gear < promotionCost) {
               return interaction.update({
                 content:
-                  'You do not have enough ⚙️gears to promote this monster.',
+                  'You do not have enough ⚙️gear to promote this monster.',
                 components: [],
               })
             }
@@ -903,8 +868,7 @@ module.exports = {
             user.set('currency', updatedCurrency)
             await user.save()
 
-            // Subtract gears, save currency
-            console.log('Before Save:', user.currency.gear)
+            // console.log('Before Save:', user.currency.gear)
 
             if (!User) console.log('User model is undefined')
 
