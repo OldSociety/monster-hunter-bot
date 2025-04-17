@@ -23,10 +23,9 @@ module.exports = {
     const lastClaim = new Date(user.last_daily_claim || 0)
     const hoursSinceLastClaim = Math.abs(now - lastClaim) / 36e5
 
-    const displayDay =
-      user.daily_streak % 10 === 0 && user.daily_streak > 0
-        ? 10
-        : user.daily_streak % 80 || 1
+    const dayIndex = ((user.daily_streak || 1) - 1) % 10
+const displayDay = dayIndex + 1
+
 
     const rewards = [
       '🪙1000 coins',

@@ -21,17 +21,15 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       duration: {
-        // Total training duration in milliseconds.
         type: DataTypes.INTEGER,
         allowNull: false,
       },
       bonus: {
-        // The base bonus (plus any potential extra bonus) that will be applied.
         type: DataTypes.INTEGER,
         allowNull: false,
       },
       status: {
-        type: DataTypes.STRING, // Use DataTypes.STRING here
+        type: DataTypes.STRING, 
         allowNull: false,
         defaultValue: 'in-progress',
       },
