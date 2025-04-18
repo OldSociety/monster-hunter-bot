@@ -553,12 +553,12 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
     collector.on('end', async (_, reason) => {
       console.log(`[WildHunt] Collector ended with reason: ${reason}`)
       collectors.delete(interaction.user.id)
-      if (reason === 'time') {
-        await interaction.followUp({
-          content: 'Wild Hunt session expired. Please try again.',
-          ephemeral: true,
-        })
-      }
+      // if (reason === 'time') {
+      //   await interaction.followUp({
+      //     content: 'Wild Hunt session expired. Please try again.',
+      //     ephemeral: true,
+      //   })
+      // }
     })
   },
 }

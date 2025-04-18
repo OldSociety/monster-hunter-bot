@@ -24,8 +24,26 @@ module.exports = {
     const hoursSinceLastClaim = Math.abs(now - lastClaim) / 36e5
 
     const dayIndex = ((user.daily_streak || 1) - 1) % 10
-const displayDay = dayIndex + 1
+    const displayDay = dayIndex + 1
 
+    // Determine which demon card should be shown on the 10th day
+    const demonIndex = Math.floor((user.daily_streak - 1) / 10) % 8
+
+    const rotatingMonsters = [
+      'lemure',
+      'nightmare',
+      'barbed-devil',
+      'bone-devil',
+      'horned-devil',
+      'erinyes',
+      'rakshasa',
+      'marilith',
+    ] // 8 demon cards
+
+    const demonNameCapitalized =
+      rotatingMonsters[demonIndex]
+        ?.replace(/-/g, ' ')
+        ?.replace(/\b\w/g, (c) => c.toUpperCase()) || 'Demon Card'
 
     const rewards = [
       '🪙1000 coins',
@@ -37,7 +55,7 @@ const displayDay = dayIndex + 1
       '🪙3000 coins',
       '🥚3 dragon egg',
       '🧪3 demon ichor',
-      'Demon Card 🃏',
+      `${demonNameCapitalized} 🃏`, // ← inject the correct name here
     ]
 
     // Restore the reward progression display
