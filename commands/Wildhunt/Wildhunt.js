@@ -194,6 +194,13 @@ module.exports = {
     }
     stopUserCollector(interaction.user.id)
     await verifyAndUpdateUserScores(user.user_id)
+    await user.reload()
+
+    // ── use the fresh values from here on ──
+    const bruteScore = user.brute_score || 0
+    const baseDmg = user.base_damage || 0
+    const effectivePlayerScore = bruteScore + baseDmg // 160 + 12 = 172 when updated
+
     await populateMonsterCache()
 
     // ------------- Cooldown & Buy-In Logic ------------- //
@@ -217,9 +224,7 @@ module.exports = {
         .setDescription(
           `To win, climb the ladder of beasts and reach the top of the food chain using only your **brute strength**. Each round consists of 5 fights and comes with the chance to win gold, gear, and beast cards.
       
-Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
-            user.base_damage || 0
-          }`
+Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
         )
         .setColor('DarkGreen')
         .setFooter({
@@ -323,8 +328,6 @@ Your Brute Score: ${user.brute_score || 0} + Base Damage: ${
     }
     let currentIndex = 0
     let winsInSet = 0
-    const effectivePlayerScore =
-      (user.brute_score || 0) + (user.base_damage || 0)
 
     async function runWildHunt() {
       console.log('[WildHunt] Running wild hunt loop.')
