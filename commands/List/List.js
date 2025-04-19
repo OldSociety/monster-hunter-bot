@@ -6,7 +6,8 @@ const {
   ButtonStyle,
 } = require('discord.js')
 const { checkUserAccount } = require('../Account/helpers/checkAccount.js')
-const { Monster } = require('../../Models/model.js')
+const { updateTop3AndUserScore } = require('../../handlers/topCardsManager')
+const { Collection, Monster } = require('../../Models/model.js')
 const fs = require('fs')
 const path = require('path')
 
@@ -53,27 +54,166 @@ module.exports = {
       subcommand
         .setName('missing')
         .setDescription('Lists monsters missing from the assets folder')
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('collection')
+        .setDescription('Show your card collection')
+        .addStringOption((opt) =>
+          opt
+            .setName('sort')
+            .setDescription('alpha | type')
+            .addChoices(
+              { name: 'alphabetical', value: 'alpha' },
+              { name: 'by‑type', value: 'type' }
+            )
+        )
     ),
 
   async execute(interaction) {
-    if (!interaction.member.roles.cache.has(process.env.ADMINROLEID)) {
-      return interaction.reply({
-        content: 'You do not have permission to run this command.',
-        ephemeral: true,
-      })
+    const sub = interaction.options.getSubcommand()
+
+    // admin‑gate only for maintenance subs
+    if (
+      ['filter', 'missing'].includes(sub) &&
+      !interaction.member.roles.cache.has(process.env.ADMINROLEID)
+    ) {
+      return interaction.reply({ content: 'No permission.', ephemeral: true })
     }
 
-    await interaction.deferReply()
-    const user = await checkUserAccount(interaction)
-    if (!user) return
+    await interaction.deferReply({ ephemeral: true })
 
-    const subcommand = interaction.options.getSubcommand()
-    if (subcommand === 'missing') {
-      return await listMissingMonsters(interaction)
-    } else if (subcommand === 'filter') {
-      return await listFilteredMonsters(interaction)
-    }
+    if (sub === 'collection') return listUserCollection(interaction)
+    if (sub === 'filter') return listFilteredMonsters(interaction)
+    if (sub === 'missing') return listMissingMonsters(interaction)
   },
+}
+
+async function listUserCollection(interaction) {
+  const sortMode = interaction.options.getString('sort') || 'alpha'
+  const user     = await checkUserAccount(interaction)
+  if (!user) return
+
+  const cards = await Collection.findAll({ where: { userId: user.user_id } })
+  if (!cards.length)
+    return interaction.editReply({ content: 'You own no cards yet.' })
+
+  // ── pull every matching Monster → combatType
+  const monsterRows = await Monster.findAll({
+    where: { name: cards.map(c => c.name) },        // or 'index', adjust as needed
+    attributes: ['name', 'combatType'],
+  })
+  const combatMap = new Map(
+    monsterRows.map(m => [m.name.toLowerCase(), m.combatType])
+  )
+
+  // attach combatType to each card for easy access later
+  cards.forEach(c => {
+    c.combatType = combatMap.get(c.name.toLowerCase()) || 'unknown'
+  })
+
+  // scores remain unchanged …
+  const typeScore = {
+    brute:       user.brute_score,
+    spellsword:  user.spellsword_score,
+    stealth:     user.stealth_score,
+  }
+
+  // sort cards – use combatType when the user asked for /sort:type
+  cards.sort((a, b) => {
+    if (sortMode === 'type') {
+      return (
+        a.combatType.localeCompare(b.combatType, undefined, { sensitivity: 'base' }) ||
+        a.name.localeCompare(b.name)
+      )
+    }
+    return a.name.localeCompare(b.name)
+  })
+
+  return paginateCollection(interaction, cards, typeScore, sortMode)
+}
+
+
+async function paginateCollection(interaction, cards, typeScore, sortMode) {
+  const perPage = 10
+  let page = 0
+
+  const makeEmbed = (p) => {
+    const slice = cards.slice(p * perPage, (p + 1) * perPage)
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${interaction.user.username}'s Cards (${cards.length})`)
+      .setDescription(
+        `**Current Scores** – Brute ${typeScore.brute} | ` +
+          `Spellsword ${typeScore.spellsword} | Stealth ${typeScore.stealth}\n` +
+          `Sorted by **${sortMode === 'alpha' ? 'name' : 'type'}**`
+      )
+      .setColor(0x4caf50)
+      .setFooter({
+        text: `Page ${page + 1} of ${Math.ceil(cards.length / perPage)}`,
+      })
+
+      slice.forEach(c =>
+        embed.addFields({
+          name: c.name,
+          value:
+            `Type: ${c.combatType} • Rank: ${c.rank} ` +
+            `• Score: ${c.m_score} • Copies: ${c.copies}`,
+          inline: true,
+        })
+      )
+
+    return embed
+  }
+
+  const getRow = (p) =>
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('prev')
+        .setLabel('Previous')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(p === 0),
+      new ButtonBuilder()
+        .setCustomId('next')
+        .setLabel('Next')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled((p + 1) * perPage >= cards.length),
+      new ButtonBuilder()
+        .setCustomId('end')
+        .setLabel('Finish')
+        .setStyle(ButtonStyle.Danger)
+    )
+
+  await interaction.editReply({
+    embeds: [makeEmbed(page)],
+    components: [getRow(page)],
+    ephemeral: true,
+  })
+
+  const collector = interaction.channel.createMessageComponentCollector({
+    time: 60000,
+  })
+
+  collector.on('collect', async (btn) => {
+    if (btn.user.id !== interaction.user.id)
+      return btn.reply({ content: 'Not your navigation.', ephemeral: true })
+
+    if (btn.customId === 'end') return collector.stop()
+
+    page += btn.customId === 'next' ? 1 : -1
+    await btn.update({
+      embeds: [makeEmbed(page)],
+      components: [getRow(page)],
+    })
+  })
+
+  collector.on('end', async () => {
+    await interaction.editReply({
+      embeds: [makeEmbed(page).setFooter({ text: 'Session ended.' })],
+      components: [],
+      ephemeral: true,
+    })
+  })
 }
 
 async function listMissingMonsters(interaction) {

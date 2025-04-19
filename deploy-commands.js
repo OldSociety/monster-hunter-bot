@@ -1,83 +1,58 @@
-const { REST, Routes } = require('discord.js')
-const fs = require('fs')
-const path = require('path')
+const { REST, Routes } = require('discord.js');
+const fs  = require('fs');
+const path = require('path');
 
-// Set default NODE_ENV if undefined
-const env = process.env.NODE_ENV || 'development'
-console.log(`Environment: ${env}`)
+const env = process.env.NODE_ENV || 'production';
+require('dotenv').config({ path: env === 'development' ? '.env.development'
+                                                        : '.env.production' });
 
-// Load environment variables
-require('dotenv').config({
-  path: env === 'development' ? '.env.development' : '.env.production',
-})
+const PROD_GUILD_IDS = (process.env.PRODGUILDIDS || '')
+                        .split(',')
+                        .filter(Boolean);
 
-console.log(`🔍 Loaded ENV Variables:`)
-console.log(`- CLIENTID: ${process.env.CLIENTID}`)
-console.log(
-  `- GUILDID: ${process.env.GUILDID || 'Not required for production'}`
-)
+console.log(`Environment: ${env}`);
+console.log(`CLIENTID: ${process.env.CLIENTID}`);
+console.log(`PRODGUILDIDS: ${PROD_GUILD_IDS.join(',') || 'none'}`);
 
-const commands = []
+const commands = [];
+const commandsDir = path.join(__dirname, 'commands');
 
-const foldersPath = path.join(__dirname, 'commands')
-const commandFolders = fs.readdirSync(foldersPath)
-
-for (const folder of commandFolders) {
-  const commandsPath = path.join(foldersPath, folder)
-  const commandFiles = fs
-    .readdirSync(commandsPath)
-    .filter((file) => file.endsWith('.js'))
-
-  for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file)
-    const command = require(filePath)
-    console.log(`Reading folder: ${folder}`)
-    console.log(`Reading file: ${file}`)
-    if ('data' in command && 'execute' in command) {
-      commands.push(command.data.toJSON())
-    } else {
-      console.log(
-        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
-      )
-    }
+for (const folder of fs.readdirSync(commandsDir)) {
+  for (const file of fs.readdirSync(path.join(commandsDir, folder))
+                       .filter(f => f.endsWith('.js'))) {
+    const cmd = require(path.join(commandsDir, folder, file));
+    if (cmd.data && cmd.execute) commands.push(cmd.data.toJSON());
+    else console.log(`[WARN] ${file} missing data/execute.`);
   }
 }
 
-const rest = new REST({ version: '10' }).setToken(process.env.TOKEN)
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-;(async () => {
+(async () => {
   try {
-    console.log(
-      `Started refreshing ${commands.length} application (/) commands.`
-    )
-
-    let data
-
     if (env === 'development') {
-      // Fast updates for development in a specific test server
-      console.log(
-        `Deploying GUILD commands to test server: ${process.env.GUILD_ID}`
-      )
-      data = await rest.put(
-        Routes.applicationGuildCommands(
-          process.env.CLIENTID,
-          process.env.GUILDID
-        ),
+      console.log('Deploying guild‑scoped commands to test server.');
+      await rest.put(
+        Routes.applicationGuildCommands(process.env.CLIENTID,
+                                        process.env.GUILDID),
         { body: commands }
-      )
+      );
+      console.log(`Deployed ${commands.length} commands to test guild.`);
     } else {
-      // Global deployment for production (takes up to 1 hour)
-      console.log('Deploying GLOBAL commands (may take up to 1 hour to update)')
-      data = await rest.put(Routes.applicationCommands(process.env.CLIENTID), {
-        body: commands,
-      })
-    }
+      // wipe global
+      await rest.put(Routes.applicationCommands(process.env.CLIENTID), { body: [] });
 
-    console.log(
-      `Successfully reloaded ${data.length} application (/) commands.`
-    )
-    console.log(`Client ID: ${process.env.CLIENTID}`)
-  } catch (error) {
-    console.error(error)
+      // push to every prod guild
+      for (const gid of PROD_GUILD_IDS) {
+        await rest.put(
+          Routes.applicationGuildCommands(process.env.CLIENTID, gid),
+          { body: commands }
+        );
+        console.log(`Updated ${commands.length} commands in guild ${gid}.`);
+      }
+    }
+    console.log('✔ Slash command deploy complete.');
+  } catch (err) {
+    console.error(err);
   }
-})()
+})();

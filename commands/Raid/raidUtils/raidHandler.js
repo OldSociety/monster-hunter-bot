@@ -51,6 +51,7 @@ async function runRaidBattlePhases(
   selectedStyle
 ) {
   console.log('[Battle] Starting Raid Battle Phases')
+
   let playerHP = user.current_raidHp
   let bossHP = raidBoss.current_hp
   const maxBossHP = raidBoss.hp
@@ -58,64 +59,115 @@ async function runRaidBattlePhases(
   const imageUrl = raidBoss.imageUrl
 
   let phase = 0
+
   while (bossHP > 0 && playerHP > 0) {
-    phase++
+    phase += 1
     console.log(`[Battle] Phase ${phase} started.`)
 
-    // Use a random multiplier between 0.1 and 1 for the player's roll.
-    let multiplier = Math.random() * 0.9 + 0.1
-    let playerRoll = Math.round(multiplier * playerScore * advMultiplier)
+    /* ---- rolls ---- */
+    const playerMult = Math.random() * 0.9 + 0.1
+    const playerRoll = Math.round(playerMult * playerScore * advMultiplier)
 
-    // Monster roll with a floor at 50% of boss_score.
-    let monsterRoll = Math.round(
-      Math.random() * (raidBoss.boss_score * 0.5) + raidBoss.boss_score * 0.5
+    const dmgMult = [1, 2, 3][raidBoss.difficulty_stage - 1]
+    const monsterRoll = Math.round(
+      (Math.random() * (raidBoss.boss_score * 0.5) +
+        raidBoss.boss_score * 0.5) *
+        dmgMult
     )
+
     console.log(
       `[Battle] Phase ${phase} rolls - Player: ${playerRoll}, Monster: ${monsterRoll}`
     )
 
-    let phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
+    const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
     console.log(`[Battle] Phase ${phase} result: ${phaseResult}`)
 
-    // When a player deals damage to the boss:
+    /* ---- apply damage ---- */
     if (phaseResult === 'Hit!') {
-      let damage = Math.round(playerRoll * 0.1)
-      // Atomically decrement boss's health:
+      const damage = Math.round(playerRoll * 0.1)
       await raidBoss.instance.decrement('current_hp', { by: damage })
-      // Optionally, fetch the updated value:
       await raidBoss.instance.reload()
       bossHP = raidBoss.instance.current_hp
-      console.log(
-        `[Battle] Phase ${phase} - Boss HP reduced by ${damage}, new HP: ${bossHP}`
-      )
+      console.log(`[Battle] Boss HP reduced by ${damage}, new HP: ${bossHP}`)
+
+      /* milestone check */
+      const lostRatio = (raidBoss.hp - bossHP) / raidBoss.hp // 0–1
+      const reached = Math.floor(lostRatio / 0.25) // 0–3 (75 %)
+      if (reached > raidBoss.instance.threshold_state) {
+        const { giveMilestoneCard } = require('./milestoneLootDistributor')
+        const milestoneCards = [raidBoss.loot1, raidBoss.loot2, raidBoss.loot3]
+
+        for (let t = raidBoss.instance.threshold_state; t < reached; t += 1) {
+          const card = t < 3 ? milestoneCards[t] : raidBoss.index // safety
+          await giveMilestoneCard(
+            card,
+            globalRaidParticipants,
+            interaction.client
+          )
+        }
+        raidBoss.instance.threshold_state = reached
+        await raidBoss.instance.save()
+      }
     } else {
-      // For player damage, you can still update the player's record as needed.
-      let damage = Math.round(monsterRoll * 0.1)
+      const damage = Math.round(monsterRoll * 0.1)
       playerHP -= damage
-      console.log(`[Battle] Phase ${phase} - Player HP reduced by ${damage}`)
+      console.log(`[Battle] Player HP reduced by ${damage}`)
     }
 
-    if (bossHP < 0) bossHP = 0
-    if (playerHP < 0) playerHP = 0
+    /* ---- make sure never negative ---- */
+    bossHP = Math.max(0, bossHP)
+    playerHP = Math.max(0, playerHP)
 
-    const isAdvantaged = advMultiplier > 1
-    const isDisadvantaged = advMultiplier < 1
+    /* ---- defeat / victory handling ---- */
+    if (bossHP === 0) {
+      // award boss card if not given by milestone loop
+      if (raidBoss.instance.threshold_state < 4) {
+        const { giveMilestoneCard } = require('./milestoneLootDistributor')
+        await giveMilestoneCard(
+          raidBoss.index,
+          globalRaidParticipants,
+          interaction.client
+        )
+      }
+
+      if (raidBoss.difficulty_stage < 3) {
+        raidBoss.difficulty_stage += 1
+        raidBoss.instance.difficulty_stage = raidBoss.difficulty_stage
+        raidBoss.instance.current_hp = raidBoss.hp
+        raidBoss.instance.threshold_state = 0
+        await raidBoss.instance.save()
+
+        await interaction.followUp({
+          content: `**${raidBoss.name} rises again in ${
+            ['Hard', 'Nightmare'][raidBoss.difficulty_stage - 2]
+          } mode!**  Damage multiplier is now ×${raidBoss.difficulty_stage}.`,
+          ephemeral: false,
+        })
+      }
+      break // end loop after processing kill
+    }
+
+    if (playerHP === 0) break
+
+    /* ---- phase embed ---- */
+    const isAdv = advMultiplier > 1
+    const isDis = advMultiplier < 1
     const effects =
-      [
-        isAdvantaged ? '⏫Advantage' : '',
-        isDisadvantaged ? '⏬Disadvantage' : '',
-      ]
+      [isAdv ? '⏫Advantage' : '', isDis ? '⏬Disadvantage' : '']
         .filter(Boolean)
         .join(', ') || 'None'
-
-    const playerHealthBar = createHealthBar(playerHP, maxPlayerHP)
-    const bossHealthBar = createHealthBar(bossHP, maxBossHP)
 
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Fighting ${raidBoss.name}`)
       .setDescription(
-        `**Your HP:** ${playerHP} / ${maxPlayerHP}\n${playerHealthBar}\n` +
-          `**Boss HP:** ${bossHP} / ${maxBossHP}\n${bossHealthBar}\n\n` +
+        `**Your HP:** ${playerHP} / ${maxPlayerHP}\n${createHealthBar(
+          playerHP,
+          maxPlayerHP
+        )}\n` +
+          `**Boss HP:** ${bossHP} / ${maxBossHP}\n${createHealthBar(
+            bossHP,
+            maxBossHP
+          )}\n\n` +
           `**Effects:** ${effects}\n` +
           `**Player Roll:** ${playerRoll}\n` +
           `**Boss Roll:** ${monsterRoll}\n\n` +
@@ -126,32 +178,22 @@ async function runRaidBattlePhases(
       .setImage(imageUrl)
       .setFooter({ text: getUserFooter(user) })
 
-    console.log(`[Battle] Phase ${phase} - Sending phase embed.`)
     await interaction.followUp({ embeds: [phaseEmbed], ephemeral: true })
-
-    if (bossHP <= 0 || playerHP <= 0) break
-    console.log(
-      `[Battle] Phase ${phase} complete. Waiting 3 seconds for next phase.`
-    )
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((r) => setTimeout(r, 2000))
   }
 
   console.log(
     `[Battle] Battle ended. Final Player HP: ${playerHP}, Final Boss HP: ${bossHP}`
   )
-  // Write the final damage values to the database at the end of the battle.
+
+  /* ---- persist HP ---- */
   user.current_raidHp = playerHP
   await user.save()
-  if (raidBoss.instance) {
-    raidBoss.instance.current_hp = bossHP
-    await raidBoss.instance.save()
-    console.log('[Battle] Raid boss current_hp updated in database.')
-  } else {
-    console.log('[Battle] No raid boss instance available for database update.')
-  }
 
-  // Return true if the boss was defeated.
-  return bossHP <= 0
+  raidBoss.instance.current_hp = bossHP
+  await raidBoss.instance.save()
+
+  return bossHP === 0
 }
 
 async function startRaidEncounter(interaction, user) {
@@ -202,6 +244,7 @@ async function startRaidEncounter(interaction, user) {
     loot3: selectedBoss.loot3,
     boss_score: selectedBoss.boss_score,
     imageUrl: selectedBoss.imageUrl,
+    difficulty_stage: selectedBoss.difficulty_stage,
     lootDrops: selectedBoss.lootDrops || [],
     activePhase: raidBossRotation.phase === 'active',
     instance: selectedBoss,

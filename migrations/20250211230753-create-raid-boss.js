@@ -65,6 +65,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      difficulty_stage: {
+        type: Sequelize.INTEGER,
+        defaultValue: 1, // 1‑Normal, 2‑Hard, 3‑Nightmare
+      },
+      threshold_state: {
+        type: Sequelize.INTEGER,   // 0 = none, 1 = 25 %, 2 = 50 %, 3 = 75 %
+        defaultValue: 0,
+      },
       active: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
