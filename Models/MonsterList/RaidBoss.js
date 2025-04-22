@@ -78,6 +78,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      participants: {
+        type: DataTypes.JSON,
+        allowNull: false,
+        defaultValue: [],
+      },
     },
     {
       timestamps: false,

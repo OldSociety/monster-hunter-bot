@@ -32,7 +32,7 @@ const {
 
 const { formatTimeRemaining } = require('./timeUtils.js')
 const { processGlobalRaidRewards } = require('./raidRewardsProcessor.js')
-const { globalRaidParticipants } = require('./raidState.js')
+const { addParticipant } = require('./raidParticipants')
 
 const {
   getUniformBaseRewards,
@@ -59,6 +59,7 @@ async function runRaidBattlePhases(
   const imageUrl = raidBoss.imageUrl
 
   let phase = 0
+  let damageDealt = 0
 
   while (bossHP > 0 && playerHP > 0) {
     phase += 1
@@ -85,6 +86,8 @@ async function runRaidBattlePhases(
     /* ---- apply damage ---- */
     if (phaseResult === 'Hit!') {
       const damage = Math.round(playerRoll * 0.1)
+      damageDealt += damage
+
       await raidBoss.instance.decrement('current_hp', { by: damage })
       await raidBoss.instance.reload()
       bossHP = raidBoss.instance.current_hp
@@ -101,7 +104,7 @@ async function runRaidBattlePhases(
           const card = t < 3 ? milestoneCards[t] : raidBoss.index // safety
           await giveMilestoneCard(
             card,
-            globalRaidParticipants,
+            raidBoss.instance.participants,
             interaction.client
           )
         }
@@ -125,7 +128,7 @@ async function runRaidBattlePhases(
         const { giveMilestoneCard } = require('./milestoneLootDistributor')
         await giveMilestoneCard(
           raidBoss.index,
-          globalRaidParticipants,
+          raidBoss.instance.participants,
           interaction.client
         )
       }
@@ -193,13 +196,17 @@ async function runRaidBattlePhases(
   raidBoss.instance.current_hp = bossHP
   await raidBoss.instance.save()
 
+  /* ── add participant if ≥ 2 % total damage this encounter ── */
+  if (damageDealt >= raidBoss.hp * 0.02) {
+    await addParticipant(raidBoss.instance, user.user_id)
+  }
+
   return bossHP === 0
 }
 
 async function startRaidEncounter(interaction, user) {
   console.log('[Raid] Starting raid encounter')
   stopUserCollector(interaction.user.id)
-  globalRaidParticipants.add(interaction.user.id)
 
   if (!interaction.deferred && !interaction.replied) {
     await interaction.deferReply({ ephemeral: true })
@@ -260,7 +267,7 @@ async function startRaidEncounter(interaction, user) {
     const elapsed = now - raidBossRotation.lastSwitch
     const timeRemaining = Math.max(0, cooldownDuration - elapsed)
 
-    if (globalRaidParticipants.size === 0) {
+    if (selectedBoss.participants.length === 0) {
       const embed = new EmbedBuilder()
         .setTitle('🏆 Raid Complete.')
         .setDescription(
@@ -273,7 +280,7 @@ async function startRaidEncounter(interaction, user) {
     }
 
     const { summaryEmbed, monsterRewardEmbeds } =
-      await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
+      await processGlobalRaidRewards(raidBoss, selectedBoss.participants)
     summaryEmbed.setTitle("This week's Raid is over.")
     console.log(
       '[Collector] Global rewards processed. Displaying summary embed.'
@@ -388,7 +395,10 @@ async function startRaidEncounter(interaction, user) {
               '[Collector] Raid is no longer active. Processing global rewards.'
             )
             const { summaryEmbed, monsterRewardEmbeds } =
-              await processGlobalRaidRewards(raidBoss, globalRaidParticipants)
+              await processGlobalRaidRewards(
+                raidBoss,
+                raidBoss.instance.participants
+              )
             summaryEmbed.setTitle("This week's Raid is over.")
             console.log(
               '[Collector] Global rewards processed. Displaying summary embed.'

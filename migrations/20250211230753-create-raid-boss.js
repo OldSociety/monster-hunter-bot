@@ -76,7 +76,12 @@ module.exports = {
       active: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
-      }
+      },
+      participants: {
+        type: Sequelize.JSON,
+        allowNull: false,
+        defaultValue: [],
+      },
     })
   },
 

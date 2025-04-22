@@ -249,6 +249,9 @@ async function enterCooldown() {
 
     // Then send the embeds (for example, combined in one message)
     await channel.send({ embeds: [summaryEmbed, ...monsterRewardEmbeds] })
+
+    selectedBoss.participants = []
+    await selectedBoss.save()
   } catch (error) {
     console.error('[Cooldown] Error processing global rewards:', error)
   }
