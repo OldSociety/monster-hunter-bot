@@ -9,11 +9,7 @@ const {
 } = require('discord.js')
 const { Op } = require('sequelize')
 
-const {
-  User,
-  Monster,
-  Collection,
-} = require('../../Models/model.js')
+const { User, Monster, Collection } = require('../../Models/model.js')
 
 const {
   populateMonsterCache,
@@ -87,6 +83,17 @@ function getRarityByCR(cr) {
   if (cr >= 11) return 'Rare'
   if (cr >= 5) return 'Uncommon'
   return 'Common'
+}
+
+const GEAR_COST_BY_RARITY = {
+  Common: 10,
+  Uncommon: 20,
+  Rare: 30,
+  'Very Rare': 40,
+  Legendary: 50,
+}
+function getGearCost(rarity) {
+  return GEAR_COST_BY_RARITY[rarity] ?? 50
 }
 
 function convertNameToIndex(name) {
@@ -163,6 +170,11 @@ module.exports = {
 
       const footerText = `Available: 🪙${gold} ⚡${energy} 🧿${tokens} 🥚${eggs} 🧪${ichor} ⚙️${gear}`
 
+      // ── cards that could ever be upgraded ─────────────
+      const allUpgradeable = await Collection.findAll({
+        where: { userId: user.user_id, rank: { [Op.lt]: 7 } },
+      })
+
       const shopEmbed = new EmbedBuilder()
         .setColor(0x00ff00)
         .setTitle('-- Hunter Store --')
@@ -212,8 +224,11 @@ module.exports = {
           .setFooter({ text: footerText })
       }
 
-      const PromotionAvailable = await Collection.findOne({
-        where: { userId: user.user_id, copies: { [Op.gt]: 0 } },
+      const gearOnHand = gear
+      const hasPromotion = allUpgradeable.some((c) => {
+        const rarity = getRarityByCR(c.cr)
+        const gearCost = getGearCost(rarity)
+        return c.copies > 0 || gearOnHand >= gearCost
       })
 
       const rows = [new ActionRowBuilder()]
@@ -263,7 +278,7 @@ module.exports = {
         packButtons.forEach(addButton)
       }
 
-      if (PromotionAvailable) {
+      if (hasPromotion) {
         addButton(
           new ButtonBuilder()
             .setCustomId('promote_cards')
@@ -543,12 +558,11 @@ module.exports = {
 
           // ----- Promotion Initial Selection (when user clicks "promote_cards") -----
           if (interaction.customId === 'promote_cards') {
-            const userMonsters = await Collection.findAll({
-              where: { userId, copies: { [Op.gt]: 0 } },
+            const promotableMonsters = allUpgradeable.filter((m) => {
+              const rarity = getRarityByCR(m.cr)
+              const gearCost = getGearCost(rarity)
+              return m.copies > 0 || gearOnHand >= gearCost
             })
-            const promotableMonsters = userMonsters.filter(
-              (monster) => monster.rank < 7
-            )
             if (promotableMonsters.length === 0) {
               return interaction.editReply({
                 content: 'You have no cards available for promotion.',
@@ -578,10 +592,17 @@ module.exports = {
               ) {
                 emoji = ' 🎭'
               }
+
+              const rarity = getRarityByCR(monster.cr)
+              const gearCost = getGearCost(rarity)
+
               return {
                 label: `${monster.name} (Lv. ${monster.rank})${emoji}`,
                 value: `promote_${monster.id}`,
-                description: `Copies: ${monster.copies}`,
+                description:
+                  monster.copies > 0
+                    ? `Copies: ${monster.copies}`
+                    : `Cost: ⚙️${gearCost}`,
               }
             })
 
@@ -755,7 +776,7 @@ module.exports = {
           }
 
           // ----- Handling Selection from the Paginated Menu -----
-          // Note: We now handle any selection from a menu whose customId starts with "select_promotion_page_"
+
           if (interaction.customId.startsWith('select_promotion_page_')) {
             const selectedMonsterId = interaction.values[0].replace(
               'promote_',
@@ -772,7 +793,12 @@ module.exports = {
               })
             }
 
-            const promotionCost = 5 * (selectedMonster.rank + 1)
+            const rarity = getRarityByCR(selectedMonster.cr)
+            const gearCost = getGearCost(rarity)
+            const hasCopy = selectedMonster.copies > 0
+            const costLine = hasCopy
+              ? '**Cost:** 1 copy'
+              : `**Cost:** ⚙️${gearCost}`
 
             const nextRank = selectedMonster.rank + 1
             let assignedRarity = getRarityByCR(selectedMonster.cr)
@@ -807,7 +833,7 @@ module.exports = {
                   `**Next Rank:** ${nextRank}\n` +
                   `**Current Score:** ${selectedMonster.m_score}\n` +
                   `**New Score:** ${newScore}\n\n` +
-                  `**Cost:** ⚙️${promotionCost}`
+                  costLine
               )
               .setColor('Gold')
               .setFooter({
@@ -849,26 +875,24 @@ module.exports = {
               })
             }
 
-            const promotionCost = 5 * (monster.rank + 1)
+            const rarity = getRarityByCR(monster.cr)
+            const gearCost = getGearCost(rarity)
 
-            if (user.currency.gear < promotionCost) {
-              return interaction.update({
-                content:
-                  'You do not have enough ⚙️gear to promote this monster.',
-                components: [],
-              })
+            // choose payment method
+            if (monster.copies > 0) {
+              monster.copies -= 1 // free promotion with copy
+            } else {
+              if (user.currency.gear < gearCost) {
+                return interaction.update({
+                  content: 'Not enough ⚙️gear.',
+                  components: [],
+                })
+              }
+              user.currency.gear -= gearCost
+              user.set('currency', user.currency)
+              await user.save()
             }
-
-            const updatedCurrency = {
-              ...user.currency,
-              gear: user.currency.gear - promotionCost,
-            }
-
-            user.currency = updatedCurrency
-            user.set('currency', updatedCurrency)
-            await user.save()
-
-            // console.log('Before Save:', user.currency.gear)
+            monster.rank += 1
 
             if (!User) console.log('User model is undefined')
 
@@ -878,8 +902,6 @@ module.exports = {
             } catch (e) {
               console.error('Could not refresh user from DB:', e)
             }
-
-            monster.rank += 1
 
             let assignedRarity = getRarityByCR(monster.cr)
 
@@ -905,7 +927,6 @@ module.exports = {
               monster.rank
             )
 
-            monster.copies -= 1
 
             await monster.save()
             console.log(

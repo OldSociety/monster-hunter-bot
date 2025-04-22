@@ -709,7 +709,7 @@ async function startGame(interaction, userData) {
         `[Collector] Collector ended for user: ${userId} with reason: ${reason}`
       )
       if (gameState.running) {
-        console.log(`[Collector] Renewing collector for user: ${userId}`)
+        console.log(`[Collector] Renewing slots collector for user: ${userId}`)
         currentCollector = createCollector()
         collectors.set(userId, currentCollector)
       } else {
@@ -734,7 +734,7 @@ async function startGame(interaction, userData) {
   const collectorRenewInterval = setInterval(async () => {
     if (Date.now() - lastInteractionTime >= 30000 && gameState.running) {
       console.log(
-        `[Renew] No interaction for 30 seconds for user: ${userId}. Renewing collector.`
+        `[Renew Slots] No interaction for 30 seconds for user: ${userId}. Renewing collector.`
       )
       currentCollector.stop('timeout')
       lastInteractionTime = Date.now()
