@@ -198,8 +198,6 @@ module.exports = {
 
     // ── use the fresh values from here on ──
     const bruteScore = user.brute_score || 0
-    const baseDmg = user.base_damage || 0
-    const effectivePlayerScore = bruteScore + baseDmg // 160 + 12 = 172 when updated
 
     await populateMonsterCache()
 
@@ -396,7 +394,7 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
         const battleResult = await runBattlePhases(
           interaction,
           user,
-          effectivePlayerScore,
+          bruteScore,
           battleBoss.boss_score,
           battleBoss,
           1, // advMultiplier fixed to 1.
