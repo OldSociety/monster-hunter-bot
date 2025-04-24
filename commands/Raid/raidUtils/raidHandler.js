@@ -32,7 +32,6 @@ const {
 
 const { formatTimeRemaining } = require('./timeUtils.js')
 const { processGlobalRaidRewards } = require('./raidRewardsProcessor.js')
-const { addParticipant } = require('./raidParticipants')
 
 const {
   getUniformBaseRewards,
@@ -63,11 +62,11 @@ async function runRaidBattlePhases(
 
   while (bossHP > 0 && playerHP > 0) {
     phase += 1
-    console.log(`[Battle] Phase ${phase} started.`)
 
-    /* ---- rolls ---- */
-    const playerMult = Math.random() * 0.9 + 0.1
-    const playerRoll = Math.round(playerMult * playerScore * advMultiplier)
+    /* ---------- rolls ---------- */
+    const playerRoll = Math.round(
+      (Math.random() * 0.9 + 0.1) * playerScore * advMultiplier
+    )
 
     const dmgMult = [1, 2, 3][raidBoss.difficulty_stage - 1]
     const monsterRoll = Math.round(
@@ -76,68 +75,53 @@ async function runRaidBattlePhases(
         dmgMult
     )
 
-    console.log(
-      `[Battle] Phase ${phase} rolls - Player: ${playerRoll}, Monster: ${monsterRoll}`
-    )
-
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
-    console.log(`[Battle] Phase ${phase} result: ${phaseResult}`)
 
-    /* ---- apply damage ---- */
+    /* ---------- damage ---------- */
     if (phaseResult === 'Hit!') {
-      const damage = Math.round(playerRoll * 0.1)
-      damageDealt += damage
+      const dmg = Math.round(playerRoll * 0.1)
+      damageDealt += dmg
 
-      await raidBoss.instance.decrement('current_hp', { by: damage })
+      const dmgMap = raidBoss.instance.participants
+      dmgMap[interaction.user.id] = (dmgMap[interaction.user.id] || 0) + dmg
+      raidBoss.instance.participants = dmgMap
+      await raidBoss.instance.save({ fields: ['participants'] })
+
+      await raidBoss.instance.decrement('current_hp', { by: dmg })
       await raidBoss.instance.reload()
       bossHP = raidBoss.instance.current_hp
-      console.log(`[Battle] Boss HP reduced by ${damage}, new HP: ${bossHP}`)
-
-      /* milestone check */
-      const lostRatio = (raidBoss.hp - bossHP) / raidBoss.hp // 0–1
-      const reached = Math.floor(lostRatio / 0.25) // 0–3 (75 %)
-      if (reached > raidBoss.instance.threshold_state) {
-        const { giveMilestoneCard } = require('./milestoneLootDistributor')
-        const milestoneCards = [raidBoss.loot1, raidBoss.loot2, raidBoss.loot3]
-
-        for (let t = raidBoss.instance.threshold_state; t < reached; t += 1) {
-          const card = t < 3 ? milestoneCards[t] : raidBoss.index // safety
-          await giveMilestoneCard(
-            card,
-            raidBoss.instance.participants,
-            interaction.client
-          )
-        }
-        raidBoss.instance.threshold_state = reached
-        await raidBoss.instance.save()
-      }
     } else {
-      const damage = Math.round(monsterRoll * 0.1)
-      playerHP -= damage
-      console.log(`[Battle] Player HP reduced by ${damage}`)
+      const dmg = Math.round(monsterRoll * 0.1)
+      playerHP -= dmg
     }
 
-    /* ---- make sure never negative ---- */
     bossHP = Math.max(0, bossHP)
     playerHP = Math.max(0, playerHP)
 
-    /* ---- defeat / victory handling ---- */
+    /* ---------- victory ---------- */
     if (bossHP === 0) {
-      // award boss card if not given by milestone loop
-      if (raidBoss.instance.threshold_state < 4) {
-        const { giveMilestoneCard } = require('./milestoneLootDistributor')
-        await giveMilestoneCard(
-          raidBoss.index,
-          raidBoss.instance.participants,
-          interaction.client
-        )
+      const allCards = [
+        raidBoss.loot1,
+        raidBoss.loot2,
+        raidBoss.loot3,
+        raidBoss.index,
+      ].filter(Boolean)
+
+  for (const uid of Object.keys(raidBoss.instance.participants)) {
+  
+        for (const card of allCards) {
+          const monster = await pullSpecificMonster(card)
+          await updateOrAddMonsterToCollection(uid, monster)
+        }
+        await updateTop3AndUserScore(uid)
       }
 
+      /* difficulty ladder */
       if (raidBoss.difficulty_stage < 3) {
         raidBoss.difficulty_stage += 1
         raidBoss.instance.difficulty_stage = raidBoss.difficulty_stage
         raidBoss.instance.current_hp = raidBoss.hp
-        raidBoss.instance.threshold_state = 0
+        raidBoss.instance.participants = {};
         await raidBoss.instance.save()
 
         await interaction.followUp({
@@ -147,21 +131,21 @@ async function runRaidBattlePhases(
           ephemeral: false,
         })
       }
-      break // end loop after processing kill
+      break // leave loop after kill-handling
     }
 
     if (playerHP === 0) break
 
-    /* ---- phase embed ---- */
-    const isAdv = advMultiplier > 1
-    const isDis = advMultiplier < 1
+    /* ---------- embed per phase ---------- */
     const effects =
-      [isAdv ? '⏫Advantage' : '', isDis ? '⏬Disadvantage' : '']
-        .filter(Boolean)
-        .join(', ') || 'None'
+      advMultiplier > 1
+        ? '⏫Advantage'
+        : advMultiplier < 1
+        ? '⏬Disadvantage'
+        : 'None'
 
     const phaseEmbed = new EmbedBuilder()
-      .setTitle(`Phase ${phase} - Fighting ${raidBoss.name}`)
+      .setTitle(`Phase ${phase} – Fighting ${raidBoss.name}`)
       .setDescription(
         `**Your HP:** ${playerHP} / ${maxPlayerHP}\n${createHealthBar(
           playerHP,
@@ -174,7 +158,7 @@ async function runRaidBattlePhases(
           `**Effects:** ${effects}\n` +
           `**Player Roll:** ${playerRoll}\n` +
           `**Boss Roll:** ${monsterRoll}\n\n` +
-          `**Phase ${phase} Result:** ${phaseResult}\n` +
+          `**Result:** ${phaseResult}\n` +
           (selectedStyle ? `**Style:** ${selectedStyle}\n` : '')
       )
       .setColor('#FF4500')
@@ -185,21 +169,11 @@ async function runRaidBattlePhases(
     await new Promise((r) => setTimeout(r, 2000))
   }
 
-  console.log(
-    `[Battle] Battle ended. Final Player HP: ${playerHP}, Final Boss HP: ${bossHP}`
-  )
-
-  /* ---- persist HP ---- */
+  /* ---------- persist ---------- */
   user.current_raidHp = playerHP
   await user.save()
-
   raidBoss.instance.current_hp = bossHP
   await raidBoss.instance.save()
-
-  /* ── add participant if ≥ 2 % total damage this encounter ── */
-  if (damageDealt >= raidBoss.hp * 0.02) {
-    await addParticipant(raidBoss.instance, user.user_id)
-  }
 
   return bossHP === 0
 }
@@ -267,7 +241,7 @@ async function startRaidEncounter(interaction, user) {
     const elapsed = now - raidBossRotation.lastSwitch
     const timeRemaining = Math.max(0, cooldownDuration - elapsed)
 
-    if (selectedBoss.participants.length === 0) {
+    if (Object.keys(selectedBoss.participants).length === 0) {
       const embed = new EmbedBuilder()
         .setTitle('🏆 Raid Complete.')
         .setDescription(
@@ -279,8 +253,10 @@ async function startRaidEncounter(interaction, user) {
       return interaction.editReply({ embeds: [embed], ephemeral: true })
     }
 
-    const { summaryEmbed, monsterRewardEmbeds } =
-      await processGlobalRaidRewards(raidBoss, selectedBoss.participants)
+     const { getContributors } = require('./raidParticipants');
+     const paidUsers = getContributors(raidBoss.instance);
+     const { summaryEmbed, monsterRewardEmbeds } =
+      await processGlobalRaidRewards(raidBoss, paidUsers);
     summaryEmbed.setTitle("This week's Raid is over.")
     console.log(
       '[Collector] Global rewards processed. Displaying summary embed.'
@@ -394,6 +370,7 @@ async function startRaidEncounter(interaction, user) {
             console.log(
               '[Collector] Raid is no longer active. Processing global rewards.'
             )
+
             const { summaryEmbed, monsterRewardEmbeds } =
               await processGlobalRaidRewards(
                 raidBoss,
@@ -414,70 +391,28 @@ async function startRaidEncounter(interaction, user) {
             )
             await enterCooldownEarly()
 
-            const raidProgressPercentage = 1 - raidBoss.current_hp / raidBoss.hp
-            console.log(
-              `[DEBUG] Raid Progress: ${raidProgressPercentage * 100}%`
-            )
+            const raidPct = 1 - raidBoss.instance.current_hp / raidBoss.hp;
 
-            let baseRewards = getUniformBaseRewards(
-              true,
-              raidProgressPercentage
-            )
-            let gearReward = getUniformGearReward(true, raidProgressPercentage)
-            let cardRewards = getUniformCardRewards(
-              true,
-              raidProgressPercentage,
-              raidBoss
-            )
+            /* ── gold + gear only ───────────────────────────────── */
+            const base = getUniformBaseRewards(true, raidPct) // gold + legendary flag
+            const gear = getUniformGearReward(true, raidPct)
 
-            user.gold = Number(user.gold) || 0
-            user.currency = {
-              ...user.currency,
-              gear: Number(user.currency.gear) || 0,
-            }
-
-            user.gold += baseRewards.gold
-            user.currency.gear += gearReward
+            user.gold = Number(user.gold) + base.gold
+            user.currency.gear = Number(user.currency.gear) + gear
             await user.setDataValue('currency', user.currency)
             await user.save()
-
-            let monsterRewardEmbeds = []
-            for (const cardName of cardRewards) {
-              const monster = await pullSpecificMonster(cardName)
-              if (monster) {
-                await updateOrAddMonsterToCollection(user.user_id, monster)
-                await updateTop3AndUserScore(user.user_id)
-                const stars = getStarsBasedOnColor(monster.color)
-                const category = classifyMonsterType(monster.type)
-                const monsterEmbed = generateMonsterRewardEmbed(
-                  monster,
-                  category,
-                  stars
-                )
-                monsterRewardEmbeds.push(monsterEmbed)
-              }
-            }
 
             const rewardEmbed = new EmbedBuilder()
               .setTitle('🏆 Raid Rewards')
               .setDescription(
                 `You received:\n\n` +
-                  `**Gold:** ${baseRewards.gold}\n` +
-                  `**Legendary Card:** ${
-                    baseRewards.legendaryCard ? 'Yes' : 'No'
-                  }\n` +
-                  `**⚙️ Gear:** ${gearReward}\n` +
-                  `**Cards:** ${
-                    cardRewards.length ? cardRewards.join(', ') : 'None'
-                  }`
+                  `**Gold:** ${base.gold}\n` +
+                  `**Legendary Card:** ${base.legendaryCard ? 'Yes' : 'No'}\n` +
+                  `**⚙️ Gear:** ${gear}`
               )
               .setColor('Green')
 
-            const embedsToSend = [rewardEmbed, ...monsterRewardEmbeds]
-            console.log(
-              '[Collector] Displaying individual rewards embed to user.'
-            )
-            await i.followUp({ embeds: embedsToSend, ephemeral: true })
+            await i.followUp({ embeds: [rewardEmbed], ephemeral: true })
             collector.stop('fight_over')
           }
         }

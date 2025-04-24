@@ -38,10 +38,10 @@ function formatTimeRemaining(ms) {
 async function setupRewardWheel(interaction, user, timeout = 30000) {
   return new Promise(async (resolve) => {
     const rewards = [
-      { type: 'gold', amount: 180 },
-      { type: 'gold', amount: 360 },
-      { type: 'gear', min: 1, max: 5 },
-      { type: 'gear', min: 1, max: 5 },
+      { type: 'gold', amount: 450 },
+      { type: 'gold', amount: 450 },
+      { type: 'gear', min: 3, max: 6 },
+      { type: 'gear', min: 5, max: 8 },
       { type: 'beast' },
     ]
 
@@ -85,8 +85,7 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
       let resultEmbed
 
       if (selectedReward.type === 'gold') {
-        user.gold += selectedReward.amount
-        await user.save()
+        await user.increment('gold', { by: selectedReward.amount })
 
         resultEmbed = new EmbedBuilder()
           .setColor('#00FF00')
@@ -95,6 +94,8 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
             `${i.user.username}, you've won 🪙${selectedReward.amount} gold!`
           )
       } else if (selectedReward.type === 'gear') {
+        await user.increment('gold', { by: 225 })
+        
         const gearReward =
           Math.floor(
             Math.random() * (selectedReward.max - selectedReward.min + 1)
@@ -107,9 +108,10 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
           .setColor('#00FF00')
           .setTitle('🎉 Congratulations!')
           .setDescription(
-            `${i.user.username}, you've won ⚙️${gearReward} gear!`
+            `${i.user.username}, you've won 🪙180 gold and ⚙️${gearReward} gear!`
           )
       } else if (selectedReward.type === 'beast') {
+        await user.increment('gold', { by: 225 })     
         const beasts = await Monster.findAll({ where: { type: 'beast' } })
         if (beasts.length > 0) {
           const beast = beasts[Math.floor(Math.random() * beasts.length)]
@@ -120,7 +122,7 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
           const category = classifyMonsterType(beast.type)
           resultEmbed = generateMonsterRewardEmbed(beast, category, stars)
           resultEmbed.setDescription(
-            `${i.user.username} obtained ${
+            `${i.user.username} obtained 🪙180 gold and ${
               beast.name
             } from their Wild Hunt!\n\n${resultEmbed.data.description || ''}`
           )

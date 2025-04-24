@@ -17,12 +17,22 @@ const {
 } = require('../../../utils/embeds/monsterRewardEmbed')
 const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 
-async function processGlobalRaidRewards(raidBoss, globalRaidParticipants) {
+async function processGlobalRaidRewards(raidBoss, paidUsers) {
   // Convert hp values to numbers explicitly
 
   const totalHP = Number(raidBoss.hp)
   const currentHP = Number(raidBoss.current_hp)
   const raidProgressPercentage = 1 - currentHP / totalHP
+
+  /* get contributors that reached ≥ 2 % */
+  if (paidUsers.length === 0) {
+    return {
+      summaryEmbed: new EmbedBuilder()
+        .setTitle('Raid Complete')
+        .setDescription('No one met the 2 % damage requirement.'),
+      monsterRewardEmbeds: [],
+    }
+  }
 
   console.log('[Rewards] Boss HP:', totalHP, 'Current HP:', currentHP)
   console.log(
@@ -40,12 +50,11 @@ async function processGlobalRaidRewards(raidBoss, globalRaidParticipants) {
 
   let totalGold = 0
   let totalGear = 0
-  let awardedCards = [] // Will collect all card names awarded across users
-  let monsterRewardEmbeds = [] // Collect individual monster reward embeds
+  let awardedCards = [] 
+  let monsterRewardEmbeds = [] 
 
-  console.log(globalRaidParticipants)
   // Loop through every participant
-  for (const userId of globalRaidParticipants) {
+  for (const userId of paidUsers) {
     const user = await User.findByPk(userId)
 
     console.log(userId, 'global participants')
@@ -87,8 +96,6 @@ async function processGlobalRaidRewards(raidBoss, globalRaidParticipants) {
     }
     console.log(`[Rewards] Processed rewards for user ${userId}`)
   }
-
-  globalRaidParticipants.clear()
 
   const summaryEmbed = new EmbedBuilder()
     .setTitle('🏆 Raid Complete.')

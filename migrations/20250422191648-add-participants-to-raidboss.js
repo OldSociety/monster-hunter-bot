@@ -1,10 +1,11 @@
-// migrations/YYYYMMDDHHMMSS-add-participants-to-raidboss.js
+// migrations\20250422191648-add-participants-to-raidboss.js
+'use strict';
 module.exports = {
-  up: (qi, Sequelize) =>
+  up: (qi, S) =>
     qi.addColumn('RaidBoss', 'participants', {
-      type: Sequelize.JSON, // ARRAY(TEXT) if you prefer Postgres arrays
+      type: S.JSONB,
       allowNull: false,
-      defaultValue: [],
+      defaultValue: {},
     }),
   down: (qi) => qi.removeColumn('RaidBoss', 'participants'),
-}
+};
