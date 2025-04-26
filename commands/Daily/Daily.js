@@ -26,9 +26,6 @@ module.exports = {
     const dayIndex = ((user.daily_streak || 1) - 1) % 10
     const displayDay = dayIndex + 1
 
-    // Determine which demon card should be shown on the 10th day
-    const demonIndex = Math.floor((user.daily_streak - 1) / 10) % 8
-
     const rotatingMonsters = [
       'lemure',
       'nightmare',
@@ -38,12 +35,15 @@ module.exports = {
       'erinyes',
       'rakshasa',
       'marilith',
-    ] // 8 demon cards
-
-    const demonNameCapitalized =
-      rotatingMonsters[demonIndex]
-        ?.replace(/-/g, ' ')
-        ?.replace(/\b\w/g, (c) => c.toUpperCase()) || 'Demon Card'
+    ];
+    
+    const currentStreak = Number(user.daily_streak) || 0;            // 0-based safety
+    const demonIndex    = Math.floor(currentStreak / 10) % rotatingMonsters.length;
+    
+    const demonNameCapitalized = rotatingMonsters[demonIndex]
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+    
 
     const rewards = [
       '🪙1000 coins',

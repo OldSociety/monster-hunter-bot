@@ -7,12 +7,12 @@ const {
   updateOrAddMonsterToCollection,
 } = require('../../../handlers/userMonsterHandler')
 const { updateTop3AndUserScore } = require('../../../handlers/topCardsManager')
-const {
-  generateMonsterRewardEmbed,
-} = require('../../../utils/embeds/monsterRewardEmbed')
-const { getStarsBasedOnColor } = require('../../../utils/starRating')
+// const {
+//   generateMonsterRewardEmbed,
+// } = require('../../../utils/embeds/monsterRewardEmbed')
+// const { getStarsBasedOnColor } = require('../../../utils/starRating')
 
-const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
+// const { classifyMonsterType } = require('../../Hunt/huntUtils/huntHelpers')
 
 const { createHealthBar } = require('../../Hunt/huntUtils/battleHandler.js')
 const { collectors, stopUserCollector } = require('../../../utils/collectors')
@@ -33,11 +33,7 @@ const {
 const { formatTimeRemaining } = require('./timeUtils.js')
 const { processGlobalRaidRewards } = require('./raidRewardsProcessor.js')
 
-const {
-  getUniformBaseRewards,
-  getUniformGearReward,
-  getUniformCardRewards,
-} = require('./raidRewards')
+const { getUniformBaseRewards, getUniformGearReward } = require('./raidRewards')
 
 let rewardsDistributed = false
 
@@ -107,8 +103,7 @@ async function runRaidBattlePhases(
         raidBoss.index,
       ].filter(Boolean)
 
-  for (const uid of Object.keys(raidBoss.instance.participants)) {
-  
+      for (const uid of Object.keys(raidBoss.instance.participants)) {
         for (const card of allCards) {
           const monster = await pullSpecificMonster(card)
           await updateOrAddMonsterToCollection(uid, monster)
@@ -121,7 +116,7 @@ async function runRaidBattlePhases(
         raidBoss.difficulty_stage += 1
         raidBoss.instance.difficulty_stage = raidBoss.difficulty_stage
         raidBoss.instance.current_hp = raidBoss.hp
-        raidBoss.instance.participants = {};
+        raidBoss.instance.participants = {}
         await raidBoss.instance.save()
 
         await interaction.followUp({
@@ -253,10 +248,10 @@ async function startRaidEncounter(interaction, user) {
       return interaction.editReply({ embeds: [embed], ephemeral: true })
     }
 
-     const { getContributors } = require('./raidParticipants');
-     const paidUsers = getContributors(raidBoss.instance);
-     const { summaryEmbed, monsterRewardEmbeds } =
-      await processGlobalRaidRewards(raidBoss, paidUsers);
+    const { getContributors } = require('./raidParticipants')
+    const paidUsers = getContributors(raidBoss.instance)
+    const { summaryEmbed, monsterRewardEmbeds } =
+      await processGlobalRaidRewards(raidBoss, paidUsers)
     summaryEmbed.setTitle("This week's Raid is over.")
     console.log(
       '[Collector] Global rewards processed. Displaying summary embed.'
@@ -391,7 +386,7 @@ async function startRaidEncounter(interaction, user) {
             )
             await enterCooldownEarly()
 
-            const raidPct = 1 - raidBoss.instance.current_hp / raidBoss.hp;
+            const raidPct = 1 - raidBoss.instance.current_hp / raidBoss.hp
 
             /* ── gold + gear only ───────────────────────────────── */
             const base = getUniformBaseRewards(true, raidPct) // gold + legendary flag
@@ -496,52 +491,44 @@ async function handleCancelRaid(interaction, user) {
 }
 
 async function handleHealAction(interaction, user, raidBoss, healType) {
-  console.log(`[Heal] Handling heal action: ${healType}`)
-  if (!interaction.deferred && !interaction.replied) {
+  if (!interaction.deferred && !interaction.replied)
     await interaction.deferUpdate()
-  }
 
-  if (user.currency.tokens < 10) {
-    console.log('[Heal] Insufficient tokens to heal.')
+  /* ── pull freshest user/boss state ───────────────── */
+  await user.reload() // avoids race with battle loop
+  await raidBoss.instance.reload()
+
+  const TOKENS_PER_100 = 10
+  const HP_PER_TICK = 100
+
+  const missing = user.score - user.current_raidHp
+  if (missing <= 0) {
     return interaction.followUp({
-      content: "You don't have enough tokens to heal.",
+      content: 'You are already at full HP.',
       ephemeral: true,
     })
   }
 
-  let tokensSpent = 0
-  const missingHP = user.score - user.current_raidHp
+  /* ── compute desired heal & cost ─────────────────── */
+  const healAmount =
+    healType === 'max' ? missing : Math.min(HP_PER_TICK, missing)
 
-  if (missingHP <= 0) {
-    console.log('[Heal] Already at max health. No tokens spent.')
-    // Optionally, return early if no healing is needed.
-  } else if (healType === 'max') {
-    tokensSpent = Math.min(Math.ceil(missingHP / 10), user.currency.tokens)
-    user.current_raidHp = user.score
-    console.log(
-      `[Heal] Healing to max. Healing ${missingHP} HP. Tokens spent: ${tokensSpent}`
-    )
-  } else {
-    const desiredHeal = 100
-    const healingAmount = Math.min(desiredHeal, missingHP)
-    tokensSpent = Math.ceil(healingAmount / 10)
-    user.current_raidHp += healingAmount
-    console.log(
-      `[Heal] Healing by ${healingAmount} HP. Tokens spent: ${tokensSpent}`
-    )
+  const tokensNeeded = Math.ceil(healAmount / HP_PER_TICK) * TOKENS_PER_100
+
+  if (user.currency.tokens < tokensNeeded) {
+    return interaction.followUp({
+      content: `You need ${tokensNeeded} 🧿 tokens but only have ${user.currency.tokens}.`,
+      ephemeral: true,
+    })
   }
 
-  // Subtract the tokens spent.
-  user.currency = {
-    ...user.currency,
-    tokens: user.currency.tokens - tokensSpent,
-  }
+  /* ── apply changes atomically ────────────────────── */
+  user.current_raidHp = Math.min(user.current_raidHp + healAmount, user.score)
+  user.currency.tokens -= tokensNeeded
   await user.save()
 
-  const updatedEmbed = createRaidBossEmbed(raidBoss, user)
-  console.log('[Heal] Updated embed after healing created.')
-
-  // Recreate the action row with updated user data.
+  /* ── fresh embed & action row ────────────────────── */
+  const updatedEmbed = createRaidBossEmbed(raidBoss, user) // raidBoss.instance is fresh
   const updatedActionRow = createInitialActionRow(user)
 
   try {
@@ -550,8 +537,7 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
       components: [updatedActionRow],
       ephemeral: true,
     })
-  } catch (error) {
-    console.error('[Heal] Failed to edit ephemeral message:', error)
+  } catch {
     await interaction.followUp({
       embeds: [updatedEmbed],
       components: [updatedActionRow],
