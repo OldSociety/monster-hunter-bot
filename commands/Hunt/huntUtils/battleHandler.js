@@ -65,16 +65,17 @@ async function runBattlePhases(
       )
     )
 
-    let monsterMinRoll =
-      battleType === 'boss'
-        ? monsterScore * 0.5
-        : battleType === 'mini-boss'
-        ? monsterScore * 0.25
-        : 0
+    const monsterMinRoll =
+  battleType === 'boss'
+    ? Math.ceil(monsterScore * 0.5)
+    : battleType === 'mini-boss'
+    ? Math.ceil(monsterScore * 0.25)
+    : 0;
 
-    let monsterRoll = Math.round(
-      Math.max(Math.random() * monsterScore, monsterMinRoll)
-    )
+const monsterRoll = Math.max(
+  Math.floor(Math.random() * monsterScore) + 1, // 1-to-score inclusive
+  monsterMinRoll
+);
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
 
     if (phaseResult === 'Hit!') {
