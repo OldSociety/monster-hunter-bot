@@ -53,29 +53,29 @@ function shuffleArray(array) {
   return arr
 }
 
-// function getUniformCardRewards(bossDefeated, raidProgressPercentage, raidBoss) {
-//   let lootCards = [raidBoss.loot1, raidBoss.loot2, raidBoss.loot3].filter(
-//     Boolean
-//   )
-//   lootCards = shuffleArray(lootCards)
+function getUniformCardRewards(bossDefeated, raidProgressPercentage, raidBoss) {
+  let lootCards = [raidBoss.loot1, raidBoss.loot2, raidBoss.loot3].filter(
+    Boolean
+  )
+  lootCards = shuffleArray(lootCards)
 
-//   if (bossDefeated) {
-//     return [...lootCards, raidBoss.index]
-//   } else {
-//     if (raidProgressPercentage >= 0.75) {
-//       return lootCards.slice(0, 3)
-//     } else if (raidProgressPercentage >= 0.5) {
-//       return lootCards.slice(0, 2)
-//     } else if (raidProgressPercentage >= 0.25) {
-//       return lootCards.slice(0, 1)
-//     } else {
-//       return []
-//     }
-//   }
-// }
+  if (bossDefeated) {
+    return [...lootCards, raidBoss.index]
+  } else {
+    if (raidProgressPercentage >= 0.75) {
+      return lootCards.slice(0, 3)
+    } else if (raidProgressPercentage >= 0.5) {
+      return lootCards.slice(0, 2)
+    } else if (raidProgressPercentage >= 0.25) {
+      return lootCards.slice(0, 1)
+    } else {
+      return []
+    }
+  }
+}
 
 module.exports = {
   getUniformBaseRewards,
   getUniformGearReward,
-  // getUniformCardRewards,
+  getUniformCardRewards,
 }

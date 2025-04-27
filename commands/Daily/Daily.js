@@ -37,13 +37,13 @@ module.exports = {
       'marilith',
     ];
     
-    const currentStreak = Number(user.daily_streak) || 0;            // 0-based safety
-    const demonIndex    = Math.floor(currentStreak / 10) % rotatingMonsters.length;
-    
-    const demonNameCapitalized = rotatingMonsters[demonIndex]
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
-    
+    const currentStreak  = Number(user.daily_streak) || 0;          // 1-based
+const setsCompleted  = Math.floor(Math.max(currentStreak - 1, 0) / 10);
+const demonIndex     = setsCompleted % rotatingMonsters.length;
+
+const demonNameCapitalized = rotatingMonsters[demonIndex]
+  .replace(/-/g, ' ')
+  .replace(/\b\w/g, c => c.toUpperCase());
 
     const rewards = [
       '🪙1000 coins',

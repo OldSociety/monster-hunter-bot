@@ -889,8 +889,8 @@ module.exports = {
                 })
               }
               user.currency.gear -= gearCost
-              user.set('currency', user.currency)
-              await user.save()
+              user.changed('currency', true)
+              await user.save({ fields: ['currency'] })
             }
             monster.rank += 1
 

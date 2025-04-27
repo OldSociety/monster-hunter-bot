@@ -200,6 +200,7 @@ module.exports = {
 
     // ── use the fresh values from here on ──
     const bruteScore = user.brute_score || 0
+    const baseDmg = user.base_damage || 0
 
     await populateMonsterCache()
 

@@ -10,7 +10,7 @@ module.exports = {
       name: 'Darkmantle',
       description: 'Your hunt begins in the shadows—track down the darkmantle lurking nearby and test your strength.',
       energyCost: 1,
-      totalBattles: 3,
+      totalBattles: 4,
       battles: [
         { type: 'normal', monsterIndex: 'goblin', difficulty: 7, goldReward: 24 }, // hp 7
         { type: 'normal', monsterIndex: 'giant-rat', difficulty: 9, goldReward: 26 }, // 9
@@ -80,7 +80,7 @@ module.exports = {
       description:
         `End the sea hag’s curse before more fall victim to her drowned man curse.`,
       energyCost: 1,
-      totalBattles: 10,
+      totalBattles: 9,
       battles: [
         { type: 'normal', monsterIndex: 'animated-armor', difficulty: 33, goldReward: 31 }, // 33
         { type: 'normal', monsterIndex: 'azer', difficulty: 39, goldReward: 33 }, // 39

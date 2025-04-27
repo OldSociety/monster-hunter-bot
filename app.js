@@ -107,6 +107,9 @@ const { initializeRaidTimer } = require('./handlers/raidTimerHandler')
 const { initializeRaidHealing } = require('./handlers/raidHealingHandler')
 const { populateMonsterCache } = require('./handlers/cacheHandler')
 
+// const { printGoldTable }  = require('./printGoldTable');
+// printGoldTable();
+
 messageHandler(client, User)
 
 client.once('ready', async () => {

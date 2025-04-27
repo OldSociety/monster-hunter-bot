@@ -70,15 +70,18 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   )
 
   defeatedBattles.forEach((battle) => {
-    if (battle.type === 'mini-boss' && currentHunt.id > user.completedLevels) {
-      totalGoldEarned += battle.firstGoldReward || battle.goldReward
+    // pay the one-time bonus the very first time this boss is defeated
+    if (
+      (battle.type === 'mini-boss' || battle.type === 'boss') &&
+      currentHunt.id > user.completedLevels && // first clear
+      battle.firstGoldReward // field exists
+    ) {
+      totalGoldEarned += battle.firstGoldReward
     } else {
       totalGoldEarned += battle.goldReward
     }
 
-    if (getRandomInt(3) === 0) {
-      totalTokensEarned += 1
-    }
+    if (getRandomInt(3) === 0) totalTokensEarned += 1
   })
 
   await addRewardToUser(user, totalGoldEarned, totalTokensEarned)
@@ -146,7 +149,7 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
     //       huntPages[currentHunt.unlocksPage].name
     //     }**!`,
     //   })
-    // } else 
+    // } else
     if (currentHunt.unlocksPage === 'finished') {
       summaryEmbed.addFields({
         name: 'All Available Hunts Completed!',

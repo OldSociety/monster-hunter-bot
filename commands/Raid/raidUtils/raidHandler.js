@@ -525,7 +525,8 @@ async function handleHealAction(interaction, user, raidBoss, healType) {
   /* ── apply changes atomically ────────────────────── */
   user.current_raidHp = Math.min(user.current_raidHp + healAmount, user.score)
   user.currency.tokens -= tokensNeeded
-  await user.save()
+  user.changed('currency', true)
+  await user.save({ fields: ['current_raidHp', 'currency'] })
 
   /* ── fresh embed & action row ────────────────────── */
   const updatedEmbed = createRaidBossEmbed(raidBoss, user) // raidBoss.instance is fresh
