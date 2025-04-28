@@ -16,15 +16,14 @@ const {
   updateOrAddMonsterToCollection,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop3AndUserScore } = require('../../handlers/topCardsManager')
-const {
-  generateMonsterRewardEmbed,
-} = require('../../utils/embeds/monsterRewardEmbed')
-const { getStarsBasedOnColor } = require('../../utils/starRating')
-const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
+// const {
+//   generateMonsterRewardEmbed,
+// } = require('../../utils/embeds/monsterRewardEmbed')
+// const { getStarsBasedOnColor } = require('../../utils/starRating')
+// const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
 
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
-// Utility function to format time remaining as a countdown.
 function formatTimeRemaining(ms) {
   const totalSeconds = Math.floor(ms / 1000)
   const days = Math.floor(totalSeconds / 86400)
@@ -38,10 +37,10 @@ function formatTimeRemaining(ms) {
 async function setupRewardWheel(interaction, user, timeout = 30000) {
   return new Promise(async (resolve) => {
     const rewards = [
-      { type: 'gold', amount: 450 },
-      { type: 'gold', amount: 450 },
-      { type: 'gear', min: 3, max: 6 },
-      { type: 'gear', min: 5, max: 8 },
+      { type: 'gold', amount: 360 },
+      { type: 'gold', amount: 360 },
+      { type: 'gear', min: 1, max: 5 },
+      { type: 'gear', min: 5, max: 10 },
       { type: 'beast' },
     ]
 
@@ -80,74 +79,57 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
       claimed = true
       await i.deferUpdate()
 
-      const selectedReward = rewards[parseInt(i.customId.split('_')[2])]
-
-      let resultEmbed
-
-      if (selectedReward.type === 'gold') {
-        await user.increment('gold', { by: selectedReward.amount })
-
-        resultEmbed = new EmbedBuilder()
-          .setColor('#00FF00')
-          .setTitle('🎉 Congratulations!')
-          .setDescription(
-            `${i.user.username}, you've won 🪙${selectedReward.amount} gold!`
-          )
-      } else if (selectedReward.type === 'gear') {
-        await user.increment('gold', { by: 225 })
-        
-        const gearReward =
-          Math.floor(
-            Math.random() * (selectedReward.max - selectedReward.min + 1)
-          ) + selectedReward.min
-        user.currency.gear = (user.currency.gear || 0) + gearReward
-        await user.changed('currency', true)
-        await user.save()
-
-        resultEmbed = new EmbedBuilder()
-          .setColor('#00FF00')
-          .setTitle('🎉 Congratulations!')
-          .setDescription(
-            `${i.user.username}, you've won 🪙180 gold and ⚙️${gearReward} gear!`
-          )
-      } else if (selectedReward.type === 'beast') {
-        await user.increment('gold', { by: 225 })     
-        const beasts = await Monster.findAll({ where: { type: 'beast' } })
-        if (beasts.length > 0) {
-          const beast = beasts[Math.floor(Math.random() * beasts.length)]
-          await updateOrAddMonsterToCollection(user.user_id, beast)
-          await updateTop3AndUserScore(user.user_id)
-
-          const stars = getStarsBasedOnColor(beast.color)
-          const category = classifyMonsterType(beast.type)
-          resultEmbed = generateMonsterRewardEmbed(beast, category, stars)
-          resultEmbed.setDescription(
-            `${i.user.username} obtained 🪙180 gold and ${
-              beast.name
-            } from their Wild Hunt!\n\n${resultEmbed.data.description || ''}`
-          )
-        } else {
-          resultEmbed = new EmbedBuilder()
-            .setColor('#ff0000')
-            .setTitle('Reward Error')
-            .setDescription('No beast cards available.')
-        }
-      }
-
-      // Send non-ephemeral result to channel
-      await interaction.channel.send({ embeds: [resultEmbed] })
-
+      await giveReward(rewards[parseInt(i.customId.split('_')[2])], i.user)
       resolve(true)
     })
 
     collector.on('end', async () => {
       if (!claimed) {
-        await interaction.followUp({
-          content: '⏳ Time expired! No reward was selected.',
-          ephemeral: true,
+        const defaultReward = rewards.find((r) => r.type === 'gold')
+
+        await giveReward(defaultReward, interaction.user)
+
+        await interaction.channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor('#00FF00')
+              .setTitle('🎉 Reward Granted Automatically')
+              .setDescription(
+                `${interaction.user.username} didn’t pick a door in time, ` +
+                  `so they receive the default reward of 🪙${defaultReward.amount} gold!`
+              ),
+          ],
         })
       }
+
+      resolve(true)
     })
+
+    // --------------------------------------------------
+
+    async function giveReward(selectedReward, discordUser) {
+      if (selectedReward.type === 'gold') {
+        await user.increment('gold', { by: selectedReward.amount })
+      } else if (selectedReward.type === 'gear') {
+        const gearReward =
+          Math.floor(
+            Math.random() * (selectedReward.max - selectedReward.min + 1)
+          ) + selectedReward.min
+
+        await user.increment('gold', { by: 180 })
+        user.currency.gear = (user.currency.gear || 0) + gearReward
+        await user.changed('currency', true)
+        await user.save()
+      } else if (selectedReward.type === 'beast') {
+        await user.increment('gold', { by: 180 })
+        const beasts = await Monster.findAll({ where: { type: 'beast' } })
+        if (beasts.length) {
+          const beast = beasts[Math.floor(Math.random() * beasts.length)]
+          await updateOrAddMonsterToCollection(user.user_id, beast)
+          await updateTop3AndUserScore(user.user_id)
+        }
+      }
+    }
   })
 }
 
@@ -175,7 +157,7 @@ async function getBeastLadder() {
     }
     ladder.push(...group)
   }
-  console.log('[WildHunt] Ladder constructed with', ladder.length, 'beasts.')
+  // console.log('[WildHunt] Ladder constructed with', ladder.length, 'beasts.')
   return ladder
 }
 
@@ -184,10 +166,8 @@ module.exports = {
     .setName('wildhunt')
     .setDescription('Embark on a Wild Hunt against a ladder of beasts.'),
   async execute(interaction) {
-    console.log('[WildHunt] Command executed.')
     if (!interaction.deferred && !interaction.replied) {
       await interaction.deferReply({ ephemeral: true })
-      console.log('[WildHunt] Reply deferred.')
     }
     const user = await checkUserAccount(interaction)
     if (!user) {
@@ -198,7 +178,6 @@ module.exports = {
     await verifyAndUpdateUserScores(user.user_id)
     await user.reload()
 
-    // ── use the fresh values from here on ──
     const bruteScore = user.brute_score || 0
     const baseDmg = user.base_damage || 0
 
@@ -212,14 +191,12 @@ module.exports = {
       new Date(user.lastWildHuntAvailable).getTime() > now
     ) {
       onCooldown = true
-      console.log('[WildHunt] User is on cooldown.')
     }
     let replyMessage
     if (!onCooldown) {
       // When not on cooldown, do not set the cooldown date yet—only reset buy-ins.
       user.wildHuntBuyInsUsed = 0
       await user.save()
-      // Build welcome embed for active session.
       const welcomeEmbed = new EmbedBuilder()
         .setTitle('Wild Hunt!')
         .setDescription(
@@ -242,7 +219,6 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
           .setLabel('Cancel Wild Hunt')
           .setStyle(ButtonStyle.Danger)
       )
-      console.log('[WildHunt] Sending welcome embed.')
       replyMessage = await interaction.editReply({
         embeds: [welcomeEmbed],
         components: [normalRow],
@@ -250,7 +226,6 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
       })
     } else {
       if (user.wildHuntBuyInsUsed >= 4) {
-        console.log('[WildHunt] All daily buy-ins used.')
         replyMessage = await interaction.editReply({
           content: `Wild Hunt is on cooldown until ${new Date(
             user.lastWildHuntAvailable
@@ -331,10 +306,8 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
     let winsInSet = 0
 
     async function runWildHunt() {
-      console.log('[WildHunt] Running wild hunt loop.')
       while (true) {
         if (winsInSet >= 5) {
-          console.log('[WildHunt] 5 wins reached; triggering reward wheel.')
           const rewardWheelEmbed = new EmbedBuilder()
             .setTitle('Reward Wheel')
             .setDescription(
@@ -403,7 +376,7 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
           1, // advMultiplier fixed to 1.
           { ichorUsed: false },
           'Brute',
-          beast.imageUrl || null // Pass the wildhunt-specific image URL if available.
+          beast.imageUrl || null 
         )
 
         if (battleResult) {
@@ -524,7 +497,6 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
             text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,
           })
         try {
-          console.log('[WildHunt] Updating reply after purchase_buyin.')
           await i.editReply({
             embeds: [cooldownEmbed],
             components: [updatedRow],
@@ -547,7 +519,7 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
             console.error('[WildHunt] Error deferring begin_wildhunt:', err)
           }
         }
-        // Update lastWildHuntAvailable only when the player actually begins the hunt.
+
         user.lastWildHuntAvailable = new Date(Date.now() + 24 * 3600000)
         await user.save()
         runWildHunt()
