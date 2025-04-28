@@ -79,7 +79,7 @@ function createInitialActionRow(user) {
       .setDisabled(user.current_raidHp === 0),
     new ButtonBuilder()
       .setCustomId('heal')
-      .setLabel('Heal (100 HP/🧿token)')
+      .setLabel('Heal (100 HP/🧿10 tokens)')
       .setStyle(ButtonStyle.Success)
       .setDisabled(
         user.currency.tokens < 10 || user.current_raidHp >= user.score
