@@ -71,15 +71,23 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
 
   defeatedBattles.forEach((battle) => {
     // pay the one-time bonus the very first time this boss is defeated
+    let reward
     if (
       (battle.type === 'mini-boss' || battle.type === 'boss') &&
-      currentHunt.id > user.completedLevels && // first clear
-      battle.firstGoldReward // field exists
+      currentHunt.id > user.completedLevels &&
+      battle.firstGoldReward
     ) {
-      totalGoldEarned += battle.firstGoldReward
+      reward = battle.firstGoldReward
     } else {
-      totalGoldEarned += battle.goldReward
+      reward = battle.goldReward
     }
+
+    // bosses & minibosses always get +20%
+    if (battle.type === 'mini-boss' || battle.type === 'boss') {
+      reward = Math.round(reward * 1.2)
+    }
+
+    totalGoldEarned += reward
 
     if (getRandomInt(3) === 0) totalTokensEarned += 1
   })

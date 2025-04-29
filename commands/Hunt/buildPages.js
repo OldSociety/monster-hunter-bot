@@ -50,7 +50,20 @@ function buildAllPages(huntPages) {
         // or: hunt.totalBattles = hunt.battles.length;  // quick auto-fix
       }
 
-      const fightG = fightRewards(hunt.totalGold, hunt.totalBattles - 1)
+        // ← pass 1.2 as the bonus multiplier
+  const fightG = fightRewards(
+    hunt.totalGold,
+    hunt.totalBattles - 1,
+    0.30,
+    1.20
+  )
+
+  // optional: log to verify the boosted boss payout
+  console.log(
+    `[${pageKey} • Hunt ${hunt.id}] per-fight gold:`,
+    fightG
+  )
+
       hunt.battles.forEach((b, i) => (b.goldReward = fightG[i]))
     })
 

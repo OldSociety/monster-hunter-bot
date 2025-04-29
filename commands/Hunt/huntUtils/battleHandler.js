@@ -65,17 +65,26 @@ async function runBattlePhases(
       )
     )
 
+    // compute the floor for boss / mini-boss
     const monsterMinRoll =
-  battleType === 'boss'
-    ? Math.ceil(monsterScore * 0.5)
-    : battleType === 'mini-boss'
-    ? Math.ceil(monsterScore * 0.25)
-    : 0;
+      battleType === 'boss'
+        ? Math.ceil(monsterScore * 0.5)
+        : battleType === 'mini-boss'
+        ? Math.ceil(monsterScore * 0.25)
+        : 0
 
-const monsterRoll = Math.max(
-  Math.floor(Math.random() * monsterScore) + 1, // 1-to-score inclusive
-  monsterMinRoll
-);
+    // roll and apply floor
+    const rawMonsterRoll = Math.floor(Math.random() * monsterScore) + 1
+    const range = monsterScore - monsterMinRoll + 1
+    const monsterRoll = Math.floor(Math.random() * range) + monsterMinRoll
+
+    // log whether we had to bump it up
+    const floorLog = rawMonsterRoll < monsterMinRoll ? '❌' : '✅'
+    // console.log(
+    //   `   [Roll Check] ${monster.name}: raw=${rawMonsterRoll}, ` +
+    //     `min=${monsterMinRoll}, final=${monsterRoll} ${floorLog}`
+    // )
+
     const phaseResult = playerRoll >= monsterRoll ? 'Hit!' : 'Miss!'
 
     if (phaseResult === 'Hit!') {

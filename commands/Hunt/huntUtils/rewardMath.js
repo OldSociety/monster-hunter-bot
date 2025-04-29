@@ -38,8 +38,14 @@ export function huntTotals(
 }
 
 /* ---------- fight level --------------------------------------- */
-export function fightRewards(totalGold, fightsBeforeBoss, bossFrac = 0.3) {
-  const boss = Math.round(totalGold * bossFrac)
+export function fightRewards(
+  totalGold,
+  fightsBeforeBoss,
+  bossFrac = 0.3,
+  bossBonus = 1.2
+) {
+  const bossBase = totalGold * bossFrac
+  const boss = Math.round(bossBase * bossBonus)
   const pre = totalGold - boss
   const M = fightsBeforeBoss
 

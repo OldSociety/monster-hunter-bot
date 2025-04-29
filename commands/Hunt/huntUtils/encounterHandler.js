@@ -115,7 +115,7 @@ async function offerRetry(interaction, user, huntData) {
 
   const retryButton = new ButtonBuilder()
     .setCustomId('retry_hunt')
-    .setLabel(`Retry ⚡${huntData.level.energyCost}`)
+    .setLabel(`Retry ⚡1`)
     .setStyle(ButtonStyle.Success)
   const endHuntButton = new ButtonBuilder()
     .setCustomId('end_hunt')

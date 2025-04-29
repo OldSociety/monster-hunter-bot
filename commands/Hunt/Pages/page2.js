@@ -118,7 +118,7 @@ module.exports = {
         { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 45, goldReward: 63 }, // 67
         { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 66, goldReward: 58 }, // 66
         {
-          type: 'mini-boss',
+          type: 'boss',
           monsterIndex: 'red-dragon-wyrmling', // 93
           difficulty: 73,
           firstGoldReward: 1441,
