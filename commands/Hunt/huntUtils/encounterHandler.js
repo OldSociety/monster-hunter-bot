@@ -143,12 +143,12 @@ async function offerRetry(interaction, user, huntData) {
   collector.on('collect', async (i) => {
     await i.deferUpdate()
     if (i.customId === 'retry_hunt') {
-      if (user.currency.energy < huntData.level.energyCost) {
+      if (user.currency.energy < 1) {
         const noEnergyRetryEmbed = new EmbedBuilder()
           .setColor('#FF0000')
           .setTitle('Out of Energy')
           .setDescription(
-            `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
+            `You don't have enough energy to retry. Each retry costs ⚡1 energy.\nEnergy regenerates every 10 minutes.`
           )
         await interaction.followUp({
           embeds: [noEnergyRetryEmbed],
@@ -158,7 +158,7 @@ async function offerRetry(interaction, user, huntData) {
         collector.stop()
         return
       }
-      user.currency.energy -= huntData.level.energyCost
+      user.currency.energy -= 1
       user.changed('currency', true)
       await user.save()
       await startNewEncounter(interaction, user, huntData)

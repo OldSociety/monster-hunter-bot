@@ -16,7 +16,6 @@ const {
 } = require('../../utils/embeds/monsterRewardEmbed')
 const { getStarsBasedOnColor } = require('../../utils/starRating')
 const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers')
-const { loadJackpot, saveJackpot } = require('./helpers/jackpotStore');
 
 let jackpot = 105983
 const activePlayers = new Set()
@@ -573,7 +572,7 @@ async function startGame(interaction, userData) {
       msg += `You won the JACKPOT of 🪙${jackpot} gold!`
       jackpot = 100000 // Reset the jackpot
       // await saveJackpot(jackpot)
-    }  else if (roll.type === 'game_over') {
+    } else if (roll.type === 'game_over') {
       jackpot += Math.max(Math.floor(gameState.totalGold / 2), 0)
       gameState.running = false
       activePlayers.delete(userId)
@@ -613,46 +612,47 @@ async function startGame(interaction, userData) {
     }
 
     /* ─────────── normal (non-game-over) update ─────────── */
- // 5️⃣ Build Zalathor phrase
- const zalathorPhrases = [
-  'Did you know I can grant wishes.',
-  'The whispers say you’ll win… but I wouldn’t trust them.',
-  'How pitiful. Spin again, maybe you’ll amuse me.',
-  'Double down. I promise, it\'s safe...',
-  'Somewhere, someone is winning BIG! But not you.',
-  'Ah, the Gold Stage… so many possibilities... if you ever get there.',
-  'I saw a player win the jackpot once. They disappeared right after.',
-  'You should stop now!',
-  'Gold, eggs, ichor… Does any of it matter? You\'ll suffer either way.',
-  'There’s a hidden button in this game… but you’re not ready for it.',
-  'Yawn.',
-  'If you leave now, you might just escape my curse… maybe.',
-  'TRA LA LA! …What? Can\'t a demon have fun?',
-  'I heard you can win legendary cards here. Just keep playing...',
-  'The more you play, the greater the jackpot.',
-  'This game is fair. Trust me.',
-  'My son won once, so I killed him. He\'s still around here... somewhere.',
-  'You\'ve come so far. Just a little more…',
-  'Your odds are fantastic! Would I lie to you?',
-  'You\'re so close to winning my card! Oh… never mind.',
-  'Spin again! You\'re definitely hitting the jackpot this time.',
-  'The Gold Stage? Ah, that’s just a myth. No one gets there.',
-  'I bet you didn’t know that I devour the souls of quitters.',
-  'Another round?'
-];
-const shouldShowPhrase = Math.random() < 1 / (5 + Math.floor(Math.random() * 6));
-const randomPhrase     = shouldShowPhrase
-  ? zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
-  : null;
+    // 5️⃣ Build Zalathor phrase
+    const zalathorPhrases = [
+      'Did you know I can grant wishes.',
+      'The whispers say you’ll win… but I wouldn’t trust them.',
+      'How pitiful. Spin again, maybe you’ll amuse me.',
+      "Double down. I promise, it's safe...",
+      'Somewhere, someone is winning BIG! But not you.',
+      'Ah, the Gold Stage… so many possibilities... if you ever get there.',
+      'I saw a player win the jackpot once. They disappeared right after.',
+      'You should stop now!',
+      "Gold, eggs, ichor… Does any of it matter? You'll suffer either way.",
+      'There’s a hidden button in this game… but you’re not ready for it.',
+      'Yawn.',
+      'If you leave now, you might just escape my curse… maybe.',
+      "TRA LA LA! …What? Can't a demon have fun?",
+      'I heard you can win legendary cards here. Just keep playing...',
+      'The more you play, the greater the jackpot.',
+      'This game is fair. Trust me.',
+      "My son won once, so I killed him. He's still around here... somewhere.",
+      "You've come so far. Just a little more…",
+      'Your odds are fantastic! Would I lie to you?',
+      "You're so close to winning my card! Oh… never mind.",
+      "Spin again! You're definitely hitting the jackpot this time.",
+      'The Gold Stage? Ah, that’s just a myth. No one gets there.',
+      'I bet you didn’t know that I devour the souls of quitters.',
+      'Another round?',
+    ]
+    const shouldShowPhrase =
+      Math.random() < 1 / (5 + Math.floor(Math.random() * 6))
+    const randomPhrase = shouldShowPhrase
+      ? zalathorPhrases[Math.floor(Math.random() * zalathorPhrases.length)]
+      : null
 
-// 6️⃣ Build embed
-const footerText = `Current Jackpot 🪙${jackpot}`;
-const embed = new EmbedBuilder()
-  .setTitle(columnData[gameState.currentColumn].title)
-  .setColor(columnData[gameState.currentColumn].color)
-  .setDescription(randomPhrase ? `${msg}\n\n*${randomPhrase}*` : msg)
-  .setThumbnail(thumbnailUrl)
-  .setFooter({ text: footerText });
+    // 6️⃣ Build embed
+    const footerText = `Current Jackpot 🪙${jackpot}`
+    const embed = new EmbedBuilder()
+      .setTitle(columnData[gameState.currentColumn].title)
+      .setColor(columnData[gameState.currentColumn].color)
+      .setDescription(randomPhrase ? `${msg}\n\n*${randomPhrase}*` : msg)
+      .setThumbnail(thumbnailUrl)
+      .setFooter({ text: footerText })
 
     if (!gameState.running) {
       // should be false only if you added more end states
@@ -732,9 +732,9 @@ const embed = new EmbedBuilder()
 
   const collectorRenewInterval = setInterval(async () => {
     if (Date.now() - lastInteractionTime >= 30000 && gameState.running) {
-      console.log(
-        `[Renew Slots] No interaction for 30 seconds for user: ${userId}. Renewing collector.`
-      )
+      // console.log(
+      //   `[Renew Slots] No interaction for 30 seconds for user: ${userId}. Renewing collector.`
+      // )
       currentCollector.stop('timeout')
       lastInteractionTime = Date.now()
     }

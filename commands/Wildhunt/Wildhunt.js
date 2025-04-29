@@ -16,11 +16,11 @@ const {
   updateOrAddMonsterToCollection,
 } = require('../../handlers/userMonsterHandler')
 const { updateTop3AndUserScore } = require('../../handlers/topCardsManager')
-// const {
-//   generateMonsterRewardEmbed,
-// } = require('../../utils/embeds/monsterRewardEmbed')
-// const { getStarsBasedOnColor } = require('../../utils/starRating')
-// const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
+const {
+  generateMonsterRewardEmbed,
+} = require('../../utils/embeds/monsterRewardEmbed')
+const { getStarsBasedOnColor } = require('../../utils/starRating')
+const { classifyMonsterType } = require('../Hunt/huntUtils/huntHelpers.js')
 
 const { collectors, stopUserCollector } = require('../../utils/collectors')
 
@@ -79,8 +79,9 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
       claimed = true
       await i.deferUpdate()
 
-      await giveReward(rewards[parseInt(i.customId.split('_')[2])], i.user)
-      resolve(true)
+      const sel = rewards[parseInt(i.customId.split('_')[2])]
+      await giveReward(sel, i.user)
+      // no need to resolve again here since giveReward already does
     })
 
     collector.on('end', async () => {
@@ -108,8 +109,16 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
     // --------------------------------------------------
 
     async function giveReward(selectedReward, discordUser) {
+      let resultEmbed
+
       if (selectedReward.type === 'gold') {
         await user.increment('gold', { by: selectedReward.amount })
+        resultEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('🎉 Congratulations!')
+          .setDescription(
+            `${discordUser.username}, you've won 🪙${selectedReward.amount} gold!`
+          )
       } else if (selectedReward.type === 'gear') {
         const gearReward =
           Math.floor(
@@ -120,6 +129,13 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
         user.currency.gear = (user.currency.gear || 0) + gearReward
         await user.changed('currency', true)
         await user.save()
+
+        resultEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('🎉 Congratulations!')
+          .setDescription(
+            `${discordUser.username}, you've won 🪙180 gold and ⚙️${gearReward} gear!`
+          )
       } else if (selectedReward.type === 'beast') {
         await user.increment('gold', { by: 180 })
         const beasts = await Monster.findAll({ where: { type: 'beast' } })
@@ -127,8 +143,26 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
           const beast = beasts[Math.floor(Math.random() * beasts.length)]
           await updateOrAddMonsterToCollection(user.user_id, beast)
           await updateTop3AndUserScore(user.user_id)
+
+          const stars = getStarsBasedOnColor(beast.color)
+          const category = classifyMonsterType(beast.type)
+          resultEmbed = generateMonsterRewardEmbed(beast, category, stars)
+          resultEmbed.setDescription(
+            `${discordUser.username} obtained 🪙180 gold and the ${
+              beast.name
+            } from their Wild Hunt!\n\n${resultEmbed.data.description || ''}`
+          )
+        } else {
+          resultEmbed = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('Reward Error')
+            .setDescription('No beast cards available.')
         }
       }
+
+      // now send it
+      await interaction.channel.send({ embeds: [resultEmbed] })
+      resolve(true)
     }
   })
 }
@@ -376,7 +410,7 @@ Your Brute Score: ${bruteScore || 0} + Base Damage: ${baseDmg || 0}`
           1, // advMultiplier fixed to 1.
           { ichorUsed: false },
           'Brute',
-          beast.imageUrl || null 
+          beast.imageUrl || null
         )
 
         if (battleResult) {
