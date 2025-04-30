@@ -59,10 +59,10 @@ function buildAllPages(huntPages) {
   )
 
   // optional: log to verify the boosted boss payout
-  console.log(
-    `[${pageKey} • Hunt ${hunt.id}] per-fight gold:`,
-    fightG
-  )
+//   console.log(
+//     `[${pageKey} • Hunt ${hunt.id}] per-fight gold:`,
+//     fightG
+//   )
 
       hunt.battles.forEach((b, i) => (b.goldReward = fightG[i]))
     })

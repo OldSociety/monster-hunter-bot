@@ -24,8 +24,6 @@ async function addRewardToUser(user, goldAmount = 0, tokenAmount = 0) {
 }
 
 async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
-  console.log('🏆 Displaying Hunt Summary...')
-
   if (!huntData.level) {
     console.error(
       `❌ ERROR: huntData.level is undefined in displayHuntSummary.`
@@ -114,22 +112,20 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
   }
 
   if (levelCompleted) {
-    console.log(
-      '✔ Hunt completed. Checking for next unlock...',
-      'level id: ',
-      huntData.level.id
-    )
+    // console.log(
+    //   '✔ Hunt completed. Checking for next unlock...',
+    //   'level id: ',
+    //   huntData.level.id
+    // )
 
     // Store the old value before updating
-    const previousCompletedLevels = user.completedLevels
 
-    console.log(`🧐 Previous Completed Levels: ${previousCompletedLevels}`)
-    console.log(`🧐 Current Hunt ID: ${huntData.level.id}`)
+    // console.log(`🧐 Current Hunt ID: ${huntData.level.id}`)
 
     if (huntData.level.id === user.completedLevels + 1) {
-      console.log(
-        `📈 Progressing from ${user.completedLevels} → ${huntData.level.id}`
-      )
+      // console.log(
+      //   `📈 Progressing from ${user.completedLevels} → ${huntData.level.id}`
+      // )
       user.completedLevels = huntData.level.id
       await user.save()
 
@@ -138,14 +134,12 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
           (hunt) => hunt.key === currentHunt.unlocks
         )
         if (nextHunt) {
-          console.log(`🔓 Unlocking: ${nextHunt.name}`)
+          // console.log(`🔓 Unlocking: ${nextHunt.name}`)
 
           summaryEmbed.spliceFields(0, 0, {
             name: 'Next Hunt Unlocked!',
             value: `You have unlocked **${nextHunt.name}**!`,
           })
-
-          console.log(`✅ Unlock message added.`)
         }
       }
     }

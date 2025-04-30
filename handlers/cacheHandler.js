@@ -108,7 +108,7 @@ async function populateMonsterCache() {
       addedCount++
     }
 
-    console.log(`[CACHE] Successfully stored ${addedCount} monsters from DB.`)
+    // console.log(`[CACHE] Successfully stored ${addedCount} monsters from DB.`)
 
     cachePopulated = true
   } catch (error) {
@@ -130,7 +130,7 @@ function pullMonsterByCR(cr) {
 }
 
 function pullSpecificMonster(index) {
-  console.log(`[PULL] Searching for: ${index}`)
+  // console.log(`[PULL] Searching for: ${index}`)
 
   if (!global.monsterCache || global.monsterCache.length === 0) {
     console.error(
@@ -139,7 +139,7 @@ function pullSpecificMonster(index) {
     return null
   }
 
-  console.log(`[PULL] Total monsters in cache: ${global.monsterCache.length}`)
+  // console.log(`[PULL] Total monsters in cache: ${global.monsterCache.length}`)
 
   const foundMonster = global.monsterCache.find(
     (monster) => monster.index === index
@@ -154,7 +154,7 @@ function pullSpecificMonster(index) {
     return null
   }
 
-  console.log(`[PULL] Found ${index} in monsterCache!`, foundMonster)
+  // console.log(`[PULL] Found ${index} in monsterCache!`, foundMonster)
 
   const mScore = calculateMScore(foundMonster.cr, foundMonster.rarity, 1)
   return { ...foundMonster, mScore }
@@ -186,16 +186,16 @@ async function pullValidMonster(
 
     const eligibleMonsters = global.monsterCacheByTier?.[tierName] || []
 
-    console.log(
-      `[PULL] Checking ${tierName} tier - ${eligibleMonsters.length} available`
-    )
-    console.log('Allowed indexes for werefolk:', Array.from(allowedMonstersSet))
-    console.log(
-      'Sample monster indexes in',
-      tierName,
-      'tier:',
-      eligibleMonsters.slice(0, 5).map((m) => m.index)
-    )
+    // console.log(
+    //   `[PULL] Checking ${tierName} tier - ${eligibleMonsters.length} available`
+    // )
+    // console.log('Allowed indexes for werefolk:', Array.from(allowedMonstersSet))
+    // console.log(
+    //   'Sample monster indexes in',
+    //   tierName,
+    //   'tier:',
+    //   eligibleMonsters.slice(0, 5).map((m) => m.index)
+    // )
 
     const filteredMonsters = eligibleMonsters.filter((monster) =>
       allowedMonstersSet.has(monster.index)
