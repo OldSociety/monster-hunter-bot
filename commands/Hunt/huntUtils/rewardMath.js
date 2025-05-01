@@ -7,7 +7,7 @@ export function gPerEnergy(page) {
 }
 
 export function bossGold(page, bossEnergy) {
-  if (page === 1) return 281 // <- your hard-coded page-1 boss
+  if (page === 1) return 141 // <- your hard-coded page-1 boss
   return Math.round(gPerEnergy(page) * bossEnergy)
 }
 

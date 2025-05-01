@@ -114,7 +114,6 @@ async function runBattlePhases(
     const phaseEmbed = new EmbedBuilder()
       .setTitle(`Phase ${phase} - Battle with ${monster.name}`)
       .setDescription(
-        `**CR:** ${monster.cr}\n` +
           `**Player Score:** ${Math.floor(effectivePlayerScore)}\n` +
           `**Enemy Score:** ${Math.floor(monsterScore)}\n\n` +
           `**Effects:** ${effects}\n\n` +

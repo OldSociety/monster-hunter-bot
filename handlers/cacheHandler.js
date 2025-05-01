@@ -166,77 +166,82 @@ async function pullValidMonster(
   userId,
   maxAttempts = 10
 ) {
-  let attempts = 0
-  let monster
+  let attempts = 0, monster;
 
-  const allowedMonstersSet = allowedMonstersByPack[packType]
-  if (!allowedMonstersSet || allowedMonstersSet.size === 0) {
-    console.warn(
-      `[PULL ERROR] No allowed monsters defined for pack: ${packType}`
-    )
-    return null
+  // 1) force allowedEntries into an array
+  const allowedEntries = Array.from(allowedMonstersByPack[packType] || []);
+  if (allowedEntries.length === 0) {
+    console.warn(`[PULL ERROR] No allowed monsters defined for pack: ${packType}`);
+    return null;
   }
+
+  // 2) build map of explicit chances
+  const explicitChance = new Map(
+    allowedEntries
+      .filter(e => e.chance != null)
+      .map(e => [e.monster, e.chance])
+  );
 
   do {
     const tierName =
-      ['monstrosity', 'elemental', 'werefolk'].includes(packType) &&
-      tierOption.customTiers
+      ['monstrosity','elemental','werefolk'].includes(packType) && tierOption.customTiers
         ? selectTier(tierOption.customTiers)
-        : tierOption.name
+        : tierOption.name;
 
-    const eligibleMonsters = global.monsterCacheByTier?.[tierName] || []
-
-    // console.log(
-    //   `[PULL] Checking ${tierName} tier - ${eligibleMonsters.length} available`
-    // )
-    // console.log('Allowed indexes for werefolk:', Array.from(allowedMonstersSet))
-    // console.log(
-    //   'Sample monster indexes in',
-    //   tierName,
-    //   'tier:',
-    //   eligibleMonsters.slice(0, 5).map((m) => m.index)
-    // )
-
-    const filteredMonsters = eligibleMonsters.filter((monster) =>
-      allowedMonstersSet.has(monster.index)
-    )
-
-    console.log(
-      `[PULL] Allowed monsters after filtering: ${filteredMonsters.length}`
-    )
-
+    const eligible = global.monsterCacheByTier?.[tierName] || [];
+    const filteredMonsters = eligible.filter(m =>
+      allowedEntries.some(e => e.monster === m.index)
+    );
     if (!filteredMonsters.length) {
-      console.warn(
-        `[PULL ERROR] No eligible monsters in tier: ${tierName} after filtering`
-      )
-      return null
+      console.warn(`[PULL ERROR] No eligible monsters in tier: ${tierName}`);
+      return null;
     }
 
-    // Calculate total weight using 1 / (CR + 1)
-    const totalWeight = filteredMonsters.reduce(
-      (sum, m) => sum + 1 / (m.cr + 1),
-      0
-    )
-    let randomWeight = Math.random() * totalWeight
-    for (const m of filteredMonsters) {
-      randomWeight -= 1 / (m.cr + 1)
-      if (randomWeight <= 0) {
-        monster = m
-        break
+    // 3) attach explicit chances, clear others
+    filteredMonsters.forEach(m => {
+      if (explicitChance.has(m.index)) {
+        m.chance = explicitChance.get(m.index);
+      } else {
+        delete m.chance;
       }
+    });
+
+    // 4) compute remaining pool and distribute
+    const definedTotal = filteredMonsters
+      .filter(m => m.chance != null)
+      .reduce((sum, m) => sum + m.chance, 0);
+    const undefinedCount = filteredMonsters.filter(m => m.chance == null).length;
+    const perUndefined = undefinedCount
+      ? (1 - definedTotal) / undefinedCount
+      : 0;
+    filteredMonsters.forEach(m => {
+      if (m.chance == null) m.chance = perUndefined;
+    });
+
+    // 5) re-added debug logs
+    console.log("[PULL] Monster chances before selection:");
+    filteredMonsters.forEach(m => {
+      console.log(`Monster: ${m.name}, Chance: ${m.chance}`);
+    });
+
+    // 6) select by weight = chance * (1/(cr+1))
+    const totalWeight = filteredMonsters.reduce(
+      (sum, m) => sum + m.chance * (1 / (m.cr + 1)),
+      0
+    );
+    let roll = Math.random() * totalWeight;
+    for (const m of filteredMonsters) {
+      roll -= m.chance * (1 / (m.cr + 1));
+      if (roll <= 0) { monster = m; break; }
     }
 
-    attempts++
-  } while (!monster && attempts < maxAttempts)
+    attempts++;
+  } while (!monster && attempts < maxAttempts);
 
-  // if (monster) {
-  //   console.log(
-  //     `[PULL] Successfully pulled ${monster.name}. Adding to collection.`
-  //   )
-  //   await updateOrAddMonsterToCollection(userId, monster)
-  // }
-
-  return monster
+  if (monster) {
+    console.log(`[PULL] Selected: ${monster.name} (${monster.index}) @${monster.chance}`);
+  }
+  return monster;
 }
 
 async function fetchMonsterByName(name) {

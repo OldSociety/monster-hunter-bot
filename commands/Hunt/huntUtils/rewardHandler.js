@@ -81,8 +81,8 @@ async function displayHuntSummary(interaction, user, huntData, levelCompleted) {
     }
 
     // bosses & minibosses always get +20%
-    if (battle.type === 'mini-boss' || battle.type === 'boss') {
-      reward = Math.round(reward * 1.2)
+    if (battle.type === 'boss') {
+      reward = Math.round(reward * 1.4)
     }
 
     totalGoldEarned += reward

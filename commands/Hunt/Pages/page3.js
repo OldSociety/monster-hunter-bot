@@ -171,8 +171,8 @@ module.exports = {
         { type: 'normal', monsterIndex: 'hill-giant', difficulty: 210, goldReward: 90 }, // 210
         {
           type: 'boss',
-          monsterIndex: 'vampire-vampire', // 288
-          difficulty: 288,
+          monsterIndex: 'vampire-vampire', // 228
+          difficulty: 228,
           firstGoldReward: 2025,
           goldReward: 93,
         },
