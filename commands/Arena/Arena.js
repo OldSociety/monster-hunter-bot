@@ -50,7 +50,7 @@ module.exports = {
 //         const agility = player.allocatedAgility + (4 + 0.1 * player.stealth)
 
 //         let description =
-//           `Welcome to Blood Hunter!\n\n` +
+//           `Welcome to Blood Hunter Arena!\n\n` +
 //           `Your account uses your style scores to build your combat attributes. Here’s how it works:\n` +
 //           `• **Strength** is built from your Brute score: Base = 4 + 0.1 × Brute, plus any extra points you add (max 10).\n` +
 //           `• **Defense** and **Agility** come from your Stealth score: Base = 4 + 0.1 × Stealth, plus extra allocations.\n` +

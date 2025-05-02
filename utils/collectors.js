@@ -1,3 +1,5 @@
+//utils/collectors
+// 
 const collectors = new Map() // Global map for active collectors
 
 function stopUserCollector(userId) {
