@@ -12,12 +12,12 @@ module.exports = {
       energyCost: 1,
       totalBattles: 4,
       battles: [
-        { type: 'normal', monsterIndex: 'goblin', difficulty: 7, goldReward: 24 }, // hp 7
-        { type: 'normal', monsterIndex: 'giant-rat', difficulty: 9, goldReward: 26 }, // 9
-        { type: 'normal', monsterIndex: 'magmin', difficulty: 9, goldReward: 28 }, //9
+        { type: 'normal', monsterIndex: 'goblin', difficulty: 7},
+        { type: 'normal', monsterIndex: 'giant-rat', difficulty: 9},
+        { type: 'normal', monsterIndex: 'magmin', difficulty: 9},
         {
           type: 'mini-boss',
-          monsterIndex: 'darkmantle', // 16
+          monsterIndex: 'darkmantle', 
           difficulty: 16,
           firstGoldReward: 170,
           goldReward: 28,
@@ -33,13 +33,13 @@ module.exports = {
       energyCost: 1,
       totalBattles: 5,
       battles: [
-        { type: 'normal', monsterIndex: 'grimlock', difficulty: 11, goldReward: 25 }, // 11
-        { type: 'normal', monsterIndex: 'ape', difficulty: 9, goldReward: 27 }, // 9
-        { type: 'normal', monsterIndex: 'imp', difficulty: 10, goldReward: 29 }, // 10
-        { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 11, goldReward: 31 }, //11
+        { type: 'normal', monsterIndex: 'grimlock', difficulty: 11},
+        { type: 'normal', monsterIndex: 'ape', difficulty: 9},
+        { type: 'normal', monsterIndex: 'imp', difficulty: 10},
+        { type: 'normal', monsterIndex: 'tribal-warrior', difficulty: 11},
         {
           type: 'mini-boss',
-          monsterIndex: 'harpy', // 19
+          monsterIndex: 'harpy', 
           difficulty: 19,
           firstGoldReward: 190,
           goldReward: 32,
@@ -56,16 +56,16 @@ module.exports = {
       energyCost: 1,
       totalBattles: 8,
       battles: [
-        { type: 'normal', monsterIndex: 'drow', difficulty: 13, goldReward: 26 }, // 13
-        { type: 'normal', monsterIndex: 'orc', difficulty: 15, goldReward: 28 }, // 15
-        { type: 'normal', monsterIndex: 'camel', difficulty: 15, goldReward: 30 }, // 15
-        { type: 'normal', monsterIndex: 'lemure', difficulty: 13, goldReward: 32 }, // 13
-        { type: 'normal', monsterIndex: 'ape', difficulty: 19, goldReward: 34 }, // 19
-        { type: 'normal', monsterIndex: 'flying-sword', difficulty: 17, goldReward: 27 }, // 17
-        { type: 'normal', monsterIndex: 'deep-gnome-svirfneblin', difficulty: 16, goldReward: 29 }, // 16
+        { type: 'normal', monsterIndex: 'drow', difficulty: 13},
+        { type: 'normal', monsterIndex: 'orc', difficulty: 15},
+        { type: 'normal', monsterIndex: 'camel', difficulty: 15},
+        { type: 'normal', monsterIndex: 'lemure', difficulty: 13},
+        { type: 'normal', monsterIndex: 'ape', difficulty: 19},
+        { type: 'normal', monsterIndex: 'flying-sword', difficulty: 17},
+        { type: 'normal', monsterIndex: 'deep-gnome-svirfneblin', difficulty: 16},
         {
           type: 'mini-boss',
-          monsterIndex: 'rust-monster', // 27
+          monsterIndex: 'rust-monster', 
           difficulty: 27,
           firstGoldReward: 180,
           goldReward: 52,
@@ -82,17 +82,17 @@ module.exports = {
       energyCost: 1,
       totalBattles: 9,
       battles: [
-        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 33, goldReward: 31 }, // 33
-        { type: 'normal', monsterIndex: 'azer', difficulty: 39, goldReward: 33 }, // 39
-        { type: 'normal', monsterIndex: 'ettercap', difficulty: 44, goldReward: 70 }, // 44
-        { type: 'normal', monsterIndex: 'black-dragon-wyrmling', difficulty: 32, goldReward: 28 }, // 32
-        { type: 'normal', monsterIndex: 'dire-wolf', difficulty: 37, goldReward: 30 }, // 37
-        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 33, goldReward: 32 }, // 33
-        { type: 'normal', monsterIndex: 'dryad', difficulty: 33, goldReward: 34 }, // 33
-        { type: 'normal', monsterIndex: 'cockatrice', difficulty: 27, goldReward: 36 }, // 27
+        { type: 'normal', monsterIndex: 'animated-armor', difficulty: 33},
+        { type: 'normal', monsterIndex: 'azer', difficulty: 39},
+        { type: 'normal', monsterIndex: 'ettercap', difficulty: 44},
+        { type: 'normal', monsterIndex: 'black-dragon-wyrmling', difficulty: 32},
+        { type: 'normal', monsterIndex: 'dire-wolf', difficulty: 37},
+        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 33},
+        { type: 'normal', monsterIndex: 'dryad', difficulty: 33},
+        { type: 'normal', monsterIndex: 'cockatrice', difficulty: 27},
         {
           type: 'mini-boss',
-          monsterIndex: 'sea-hag', // 42
+          monsterIndex: 'sea-hag', 
           difficulty: 42,
           firstGoldReward: 180,
           goldReward: 52,
@@ -103,7 +103,7 @@ module.exports = {
     {
       id: 8,
       key: 'hunt8',
-      name: 'Red Dragon Wyrmling',
+      name: 'Oryzinax',
       description: `The time has come to face Oryzinax—slay the wyrmling before Harvest Hill burns.`,
       energyCost: 2,
       totalBattles: 10,
