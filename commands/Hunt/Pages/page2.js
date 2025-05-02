@@ -108,21 +108,20 @@ module.exports = {
       energyCost: 2,
       totalBattles: 10,
       battles: [
-        { type: 'normal', monsterIndex: 'bandit-captain', difficulty: 55, goldReward: 31 }, // 65
-        { type: 'normal', monsterIndex: 'satyr', difficulty: 45, goldReward: 45 }, // 45
-        { type: 'normal', monsterIndex: 'duergar', difficulty: 39, goldReward: 48 }, // 39
-        { type: 'normal', monsterIndex: 'knight', difficulty: 42, goldReward: 51 }, // 52
-        { type: 'normal', monsterIndex: 'green-hag', difficulty: 52, goldReward: 54 }, // 82
-        { type: 'normal', monsterIndex: 'werewolf-hybrid', difficulty: 58, goldReward: 57 }, // 58
-        { type: 'normal', monsterIndex: 'veteran', difficulty: 59, goldReward: 60 }, // 58
-        { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 45, goldReward: 63 }, // 67
-        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 66, goldReward: 58 }, // 66
+        { type: 'normal', monsterIndex: 'bandit-captain', difficulty: 55 }, 
+        { type: 'normal', monsterIndex: 'satyr', difficulty: 45 }, 
+        { type: 'normal', monsterIndex: 'duergar', difficulty: 39 },
+        { type: 'normal', monsterIndex: 'knight', difficulty: 42 }, 
+        { type: 'normal', monsterIndex: 'green-hag', difficulty: 52 },
+        { type: 'normal', monsterIndex: 'werewolf-hybrid', difficulty: 58 }, 
+        { type: 'normal', monsterIndex: 'veteran', difficulty: 59 }, 
+        { type: 'normal', monsterIndex: 'ochre-jelly', difficulty: 45 }, 
+        { type: 'normal', monsterIndex: 'succubus-incubus', difficulty: 66 }, 
         {
           type: 'boss',
-          monsterIndex: 'red-dragon-wyrmling', // 93
+          monsterIndex: 'red-dragon-wyrmling', 
           difficulty: 73,
           firstGoldReward: 1441,
-          goldReward: 75,
         },
       ],
       unlocksPage: 'page3',

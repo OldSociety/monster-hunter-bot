@@ -81,12 +81,12 @@ function createStyleButtons(user) {
 }
 
 async function offerRetry(interaction, user, huntData) {
-  if (user.currency.energy < huntData.level.energyCost) {
+  if (user.currency.energy < 1) {
     const noEnergyRetryEmbed = new EmbedBuilder()
       .setColor('#FF0000')
       .setTitle('Out of Energy')
       .setDescription(
-        `You don't have enough energy to retry. Each retry costs ⚡${huntData.level.energyCost} energy.\nEnergy regenerates every 10 minutes.`
+        `You don't have enough energy to retry. Each retry costs ⚡1 energy.\nEnergy regenerates every 10 minutes.`
       )
       .setFooter({
         text: `Available: 🪙${user.gold} ⚡${user.currency.energy} 🧿${user.currency.tokens} 🥚${user.currency.eggs} 🧪${user.currency.ichor} ⚙️${user.currency.gear}`,

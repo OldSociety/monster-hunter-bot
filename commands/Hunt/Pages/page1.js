@@ -12,15 +12,13 @@ module.exports = {
       energyCost: 1,
       totalBattles: 4,
       battles: [
-        { type: 'normal', monsterIndex: 'hyena', difficulty: 4 }, // hp 4
-        { type: 'normal', monsterIndex: 'shrieker', difficulty: 6 }, // 6 (13)
-        { type: 'normal', monsterIndex: 'crab', difficulty: 6 }, //6 (2)
+        { type: 'normal', monsterIndex: 'hyena', difficulty: 4 }, 
+        { type: 'normal', monsterIndex: 'shrieker', difficulty: 6 }, 
+        { type: 'normal', monsterIndex: 'crab', difficulty: 6 }, 
         {
           type: 'mini-boss',
-          monsterIndex: 'giant-fire-beetle', // 8 (4)
+          monsterIndex: 'giant-fire-beetle', 
           difficulty: 8,
-          firstGoldReward: 55,
-          goldReward: 23,
         },
       ],
       unlocks: 'hunt2',
@@ -33,14 +31,13 @@ module.exports = {
       energyCost: 1,
       totalBattles: 4,
       battles: [
-        { type: 'normal', monsterIndex: 'sprite', difficulty: 6}, // 6 (2)
-        { type: 'normal', monsterIndex: 'quasit', difficulty: 7 }, // 7
-        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 8}, //(8) 22
+        { type: 'normal', monsterIndex: 'sprite', difficulty: 6}, 
+        { type: 'normal', monsterIndex: 'quasit', difficulty: 7 }, 
+        { type: 'normal', monsterIndex: 'blink-dog', difficulty: 8},
         {
           type: 'mini-boss',
-          monsterIndex: 'imp', // 10
+          monsterIndex: 'imp', 
           difficulty: 10,
-          firstGoldReward: 70,
         },
       ],
       unlocks: 'hunt3',
@@ -53,13 +50,13 @@ module.exports = {
       energyCost: 1,
       totalBattles: 5,
       battles: [
-        { type: 'normal', monsterIndex: 'orc', difficulty: 7 }, // 7 (15)
-        { type: 'normal', monsterIndex: 'goblin', difficulty: 7 }, // 7
-        { type: 'normal', monsterIndex: 'kobold', difficulty: 5 }, // 5
-        { type: 'normal', monsterIndex: 'drow', difficulty: 8 }, // 8
+        { type: 'normal', monsterIndex: 'orc', difficulty: 7 }, 
+        { type: 'normal', monsterIndex: 'goblin', difficulty: 7 }, 
+        { type: 'normal', monsterIndex: 'kobold', difficulty: 5 }, 
+        { type: 'normal', monsterIndex: 'drow', difficulty: 8 }, 
         {
           type: 'mini-boss',
-          monsterIndex: 'hobgoblin', // 11
+          monsterIndex: 'hobgoblin',
           difficulty: 11,
           firstGoldReward: 1049,
         },
