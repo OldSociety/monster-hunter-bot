@@ -9,7 +9,7 @@ const RaidBoss = require('./MonsterList/RaidBoss')(sequelize, DataTypes)
 const TrainingSession = require('./Training/TrainingSession')(sequelize, DataTypes)
 
 // Arena models
-// const Arena = require('./Arena/Arenas')(sequelize, DataTypes)
+const Arena = require('./Arena/Arena')(sequelize, DataTypes)
 // const ArenaMonster = require('./Arena/ArenaMonster')(sequelize, DataTypes)
 // const BaseItem = require('./Arena/BaseItems')(sequelize, DataTypes)
 // const Inventory = require('./Arena/Inventories')(sequelize, DataTypes)
@@ -79,13 +79,25 @@ Collection.belongsTo(User, {
 //   as: 'monster',
 // })
 
+// Monsters
+Monster.hasMany(Collection, {
+  foreignKey: 'name',
+  sourceKey: 'name', 
+})
+
+Collection.belongsTo(Monster, {
+  foreignKey: 'name',
+  targetKey: 'name',
+})
+
+
 module.exports = {
   User,
   Collection,
   Monster,
   RaidBoss,
   TrainingSession,
-  // Arena,
+  Arena,
   // ArenaMonster,
   // BaseItem,
   // Inventory,

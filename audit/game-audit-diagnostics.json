@@ -1,0 +1,1731 @@
+{
+  "campaign": [
+    {
+      "page": "page1",
+      "id": 1,
+      "name": "Giant Fire Beetle",
+      "energy": 1,
+      "fights": 4,
+      "declaredFights": 4,
+      "targetGold": 16,
+      "repeatGold": 16,
+      "firstGold": 16,
+      "goldPerEnergy": 16,
+      "tokenExpectation": 5.33,
+      "minEnemy": 4,
+      "maxEnemy": 8,
+      "bossEnemy": 8
+    },
+    {
+      "page": "page1",
+      "id": 2,
+      "name": "Imp",
+      "energy": 1,
+      "fights": 4,
+      "declaredFights": 4,
+      "targetGold": 63,
+      "repeatGold": 63,
+      "firstGold": 63,
+      "goldPerEnergy": 63,
+      "tokenExpectation": 5.33,
+      "minEnemy": 6,
+      "maxEnemy": 10,
+      "bossEnemy": 10
+    },
+    {
+      "page": "page1",
+      "id": 3,
+      "name": "Hobgoblin",
+      "energy": 1,
+      "fights": 5,
+      "declaredFights": 5,
+      "targetGold": 141,
+      "repeatGold": 141,
+      "firstGold": 1139,
+      "goldPerEnergy": 141,
+      "tokenExpectation": 6.67,
+      "minEnemy": 5,
+      "maxEnemy": 11,
+      "bossEnemy": 11
+    },
+    {
+      "page": "page2",
+      "id": 4,
+      "name": "Darkmantle",
+      "energy": 1,
+      "fights": 4,
+      "declaredFights": 4,
+      "targetGold": 145,
+      "repeatGold": 145,
+      "firstGold": 263,
+      "goldPerEnergy": 145,
+      "tokenExpectation": 5.33,
+      "minEnemy": 7,
+      "maxEnemy": 16,
+      "bossEnemy": 16
+    },
+    {
+      "page": "page2",
+      "id": 5,
+      "name": "Harpy",
+      "energy": 1,
+      "fights": 5,
+      "declaredFights": 5,
+      "targetGold": 158,
+      "repeatGold": 158,
+      "firstGold": 291,
+      "goldPerEnergy": 158,
+      "tokenExpectation": 6.67,
+      "minEnemy": 9,
+      "maxEnemy": 19,
+      "bossEnemy": 19
+    },
+    {
+      "page": "page2",
+      "id": 6,
+      "name": "Rust Monster",
+      "energy": 1,
+      "fights": 8,
+      "declaredFights": 8,
+      "targetGold": 180,
+      "repeatGold": 180,
+      "firstGold": 295,
+      "goldPerEnergy": 180,
+      "tokenExpectation": 10.67,
+      "minEnemy": 13,
+      "maxEnemy": 27,
+      "bossEnemy": 27
+    },
+    {
+      "page": "page2",
+      "id": 7,
+      "name": "Sea Hag",
+      "energy": 1,
+      "fights": 9,
+      "declaredFights": 9,
+      "targetGold": 211,
+      "repeatGold": 211,
+      "firstGold": 315,
+      "goldPerEnergy": 211,
+      "tokenExpectation": 12,
+      "minEnemy": 27,
+      "maxEnemy": 44,
+      "bossEnemy": 42
+    },
+    {
+      "page": "page2",
+      "id": 8,
+      "name": "Oryzinax",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 500,
+      "repeatGold": 572,
+      "firstGold": 2337,
+      "goldPerEnergy": 286,
+      "tokenExpectation": 13.33,
+      "minEnemy": 39,
+      "maxEnemy": 73,
+      "bossEnemy": 73
+    },
+    {
+      "page": "page3",
+      "id": 9,
+      "name": "Bandit Captain",
+      "energy": 1,
+      "fights": 6,
+      "declaredFights": 6,
+      "targetGold": 255,
+      "repeatGold": 255,
+      "firstGold": 460,
+      "goldPerEnergy": 255,
+      "tokenExpectation": 8,
+      "minEnemy": 76,
+      "maxEnemy": 115,
+      "bossEnemy": 115
+    },
+    {
+      "page": "page3",
+      "id": 10,
+      "name": "Gibbering Mouther",
+      "energy": 1,
+      "fights": 6,
+      "declaredFights": 6,
+      "targetGold": 268,
+      "repeatGold": 268,
+      "firstGold": 457,
+      "goldPerEnergy": 268,
+      "tokenExpectation": 8,
+      "minEnemy": 82,
+      "maxEnemy": 110,
+      "bossEnemy": 110
+    },
+    {
+      "page": "page3",
+      "id": 11,
+      "name": "Vampire Spawn",
+      "energy": 1,
+      "fights": 6,
+      "declaredFights": 6,
+      "targetGold": 292,
+      "repeatGold": 292,
+      "firstGold": 483,
+      "goldPerEnergy": 292,
+      "tokenExpectation": 8,
+      "minEnemy": 110,
+      "maxEnemy": 123,
+      "bossEnemy": 123
+    },
+    {
+      "page": "page3",
+      "id": 12,
+      "name": "Deva",
+      "energy": 2,
+      "fights": 8,
+      "declaredFights": 8,
+      "targetGold": 648,
+      "repeatGold": 648,
+      "firstGold": 719,
+      "goldPerEnergy": 324,
+      "tokenExpectation": 10.67,
+      "minEnemy": 135,
+      "maxEnemy": 153,
+      "bossEnemy": 153
+    },
+    {
+      "page": "page3",
+      "id": 13,
+      "name": "Chimera",
+      "energy": 1,
+      "fights": 8,
+      "declaredFights": 8,
+      "targetGold": 365,
+      "repeatGold": 365,
+      "firstGold": 540,
+      "goldPerEnergy": 365,
+      "tokenExpectation": 10.67,
+      "minEnemy": 85,
+      "maxEnemy": 172,
+      "bossEnemy": 172
+    },
+    {
+      "page": "page3",
+      "id": 14,
+      "name": "Gorgon",
+      "energy": 1,
+      "fights": 8,
+      "declaredFights": 8,
+      "targetGold": 416,
+      "repeatGold": 416,
+      "firstGold": 574,
+      "goldPerEnergy": 416,
+      "tokenExpectation": 10.67,
+      "minEnemy": 136,
+      "maxEnemy": 172,
+      "bossEnemy": 172
+    },
+    {
+      "page": "page3",
+      "id": 15,
+      "name": "Vampire Lord Maud",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 952,
+      "repeatGold": 1089,
+      "firstGold": 3444,
+      "goldPerEnergy": 544.5,
+      "tokenExpectation": 13.33,
+      "minEnemy": 125,
+      "maxEnemy": 228,
+      "bossEnemy": 228
+    },
+    {
+      "page": "page4",
+      "id": 16,
+      "name": "Hobrich the Vexed",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 960,
+      "repeatGold": 960,
+      "firstGold": 912,
+      "goldPerEnergy": 480,
+      "tokenExpectation": 13.33,
+      "minEnemy": 168,
+      "maxEnemy": 254,
+      "bossEnemy": 254
+    },
+    {
+      "page": "page4",
+      "id": 17,
+      "name": "Hydra",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 986,
+      "repeatGold": 986,
+      "firstGold": 933,
+      "goldPerEnergy": 493,
+      "tokenExpectation": 13.33,
+      "minEnemy": 155,
+      "maxEnemy": 258,
+      "bossEnemy": 258
+    },
+    {
+      "page": "page4",
+      "id": 18,
+      "name": "Mummy",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 1028,
+      "repeatGold": 1028,
+      "firstGold": 1004,
+      "goldPerEnergy": 514,
+      "tokenExpectation": 13.33,
+      "minEnemy": 184,
+      "maxEnemy": 290,
+      "bossEnemy": 290
+    },
+    {
+      "page": "page4",
+      "id": 19,
+      "name": "Erinyes",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 1629,
+      "repeatGold": 1629,
+      "firstGold": 1537,
+      "goldPerEnergy": 543,
+      "tokenExpectation": 13.33,
+      "minEnemy": 228,
+      "maxEnemy": 306,
+      "bossEnemy": 306
+    },
+    {
+      "page": "page4",
+      "id": 20,
+      "name": "Ice Devil",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 1162,
+      "repeatGold": 1162,
+      "firstGold": 1232,
+      "goldPerEnergy": 581,
+      "tokenExpectation": 13.33,
+      "minEnemy": 200,
+      "maxEnemy": 300,
+      "bossEnemy": 270
+    },
+    {
+      "page": "page4",
+      "id": 21,
+      "name": "Glabrezu",
+      "energy": 2,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 1254,
+      "repeatGold": 1254,
+      "firstGold": 1291,
+      "goldPerEnergy": 627,
+      "tokenExpectation": 13.33,
+      "minEnemy": 234,
+      "maxEnemy": 314,
+      "bossEnemy": 314
+    },
+    {
+      "page": "page4",
+      "id": 22,
+      "name": "Drokkenden the Dread",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2045,
+      "repeatGold": 2339,
+      "firstGold": 4521,
+      "goldPerEnergy": 779.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 285,
+      "maxEnemy": 356,
+      "bossEnemy": 356
+    },
+    {
+      "page": "page5",
+      "id": 23,
+      "name": "Purple Worm",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2057,
+      "repeatGold": 2057,
+      "firstGold": 1744,
+      "goldPerEnergy": 685.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 375,
+      "maxEnemy": 494,
+      "bossEnemy": 494
+    },
+    {
+      "page": "page5",
+      "id": 24,
+      "name": "Duergar",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2091,
+      "repeatGold": 2091,
+      "firstGold": 1858,
+      "goldPerEnergy": 697,
+      "tokenExpectation": 13.33,
+      "minEnemy": 308,
+      "maxEnemy": 520,
+      "bossEnemy": 520
+    },
+    {
+      "page": "page5",
+      "id": 25,
+      "name": "Fire Elemental",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2149,
+      "repeatGold": 2149,
+      "firstGold": 1901,
+      "goldPerEnergy": 716.33,
+      "tokenExpectation": 13.33,
+      "minEnemy": 420,
+      "maxEnemy": 510,
+      "bossEnemy": 510
+    },
+    {
+      "page": "page5",
+      "id": 26,
+      "name": "Balor",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2229,
+      "repeatGold": 2229,
+      "firstGold": 2037,
+      "goldPerEnergy": 743,
+      "tokenExpectation": 13.33,
+      "minEnemy": 414,
+      "maxEnemy": 524,
+      "bossEnemy": 524
+    },
+    {
+      "page": "page5",
+      "id": 27,
+      "name": "Priest",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2333,
+      "repeatGold": 2333,
+      "firstGold": 2147,
+      "goldPerEnergy": 777.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 454,
+      "maxEnemy": 537,
+      "bossEnemy": 520
+    },
+    {
+      "page": "page5",
+      "id": 28,
+      "name": "Giant Spider",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2459,
+      "repeatGold": 2459,
+      "firstGold": 2246,
+      "goldPerEnergy": 819.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 480,
+      "maxEnemy": 541,
+      "bossEnemy": 541
+    },
+    {
+      "page": "page5",
+      "id": 29,
+      "name": "Rakshasa",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2609,
+      "repeatGold": 2985,
+      "firstGold": 6517,
+      "goldPerEnergy": 995,
+      "tokenExpectation": 13.33,
+      "minEnemy": 520,
+      "maxEnemy": 550,
+      "bossEnemy": 550
+    },
+    {
+      "page": "page6",
+      "id": 30,
+      "name": "Druid",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2620,
+      "repeatGold": 2620,
+      "firstGold": 1895,
+      "goldPerEnergy": 873.33,
+      "tokenExpectation": 13.33,
+      "minEnemy": 700,
+      "maxEnemy": 710,
+      "bossEnemy": 709
+    },
+    {
+      "page": "page6",
+      "id": 31,
+      "name": "Unicorn",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2651,
+      "repeatGold": 2651,
+      "firstGold": 1919,
+      "goldPerEnergy": 883.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 705,
+      "maxEnemy": 720,
+      "bossEnemy": 720
+    },
+    {
+      "page": "page6",
+      "id": 32,
+      "name": "Planetar",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2704,
+      "repeatGold": 2704,
+      "firstGold": 2006,
+      "goldPerEnergy": 901.33,
+      "tokenExpectation": 13.33,
+      "minEnemy": 721,
+      "maxEnemy": 740,
+      "bossEnemy": 740
+    },
+    {
+      "page": "page6",
+      "id": 33,
+      "name": "Half Dragon",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2777,
+      "repeatGold": 2777,
+      "firstGold": 2057,
+      "goldPerEnergy": 925.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 747,
+      "maxEnemy": 800,
+      "bossEnemy": 800
+    },
+    {
+      "page": "page6",
+      "id": 34,
+      "name": "Mummy Lord",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2872,
+      "repeatGold": 2872,
+      "firstGold": 2118,
+      "goldPerEnergy": 957.33,
+      "tokenExpectation": 13.33,
+      "minEnemy": 792,
+      "maxEnemy": 815,
+      "bossEnemy": 815
+    },
+    {
+      "page": "page6",
+      "id": 35,
+      "name": "Treant",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 2988,
+      "repeatGold": 2988,
+      "firstGold": 2204,
+      "goldPerEnergy": 996,
+      "tokenExpectation": 13.33,
+      "minEnemy": 821,
+      "maxEnemy": 890,
+      "bossEnemy": 890
+    },
+    {
+      "page": "page6",
+      "id": 36,
+      "name": "Solar",
+      "energy": 3,
+      "fights": 10,
+      "declaredFights": 10,
+      "targetGold": 3125,
+      "repeatGold": 3575,
+      "firstGold": 8026,
+      "goldPerEnergy": 1191.67,
+      "tokenExpectation": 13.33,
+      "minEnemy": 885,
+      "maxEnemy": 929,
+      "bossEnemy": 929
+    }
+  ],
+  "probability": [
+    {
+      "kind": "normal",
+      "ratio": 0.75,
+      "phaseWin": 0.431818,
+      "battleWin": 0.353595,
+      "battleWinIchor": 0.473791
+    },
+    {
+      "kind": "normal",
+      "ratio": 1,
+      "phaseWin": 0.575425,
+      "battleWin": 0.661288,
+      "battleWinIchor": 0.80073
+    },
+    {
+      "kind": "normal",
+      "ratio": 1.25,
+      "phaseWin": 0.689649,
+      "battleWin": 0.860148,
+      "battleWinIchor": 0.951716
+    },
+    {
+      "kind": "normal",
+      "ratio": 1.5,
+      "phaseWin": 0.764696,
+      "battleWin": 0.942214,
+      "battleWinIchor": 0.989578
+    },
+    {
+      "kind": "normal",
+      "ratio": 2,
+      "phaseWin": 0.856026,
+      "battleWin": 0.98956,
+      "battleWinIchor": 0.999677
+    },
+    {
+      "kind": "mini-boss",
+      "ratio": 0.75,
+      "phaseWin": 0.262135,
+      "battleWin": 0.082302,
+      "battleWinIchor": 0.151003
+    },
+    {
+      "kind": "mini-boss",
+      "ratio": 1,
+      "phaseWin": 0.441765,
+      "battleWin": 0.374324,
+      "battleWinIchor": 0.573934
+    },
+    {
+      "kind": "mini-boss",
+      "ratio": 1.25,
+      "phaseWin": 0.588706,
+      "battleWin": 0.688051,
+      "battleWinIchor": 0.877536
+    },
+    {
+      "kind": "mini-boss",
+      "ratio": 1.5,
+      "phaseWin": 0.686667,
+      "battleWin": 0.856022,
+      "battleWinIchor": 0.97114
+    },
+    {
+      "kind": "mini-boss",
+      "ratio": 2,
+      "phaseWin": 0.808099,
+      "battleWin": 0.971091,
+      "battleWinIchor": 0.999028
+    },
+    {
+      "kind": "boss",
+      "ratio": 0.75,
+      "phaseWin": 0.098628,
+      "battleWin": 0.002591,
+      "battleWinIchor": 0.00533
+    },
+    {
+      "kind": "boss",
+      "ratio": 1,
+      "phaseWin": 0.294706,
+      "battleWin": 0.119276,
+      "battleWinIchor": 0.212997
+    },
+    {
+      "kind": "boss",
+      "ratio": 1.25,
+      "phaseWin": 0.471059,
+      "battleWin": 0.436903,
+      "battleWinIchor": 0.654275
+    },
+    {
+      "kind": "boss",
+      "ratio": 1.5,
+      "phaseWin": 0.588627,
+      "battleWin": 0.687895,
+      "battleWinIchor": 0.892292
+    },
+    {
+      "kind": "boss",
+      "ratio": 2,
+      "phaseWin": 0.735588,
+      "battleWin": 0.915372,
+      "battleWinIchor": 0.995549
+    }
+  ],
+  "probes": {
+    "werefolk": {
+      "configuredTotal": 1.08,
+      "actualCommon": 0.38,
+      "actualUncommon": 0.62,
+      "actualRare": 0
+    },
+    "rankSeven": {
+      "Common": 96,
+      "Uncommon": 224,
+      "Rare": 360,
+      "Very Rare": 618,
+      "Legendary": 1200
+    },
+    "arrayParticipantSerialization": "[]",
+    "dailyDays": [
+      {
+        "streak": 0,
+        "displayDay": 1,
+        "awardedDay": 1
+      },
+      {
+        "streak": 1,
+        "displayDay": 1,
+        "awardedDay": 2
+      },
+      {
+        "streak": 8,
+        "displayDay": 8,
+        "awardedDay": 9
+      },
+      {
+        "streak": 9,
+        "displayDay": 9,
+        "awardedDay": 10
+      },
+      {
+        "streak": 10,
+        "displayDay": 10,
+        "awardedDay": 1
+      },
+      {
+        "streak": 79,
+        "displayDay": 9,
+        "awardedDay": 10
+      },
+      {
+        "streak": 80,
+        "displayDay": 10,
+        "awardedDay": 1
+      },
+      {
+        "streak": 1,
+        "displayDay": 1,
+        "awardedDay": 2
+      }
+    ],
+    "packActualOdds": {
+      "starter/Common": [
+        {
+          "index": "darkmantle",
+          "chance": 0.4
+        },
+        {
+          "index": "dryad",
+          "chance": 0.3
+        },
+        {
+          "index": "ghoul",
+          "chance": 0.3
+        }
+      ],
+      "common/Common": [
+        {
+          "index": "azer",
+          "chance": 0.059272
+        },
+        {
+          "index": "couatl",
+          "chance": 0.010161
+        },
+        {
+          "index": "darkmantle",
+          "chance": 0.118544
+        },
+        {
+          "index": "dryad",
+          "chance": 0.088908
+        },
+        {
+          "index": "dust-mephit",
+          "chance": 0.118544
+        },
+        {
+          "index": "ettercap",
+          "chance": 0.059272
+        },
+        {
+          "index": "ettin",
+          "chance": 0.035563
+        },
+        {
+          "index": "gelatinous-cube",
+          "chance": 0.059272
+        },
+        {
+          "index": "ghost",
+          "chance": 0.035563
+        },
+        {
+          "index": "ghoul",
+          "chance": 0.088908
+        },
+        {
+          "index": "gibbering-mouther",
+          "chance": 0.059272
+        },
+        {
+          "index": "lamia",
+          "chance": 0.035563
+        },
+        {
+          "index": "phase-spider",
+          "chance": 0.044454
+        },
+        {
+          "index": "violet-fungus",
+          "chance": 0.142252
+        },
+        {
+          "index": "wight",
+          "chance": 0.044454
+        }
+      ],
+      "uncommon/Uncommon": [
+        {
+          "index": "bulette",
+          "chance": 0.063634
+        },
+        {
+          "index": "chimera",
+          "chance": 0.054544
+        },
+        {
+          "index": "drider",
+          "chance": 0.054544
+        },
+        {
+          "index": "giant-ape",
+          "chance": 0.04176
+        },
+        {
+          "index": "gorgon",
+          "chance": 0.063634
+        },
+        {
+          "index": "hill-giant",
+          "chance": 0.063634
+        },
+        {
+          "index": "invisible-stalker",
+          "chance": 0.054544
+        },
+        {
+          "index": "mammoth",
+          "chance": 0.047726
+        },
+        {
+          "index": "medusa",
+          "chance": 0.047726
+        },
+        {
+          "index": "oni",
+          "chance": 0.047726
+        },
+        {
+          "index": "otyugh",
+          "chance": 0.063634
+        },
+        {
+          "index": "roper",
+          "chance": 0.063634
+        },
+        {
+          "index": "salamander",
+          "chance": 0.054544
+        },
+        {
+          "index": "shambling-mound",
+          "chance": 0.063634
+        },
+        {
+          "index": "shield-guardian",
+          "chance": 0.047726
+        },
+        {
+          "index": "treant",
+          "chance": 0.006682
+        },
+        {
+          "index": "tyrannosaurus-rex",
+          "chance": 0.022272
+        },
+        {
+          "index": "unicorn",
+          "chance": 0.011136
+        },
+        {
+          "index": "vampire-spawn",
+          "chance": 0.063634
+        },
+        {
+          "index": "wraith",
+          "chance": 0.063634
+        }
+      ],
+      "rare/Rare": [
+        {
+          "index": "archmage",
+          "chance": 0.020532
+        },
+        {
+          "index": "behir",
+          "chance": 0.076997
+        },
+        {
+          "index": "djinni",
+          "chance": 0.076997
+        },
+        {
+          "index": "efreeti",
+          "chance": 0.022243
+        },
+        {
+          "index": "gynosphinx",
+          "chance": 0.076997
+        },
+        {
+          "index": "mummy-lord",
+          "chance": 0.057747
+        },
+        {
+          "index": "purple-worm",
+          "chance": 0.016683
+        },
+        {
+          "index": "remorhaz",
+          "chance": 0.076997
+        },
+        {
+          "index": "roc",
+          "chance": 0.076997
+        },
+        {
+          "index": "storm-giant",
+          "chance": 0.065997
+        },
+        {
+          "index": "vampire-bat",
+          "chance": 0.071074
+        },
+        {
+          "index": "vampire-mist",
+          "chance": 0.065997
+        },
+        {
+          "index": "vampire-vampire",
+          "chance": 0.017795
+        },
+        {
+          "index": "werebear-hybrid",
+          "chance": 0.016683
+        },
+        {
+          "index": "wereboar-hybrid",
+          "chance": 0.061597
+        },
+        {
+          "index": "wererat-hybrid",
+          "chance": 0.071074
+        },
+        {
+          "index": "weretiger-hybrid",
+          "chance": 0.061597
+        },
+        {
+          "index": "werewolf-hybrid",
+          "chance": 0.065997
+        }
+      ],
+      "elemental/Uncommon": [
+        {
+          "index": "air-elemental",
+          "chance": 0.154696
+        },
+        {
+          "index": "earth-elemental",
+          "chance": 0.154696
+        },
+        {
+          "index": "fire-elemental",
+          "chance": 0.154696
+        },
+        {
+          "index": "invisible-stalker",
+          "chance": 0.132597
+        },
+        {
+          "index": "salamander",
+          "chance": 0.132597
+        },
+        {
+          "index": "water-elemental",
+          "chance": 0.154696
+        },
+        {
+          "index": "xorn",
+          "chance": 0.116022
+        }
+      ],
+      "elemental/Rare": [
+        {
+          "index": "djinni",
+          "chance": 0.5
+        },
+        {
+          "index": "efreeti",
+          "chance": 0.5
+        }
+      ],
+      "werefolk/Common": [
+        {
+          "index": "wereboar-human",
+          "chance": 0.26087
+        },
+        {
+          "index": "wererat-rat",
+          "chance": 0.26087
+        },
+        {
+          "index": "weretiger-human",
+          "chance": 0.26087
+        },
+        {
+          "index": "werewolf-wolf",
+          "chance": 0.217391
+        }
+      ],
+      "werefolk/Uncommon": [
+        {
+          "index": "werebear-bear",
+          "chance": 0.216495
+        },
+        {
+          "index": "werebear-human",
+          "chance": 0.28866
+        },
+        {
+          "index": "wereboar-boar",
+          "chance": 0.247423
+        },
+        {
+          "index": "weretiger-tiger",
+          "chance": 0.247423
+        }
+      ],
+      "monstrosity/Uncommon": [
+        {
+          "index": "bulette",
+          "chance": 0.15
+        },
+        {
+          "index": "chimera",
+          "chance": 0.128571
+        },
+        {
+          "index": "drider",
+          "chance": 0.128571
+        },
+        {
+          "index": "gorgon",
+          "chance": 0.15
+        },
+        {
+          "index": "hydra",
+          "chance": 0.064286
+        },
+        {
+          "index": "medusa",
+          "chance": 0.128571
+        },
+        {
+          "index": "roper",
+          "chance": 0.15
+        },
+        {
+          "index": "spirit-naga",
+          "chance": 0.1
+        }
+      ],
+      "monstrosity/Rare": [
+        {
+          "index": "remorhaz",
+          "chance": 0.5
+        },
+        {
+          "index": "roc",
+          "chance": 0.5
+        }
+      ]
+    },
+    "starterLookup": {
+      "suppliedType": "object",
+      "found": false
+    }
+  },
+  "database": {
+    "catalog": {
+      "total": 334,
+      "withAsset": 334,
+      "byRarity": {
+        "Common": 212,
+        "Uncommon": 68,
+        "Rare": 29,
+        "Very Rare": 10,
+        "Legendary": 15
+      },
+      "withArenaEffect": 44,
+      "fractionalCR": 84
+    },
+    "missingCampaignMonsters": [],
+    "duplicates": 0,
+    "negativeCopies": 0,
+    "aboveRankSeven": 0,
+    "incorrectCardScores": 35,
+    "userScoreMismatches": {
+      "overall": 2,
+      "brute": 0,
+      "spellsword": 1,
+      "stealth": 0
+    },
+    "training": [
+      {
+        "status": "completed",
+        "n": 108
+      },
+      {
+        "status": "in-progress",
+        "n": 3
+      }
+    ],
+    "multipleTrainingUsers": 0,
+    "raids": [
+      {
+        "name": "Saraqael",
+        "hp": 210000,
+        "bossScore": 541,
+        "currentHp": 210000,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      },
+      {
+        "name": "Acerak",
+        "hp": 195000,
+        "bossScore": 408,
+        "currentHp": 191217,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      },
+      {
+        "name": "Samdralyrion",
+        "hp": 232000,
+        "bossScore": 640,
+        "currentHp": 229722,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      },
+      {
+        "name": "Lord Durrom",
+        "hp": 135000,
+        "bossScore": 539,
+        "currentHp": 134153,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      },
+      {
+        "name": "Abarax ",
+        "hp": 166600,
+        "bossScore": 756,
+        "currentHp": 166600,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      },
+      {
+        "name": "Colossus of Akros",
+        "hp": 180000,
+        "bossScore": 827,
+        "currentHp": 179956,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      },
+      {
+        "name": "Slarkrethel",
+        "hp": 300000,
+        "bossScore": 1011,
+        "currentHp": 300000,
+        "stage": 1,
+        "active": 1,
+        "participantsShape": "object",
+        "participantCount": 0
+      }
+    ],
+    "migrationHistory": {
+      "recorded": 40,
+      "missingFiles": [
+        "20250126182913-rename-level-to-rank.js",
+        "20250126183118-reorder-collections-table.js",
+        "20250203064903-rename-arenas-to-arenaaccounts.js.js",
+        "20250204063934-add-int-column.js.js",
+        "20250204065614-add-arena-score.js.js",
+        "20250204080141-add-effective-scores.js",
+        "20250206031941-update-loot-column.js",
+        "20250208045623-add-evolved-column.js",
+        "20250208050214-create-monster-unlocks.js",
+        "20250208051028-create-monster-unlocks.js",
+        "20250208185431-victories-column.js",
+        "20250208192625-rename-counta.js",
+        "20250208231344-add-current-hp.js",
+        "20250208231601-rename-max-hp.js",
+        "20250209234930-add-page-stats.js",
+        "20250209235131-change-page-stats.js",
+        "20250209233318-create-monster-stats.js",
+        "20250212020941-add-loot-columns-raid.js",
+        "20250212021204-add-loot-columns-raid.js",
+        "20250212021330-add-loot-columns3-raid.js"
+      ]
+    },
+    "rarityDisagreements": [
+      {
+        "index": "black-pudding",
+        "cr": 11,
+        "rarity": "Common"
+      },
+      {
+        "index": "gargoyle",
+        "cr": 7,
+        "rarity": "Common"
+      },
+      {
+        "index": "hydra",
+        "cr": 13,
+        "rarity": "Uncommon"
+      },
+      {
+        "index": "werewolf-wolf",
+        "cr": 5,
+        "rarity": "Common"
+      }
+    ],
+    "obtainabilityIgnoringRuntimeBugs": {
+      "obtainable": 195,
+      "unobtainable": 139
+    },
+    "packPool": {
+      "starter": [
+        {
+          "index": "darkmantle",
+          "cr": 0.5,
+          "rarity": "Common"
+        },
+        {
+          "index": "dryad",
+          "cr": 1,
+          "rarity": "Common"
+        },
+        {
+          "index": "ghoul",
+          "cr": 1,
+          "rarity": "Common"
+        }
+      ],
+      "common": [
+        {
+          "index": "darkmantle",
+          "cr": 0.5,
+          "rarity": "Common"
+        },
+        {
+          "index": "dryad",
+          "cr": 1,
+          "rarity": "Common"
+        },
+        {
+          "index": "ghoul",
+          "cr": 1,
+          "rarity": "Common"
+        },
+        {
+          "index": "violet-fungus",
+          "cr": 0.25,
+          "rarity": "Common"
+        },
+        {
+          "index": "dust-mephit",
+          "cr": 0.5,
+          "rarity": "Common"
+        },
+        {
+          "index": "gelatinous-cube",
+          "cr": 2,
+          "rarity": "Common"
+        },
+        {
+          "index": "azer",
+          "cr": 2,
+          "rarity": "Common"
+        },
+        {
+          "index": "ettercap",
+          "cr": 2,
+          "rarity": "Common"
+        },
+        {
+          "index": "gibbering-mouther",
+          "cr": 2,
+          "rarity": "Common"
+        },
+        {
+          "index": "wight",
+          "cr": 3,
+          "rarity": "Common"
+        },
+        {
+          "index": "phase-spider",
+          "cr": 3,
+          "rarity": "Common"
+        },
+        {
+          "index": "ettin",
+          "cr": 4,
+          "rarity": "Common"
+        },
+        {
+          "index": "lamia",
+          "cr": 4,
+          "rarity": "Common"
+        },
+        {
+          "index": "ghost",
+          "cr": 4,
+          "rarity": "Common"
+        },
+        {
+          "index": "couatl",
+          "cr": 4,
+          "rarity": "Common",
+          "explicitChance": 0.02
+        }
+      ],
+      "uncommon": [
+        {
+          "index": "roper",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "salamander",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "wraith",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "hill-giant",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "unicorn",
+          "cr": 5,
+          "rarity": "Uncommon",
+          "explicitChance": 0.01
+        },
+        {
+          "index": "otyugh",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "shambling-mound",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "gorgon",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "medusa",
+          "cr": 6,
+          "rarity": "Uncommon",
+          "explicitChance": 0.05
+        },
+        {
+          "index": "chimera",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "mammoth",
+          "cr": 6,
+          "rarity": "Uncommon",
+          "explicitChance": 0.05
+        },
+        {
+          "index": "invisible-stalker",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "drider",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "oni",
+          "cr": 7,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "treant",
+          "cr": 9,
+          "rarity": "Uncommon",
+          "explicitChance": 0.01
+        },
+        {
+          "index": "vampire-spawn",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "shield-guardian",
+          "cr": 7,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "giant-ape",
+          "cr": 7,
+          "rarity": "Uncommon",
+          "explicitChance": 0.05
+        },
+        {
+          "index": "bulette",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "tyrannosaurus-rex",
+          "cr": 8,
+          "rarity": "Uncommon",
+          "explicitChance": 0.03
+        }
+      ],
+      "rare": [
+        {
+          "index": "djinni",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "efreeti",
+          "cr": 11,
+          "rarity": "Rare",
+          "explicitChance": 0.02
+        },
+        {
+          "index": "black-pudding",
+          "cr": 11,
+          "rarity": "Common"
+        },
+        {
+          "index": "wererat-hybrid",
+          "cr": 12,
+          "rarity": "Rare"
+        },
+        {
+          "index": "werewolf-hybrid",
+          "cr": 13,
+          "rarity": "Rare"
+        },
+        {
+          "index": "wereboar-hybrid",
+          "cr": 14,
+          "rarity": "Rare"
+        },
+        {
+          "index": "weretiger-hybrid",
+          "cr": 14,
+          "rarity": "Rare"
+        },
+        {
+          "index": "werebear-hybrid",
+          "cr": 15,
+          "rarity": "Rare",
+          "explicitChance": 0.02
+        },
+        {
+          "index": "gynosphinx",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "remorhaz",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "hydra",
+          "cr": 13,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "roc",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "behir",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "archmage",
+          "cr": 12,
+          "rarity": "Rare",
+          "explicitChance": 0.02
+        },
+        {
+          "index": "storm-giant",
+          "cr": 13,
+          "rarity": "Rare"
+        },
+        {
+          "index": "vampire-bat",
+          "cr": 12,
+          "rarity": "Rare"
+        },
+        {
+          "index": "vampire-mist",
+          "cr": 13,
+          "rarity": "Rare"
+        },
+        {
+          "index": "vampire-vampire",
+          "cr": 14,
+          "rarity": "Rare",
+          "explicitChance": 0.02
+        },
+        {
+          "index": "mummy-lord",
+          "cr": 15,
+          "rarity": "Rare"
+        },
+        {
+          "index": "purple-worm",
+          "cr": 15,
+          "rarity": "Rare",
+          "explicitChance": 0.02
+        }
+      ],
+      "elemental": [
+        {
+          "index": "air-elemental",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "earth-elemental",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "fire-elemental",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "salamander",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "gargoyle",
+          "cr": 7,
+          "rarity": "Common"
+        },
+        {
+          "index": "water-elemental",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "xorn",
+          "cr": 7,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "invisible-stalker",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "djinni",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "efreeti",
+          "cr": 11,
+          "rarity": "Rare"
+        }
+      ],
+      "werefolk": [
+        {
+          "index": "wererat-rat",
+          "cr": 4,
+          "rarity": "Common"
+        },
+        {
+          "index": "weretiger-human",
+          "cr": 4,
+          "rarity": "Common"
+        },
+        {
+          "index": "werebear-human",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "werewolf-wolf",
+          "cr": 5,
+          "rarity": "Common"
+        },
+        {
+          "index": "wereboar-human",
+          "cr": 4,
+          "rarity": "Common"
+        },
+        {
+          "index": "wereboar-boar",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "wererat-hybrid",
+          "cr": 12,
+          "rarity": "Rare"
+        },
+        {
+          "index": "werewolf-hybrid",
+          "cr": 13,
+          "rarity": "Rare"
+        },
+        {
+          "index": "werebear-bear",
+          "cr": 7,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "weretiger-tiger",
+          "cr": 6,
+          "rarity": "Uncommon"
+        }
+      ],
+      "monstrosity": [
+        {
+          "index": "bulette",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "gorgon",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "roper",
+          "cr": 5,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "drider",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "medusa",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "chimera",
+          "cr": 6,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "remorhaz",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "roc",
+          "cr": 11,
+          "rarity": "Rare"
+        },
+        {
+          "index": "spirit-naga",
+          "cr": 8,
+          "rarity": "Uncommon"
+        },
+        {
+          "index": "hydra",
+          "cr": 13,
+          "rarity": "Uncommon"
+        }
+      ]
+    }
+  }
+}

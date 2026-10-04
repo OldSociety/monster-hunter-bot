@@ -1,0 +1,30 @@
+{
+  "participantChangeDetected": false,
+  "arenaEffectDeclaredInMonsterModel": false,
+  "productionStorage": "./config/dev.sqlite",
+  "baseOnlyStyleWins": false,
+  "freezeState": {
+    "enemyHp": 15,
+    "playerHp": 10,
+    "shield": 0,
+    "freezeEnemy": true
+  },
+  "normalRaidKill": {
+    "won": true,
+    "stage": 2,
+    "persistedHp": 0,
+    "participants": {}
+  },
+  "slotsCashout": {
+    "gold": 25,
+    "newCollectorsAfterCashout": 1,
+    "remainingPot": 25,
+    "goldAfterRepeatedAction": 50
+  },
+  "raidObjectPayoutError": "paidUsers is not iterable",
+  "cleanMigration": {
+    "applied": 2,
+    "failingFile": "20250201082348-add-rarity-to-collections.js",
+    "error": "SQLITE_ERROR: duplicate column name: rarity"
+  }
+}

@@ -39,8 +39,8 @@ async function setupRewardWheel(interaction, user, timeout = 30000) {
     const rewards = [
       { type: 'gold', amount: 360 },
       { type: 'gold', amount: 360 },
-      { type: 'gear', min: 1, max: 5 },
-      { type: 'gear', min: 5, max: 10 },
+      { type: 'gold', amount: 360 },
+      { type: 'gear', min: 5, max: 5 },
       { type: 'beast' },
     ]
 

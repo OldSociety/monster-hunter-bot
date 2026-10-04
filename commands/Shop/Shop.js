@@ -606,47 +606,55 @@ module.exports = {
               }
             })
 
-            const itemsPerPage = 25
-            const totalPages = Math.ceil(monsterOptions.length / itemsPerPage)
-            let currentPage = 0
-            const getPageOptions = (page) =>
-              monsterOptions.slice(
-                page * itemsPerPage,
-                (page + 1) * itemsPerPage
-              )
+/* ── derive page ── */
+let currentPage = 0;                     // default
+const id = interaction.customId;         // e.g. promotion_next_page_2
+const parts = id.split('_');
+const maybePage = parseInt(parts[parts.length - 1], 10);
+if (!isNaN(maybePage)) currentPage = maybePage;
 
-            // Build select menu with the options for the current page
-            const selectMenu = new StringSelectMenuBuilder()
-              .setCustomId(`select_promotion_page_${currentPage}`)
-              .setPlaceholder(
-                `Select a card to promote (Page ${
-                  currentPage + 1
-                } of ${totalPages})`
-              )
-              .addOptions(getPageOptions(currentPage))
+/* ── rebuild list ── */
+const itemsPerPage = 25;
+const totalPages = Math.max(1, Math.ceil(monsterOptions.length / itemsPerPage));
+
+if (currentPage >= totalPages) currentPage = totalPages - 1;
+if (currentPage < 0) currentPage = 0;
+
+const pageOptions = monsterOptions.slice(
+  currentPage * itemsPerPage,
+  (currentPage + 1) * itemsPerPage
+); // guaranteed 1‑25
+
+const selectMenu = new StringSelectMenuBuilder()
+  .setCustomId(`select_promotion_page_${currentPage}`)
+  .setPlaceholder(`Select a card to promote (Page ${currentPage + 1} of ${totalPages})`)
+  .addOptions(pageOptions);
+
 
             // Build action rows: one for the select menu, one for pagination buttons (if needed)
             const actionRows = []
             actionRows.push(new ActionRowBuilder().addComponents(selectMenu))
 
             if (totalPages > 1) {
-              const paginationRow = new ActionRowBuilder()
-              if (currentPage > 0) {
-                paginationRow.addComponents(
-                  new ButtonBuilder()
-                    .setCustomId(`promotion_prev_page_${currentPage}`)
-                    .setLabel('Previous Page')
-                    .setStyle(ButtonStyle.Secondary)
-                )
-              }
-              if (currentPage < totalPages - 1) {
-                paginationRow.addComponents(
-                  new ButtonBuilder()
-                    .setCustomId(`promotion_next_page_${currentPage}`)
-                    .setLabel('Next Page')
-                    .setStyle(ButtonStyle.Secondary)
-                )
-              }
+              /* ── rebuild pagination buttons ── */
+const paginationRow = new ActionRowBuilder();
+if (currentPage > 0) {
+  paginationRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`promotion_prev_page_${currentPage}`)
+      .setLabel('Previous Page')
+      .setStyle(ButtonStyle.Secondary)
+  );
+}
+if (currentPage < totalPages - 1) {
+  paginationRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`promotion_next_page_${currentPage}`)
+      .setLabel('Next Page')
+      .setStyle(ButtonStyle.Secondary)
+  );
+}
+
               actionRows.push(paginationRow)
             }
 
@@ -674,86 +682,88 @@ module.exports = {
             interaction.customId.startsWith('promotion_prev_page_')
           ) {
             // Extract current page from customId
-            const parts = interaction.customId.split('_')
-            const currentPage = parseInt(parts.pop())
-            let newPage = currentPage
-            if (interaction.customId.startsWith('promotion_next_page_')) {
-              newPage = currentPage + 1
-            } else {
-              newPage = currentPage - 1
-            }
+            const parts       = interaction.customId.split('_');
+            const currentPage = parseInt(parts.pop(), 10);
+            let   newPage     = interaction.customId.startsWith('promotion_next_page_')
+                                  ? currentPage + 1
+                                  : currentPage - 1;
+          
 
             // Rebuild the promotion options (repeat same query and mapping)
-            const userMonsters = await Collection.findAll({
-              where: { userId, copies: { [Op.gt]: 0 } },
-            })
-            const promotableMonsters = userMonsters.filter(
-              (monster) => monster.rank < 7
-            )
+            const allUpgradeable = await Collection.findAll({
+              where: { userId, rank: { [Op.lt]: 7 } },
+            });
+            const promotableMonsters = allUpgradeable.filter(m => {
+              const gearCost = getGearCost(getRarityByCR(m.cr));
+              return m.copies > 0 || gearOnHand >= gearCost;
+            });
+          
+            if (!promotableMonsters.length) {
+              return interaction.update({
+                content: 'You have no cards available for promotion.',
+                components: [],
+              });
+            }
             const sortedPromotable = promotableMonsters.sort(
               (a, b) => b.m_score - a.m_score
             )
             const monsterOptions = sortedPromotable.map((monster) => {
-              const style = classifyMonsterType(monster.type)
-              let emoji = ''
-              if (style === 'brute' && user.top_brutes.includes(monster.id)) {
-                emoji = ' ⚔️'
-              } else if (
-                style === 'spellsword' &&
-                user.top_spellswords.includes(monster.id)
-              ) {
-                emoji = ' 🪄'
-              } else if (
-                style === 'stealth' &&
-                user.top_stealths.includes(monster.id)
-              ) {
-                emoji = ' 🎭'
-              }
+              const style = classifyMonsterType(monster.type);
+              let emoji = '';
+              if (style === 'brute'      && user.top_brutes.includes(monster.id))     emoji = ' ⚔️';
+              else if (style === 'spellsword' && user.top_spellswords.includes(monster.id)) emoji = ' 🪄';
+              else if (style === 'stealth'    && user.top_stealths.includes(monster.id))    emoji = ' 🎭';
+            
+              const rarity   = getRarityByCR(monster.cr);
+              const gearCost = getGearCost(rarity);
+            
               return {
                 label: `${monster.name} (Lv. ${monster.rank})${emoji}`,
                 value: `promote_${monster.id}`,
-                description: `Copies: ${monster.copies}`,
-              }
-            })
-            const itemsPerPage = 25
-            const totalPages = Math.ceil(monsterOptions.length / itemsPerPage)
-            const getPageOptions = (page) =>
-              monsterOptions.slice(
-                page * itemsPerPage,
-                (page + 1) * itemsPerPage
-              )
-
+                description:
+                  monster.copies > 0
+                    ? `Copies: ${monster.copies}`
+                    : `Cost: ⚙️${gearCost}`,
+              };
+            });
+            
+            const itemsPerPage = 25;
+            const totalPages   = Math.max(1, Math.ceil(monsterOptions.length / itemsPerPage));
+          
+            /* ── clamp page ── */
+            if (newPage >= totalPages) newPage = totalPages - 1;
+            if (newPage < 0)           newPage = 0;
+          
+            const pageOptions = monsterOptions.slice(
+              newPage * itemsPerPage,
+              (newPage + 1) * itemsPerPage
+            ); // guaranteed 1‑25
+          
             // Build updated select menu with newPage options
             const selectMenu = new StringSelectMenuBuilder()
-              .setCustomId(`select_promotion_page_${newPage}`)
-              .setPlaceholder(
-                `Select a card to promote (Page ${
-                  newPage + 1
-                } of ${totalPages})`
-              )
-              .addOptions(getPageOptions(newPage))
+            .setCustomId(`select_promotion_page_${newPage}`)
+            .setPlaceholder(`Select a card to promote (Page ${newPage + 1} of ${totalPages})`)
+            .addOptions(pageOptions);
 
             const actionRows = []
             actionRows.push(new ActionRowBuilder().addComponents(selectMenu))
-
+            const paginationRow = new ActionRowBuilder();
             if (totalPages > 1) {
-              const paginationRow = new ActionRowBuilder()
-              if (newPage > 0) {
+
+              if (newPage > 0)
                 paginationRow.addComponents(
                   new ButtonBuilder()
                     .setCustomId(`promotion_prev_page_${newPage}`)
                     .setLabel('Previous Page')
                     .setStyle(ButtonStyle.Secondary)
-                )
-              }
-              if (newPage < totalPages - 1) {
+                );
+              if (newPage < totalPages - 1)
                 paginationRow.addComponents(
                   new ButtonBuilder()
                     .setCustomId(`promotion_next_page_${newPage}`)
                     .setLabel('Next Page')
                     .setStyle(ButtonStyle.Secondary)
-                )
-              }
+                );
               actionRows.push(paginationRow)
             }
 
@@ -769,10 +779,10 @@ module.exports = {
                 inline: false,
               })
 
-            return interaction.update({
-              embeds: [promotionEmbed],
-              components: actionRows,
-            })
+              return interaction.update({
+                embeds: [promotionEmbed],
+                components: [new ActionRowBuilder().addComponents(selectMenu), paginationRow],
+              });
           }
 
           // ----- Handling Selection from the Paginated Menu -----
@@ -926,7 +936,6 @@ module.exports = {
               assignedRarity,
               monster.rank
             )
-
 
             await monster.save()
             console.log(
